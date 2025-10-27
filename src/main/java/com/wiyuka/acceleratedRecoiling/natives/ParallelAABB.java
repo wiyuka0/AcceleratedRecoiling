@@ -69,7 +69,7 @@ public class ParallelAABB {
             if (entity.level() instanceof ServerLevel serverLevel) {
                 int maxCollisionLimit = serverLevel.getGameRules().getInt(GameRules.RULE_MAX_ENTITY_CRAMMING);
                 if (entity instanceof LivingEntity living && data.count >= maxCollisionLimit) {
-                    living.hurtServer(serverLevel, living.damageSources().cramming(), 6.0F);
+                    living.hurt(living.damageSources().cramming(), 6.0F);
                 }
             }
         });
