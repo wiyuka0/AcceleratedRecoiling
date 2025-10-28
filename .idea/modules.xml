@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/FoldMC.iml" filepath="$PROJECT_DIR$/.idea/modules/FoldMC.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/FoldMC.main.iml" filepath="$PROJECT_DIR$/.idea/modules/FoldMC.main.iml" />
     </modules>
   </component>
