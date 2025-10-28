@@ -20,11 +20,30 @@ public class NativeInterface {
     private static java.lang.invoke.MethodHandle pushMethodHandle = null;
     private static long maxSizeTouched = -1;
 
+    public static void destroy() {
+        // 1. 使用标志位防止重复调用
+        if (!ParallelAABB.isInitialized) {
+            return;
+        }
+
+        // 2. 立即设置标志位
+        ParallelAABB.isInitialized = false;
+
+        // 4. 关闭为 FFM 分配的 Arena (非常重要)
+        if (nativeArena != null) {
+            // 这将释放为加载库符号而分配的本机内存
+            nativeArena.close();
+        }
+
+        // 5. 将静态句柄设为 null，帮助 GC 并防止“use-after-close”
+        nativeArena = null;
+        linker = null;
+        pushMethodHandle = null;
+    }
     /**
      * @return Null if the server cannot find the library
      */
     private static java.lang.foreign.SymbolLookup findFoldLib(java.lang.foreign.Arena arena, String dllPath) {
-        //TODO Find or download library file
         return java.lang.foreign.SymbolLookup.libraryLookup(dllPath, arena);
     }
 

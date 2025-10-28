@@ -3,6 +3,7 @@ plugins {
     id 'maven-publish'
     id 'idea'
     id 'net.neoforged.moddev' version '2.0.115'
+    id 'org.jetbrains.kotlin.jvm'
 }
 
 version = mod_version
@@ -10,6 +11,7 @@ group = mod_group_id
 
 repositories {
     mavenLocal()
+    mavenCentral()
 }
 
 base {
@@ -107,6 +109,7 @@ tasks.named('createMinecraftArtifacts') {
 }
 
 dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     // Example mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
@@ -175,4 +178,7 @@ idea {
         downloadSources = true
         downloadJavadoc = true
     }
+}
+kotlin {
+    jvmToolchain(21)
 }
