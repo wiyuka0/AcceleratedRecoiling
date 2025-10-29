@@ -86,13 +86,18 @@ public class NativeInterface {
 
         String dllPath = "";
 
-        try (InputStream dllStream = AcceleratedRecoiling.class.getResourceAsStream("/acceleratedRecoilingLib.dll")) {
+        String dllName = "acceleratedRecoilingLib";
+
+        String fullDllName = System.mapLibraryName(dllName);
+
+
+        try (InputStream dllStream = AcceleratedRecoiling.class.getResourceAsStream(STR."/\{fullDllName}")) {
             if (dllStream == null) {
-                throw new java.io.FileNotFoundException("Cannot find acceleratedRecoilingLib.dll");
+                throw new java.io.FileNotFoundException(STR."Cannot find /\{fullDllName}");
             }
 
             // 目标路径：JAR 同级目录 ./acceleratedRecoilingLib.dll
-            File targetDll = new File("acceleratedRecoilingLib.dll");
+            File targetDll = new File(fullDllName);
 
             dllPath = targetDll.getAbsolutePath();
 
@@ -100,13 +105,15 @@ public class NativeInterface {
             if (!targetDll.exists()) {
                 try (java.io.OutputStream out = new java.io.FileOutputStream(targetDll)) {
                     dllStream.transferTo(out);
-                    logger.info("acceleratedRecoilingLib.dll: " + targetDll.getAbsolutePath());
+                    logger.info(STR."\{fullDllName}: \{targetDll.getAbsolutePath()}");
                 }
             }
 
         } catch (IOException e) {
-            throw new RuntimeException("Load failed: " + e.getMessage(), e);
+            throw new RuntimeException(STR."Load failed: \{e.getMessage()}", e);
         }
+
+        logger.info("DLL: {}", dllPath);
 
 
         String config = """
@@ -147,10 +154,10 @@ public class NativeInterface {
 
 
         logger.info("acceleratedRecoiling initialized");
-        logger.info("Use grid size: " + GRID_SIZE);
-        logger.info("Use max collisions: " + K);
-        logger.info("Use gpu index: " + gpuIndex);
-        logger.info("Use CPU: " + useCPU);
+        logger.info("Use grid size: {}", GRID_SIZE);
+        logger.info("Use max collisions: {}", K);
+        logger.info("Use gpu index: {}", gpuIndex);
+        logger.info("Use CPU: {}", useCPU);
 
         linker = java.lang.foreign.Linker.nativeLinker();
         nativeArena = java.lang.foreign.Arena.ofConfined();
