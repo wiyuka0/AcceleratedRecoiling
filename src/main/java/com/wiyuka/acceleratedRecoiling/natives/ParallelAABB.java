@@ -57,6 +57,8 @@ public class ParallelAABB {
             LivingEntity e1 = livingEntities.get(e1Index);
             LivingEntity e2 = livingEntities.get(e2Index);
 
+            if(!e1.getBoundingBox().intersects(e2.getBoundingBox())) continue;
+
             e1.doPush(e2);
             e2.doPush(e1);
 
