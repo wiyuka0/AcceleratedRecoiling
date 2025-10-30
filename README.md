@@ -21,6 +21,8 @@
 
 你可以在服务器/客户端**根目录**（与 `mods文件夹` 同级）找到 `acceleratedRecoiling.json` 文件。
 
+如果客户端无法启动，**请首先检查JVM参数中是否`--enable-preview`参数。**
+
 **默认配置：**
 ```json
 {
