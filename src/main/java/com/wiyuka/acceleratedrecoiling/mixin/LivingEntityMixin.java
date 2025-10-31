@@ -1,7 +1,7 @@
-package com.wiyuka.acceleratedRecoiling.mixin;
+package com.wiyuka.acceleratedrecoiling.mixin;
 
 
-import com.wiyuka.acceleratedRecoiling.natives.ParallelAABB;
+import com.wiyuka.acceleratedrecoiling.natives.ParallelAABB;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;

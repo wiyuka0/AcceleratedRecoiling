@@ -1,4 +1,4 @@
-package com.wiyuka.acceleratedRecoiling.api;
+package com.wiyuka.acceleratedrecoiling.api;
 
 public interface ICustomBB {
 

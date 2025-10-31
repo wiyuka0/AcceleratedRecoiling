@@ -1,8 +1,8 @@
-package com.wiyuka.acceleratedRecoiling.commands;
+package com.wiyuka.acceleratedrecoiling.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
-import com.wiyuka.acceleratedRecoiling.natives.ParallelAABB;
+import com.wiyuka.acceleratedrecoiling.natives.ParallelAABB;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;

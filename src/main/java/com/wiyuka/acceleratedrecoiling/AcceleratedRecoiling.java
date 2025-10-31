@@ -1,7 +1,7 @@
-package com.wiyuka.acceleratedRecoiling;
+package com.wiyuka.acceleratedrecoiling;
 
 import com.mojang.logging.LogUtils;
-import com.wiyuka.acceleratedRecoiling.commands.ToggleFoldCommand;
+import com.wiyuka.acceleratedrecoiling.commands.ToggleFoldCommand;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.CreativeModeTab;
 import net.neoforged.bus.api.IEventBus;

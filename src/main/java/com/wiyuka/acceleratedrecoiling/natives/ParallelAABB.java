@@ -1,7 +1,7 @@
-package com.wiyuka.acceleratedRecoiling.natives;
+package com.wiyuka.acceleratedrecoiling.natives;
 
-import com.wiyuka.acceleratedRecoiling.api.ICustomBB;
-import com.wiyuka.acceleratedRecoiling.mixin.EntityMixin;
+import com.wiyuka.acceleratedrecoiling.api.ICustomBB;
+import com.wiyuka.acceleratedrecoiling.mixin.EntityMixin;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
