@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling.main.iml" filepath="$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling.test.iml" filepath="$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/com.wiyuka.FoldMC.main.iml" filepath="$PROJECT_DIR$/.idea/modules/com.wiyuka.FoldMC.main.iml" />
     </modules>
   </component>
 </project>
