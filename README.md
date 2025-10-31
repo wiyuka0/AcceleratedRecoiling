@@ -6,7 +6,7 @@
 
 ## 前置要求
 
-* **Java 21 或更高版本**：FFM API 是 Java 21 的正式功能。**你必须使用 Java 21+ 来启动你的服务器/客户端。**
+* **Java 21 或更高版本**：FFM API 是 Java 21 的预览功能。**你必须使用 Java 21+ 来启动你的服务器/客户端。**
 * **64位操作系统**：本机库（`.dll` / `.so`）需要64位环境。
 * **Windows 平台** [**Microsoft Visual C++ 运行库**](https://aka.ms/vs/17/release/vc_redist.x64.exe)：如果启动失败，请首先安装此运行库。
 * **Linux 平台**：如果启动失败，请首先安装 **OpenCL** 运行库。
