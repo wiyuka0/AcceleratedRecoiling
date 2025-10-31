@@ -29,6 +29,33 @@ public class LivingEntityMixin {
             ci.cancel();
         }
     }
+
+//    @Inject(
+//            method = "aiStep",
+//            at = @At(
+//                    "HEAD"
+//            ),
+//            cancellable = true
+//    )
+//    private void aiStep(final CallbackInfo ci) {
+//        LivingEntity self = (LivingEntity) (Object) this;
+//        if(self instanceof Player) return;
+//        ci.cancel();
+//
+//    }
+//    @Inject(
+//            method = "serverAiStep",
+//            at = @At(
+//                    "HEAD"
+//            ),
+//            cancellable = true
+//    )
+//    private void serverAiStep(final CallbackInfo ci) {
+//        LivingEntity self = (LivingEntity) (Object) this;
+//
+//        if(self instanceof Player) return;
+//        ci.cancel();
+//    }
 //    @Redirect(
 //            method = "aiStep",
 //            at = @At(

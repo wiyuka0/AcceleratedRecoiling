@@ -81,7 +81,7 @@ public class AcceleratedRecoiling {
         // Some common setup code
 //        LOGGER.info("HELLO FROM COMMON SETUP");
 //
-//        if (Config.logDirtBlock)
+//        if (Config.logDirtBlock)a
 //            LOGGER.info("DIRT BLOCK >> {}", BuiltInRegistries.BLOCK.getKey(Blocks.DIRT));
 //
 //        LOGGER.info(Config.magicNumberIntroduction + Config.magicNumber);
