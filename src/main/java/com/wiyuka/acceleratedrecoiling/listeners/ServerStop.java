@@ -1,8 +1,7 @@
-package com.wiyuka.acceleratedRecoiling.listeners;
+package com.wiyuka.acceleratedrecoiling.listeners;
 
-import com.wiyuka.acceleratedRecoiling.AcceleratedRecoiling;
-import com.wiyuka.acceleratedRecoiling.natives.NativeInterface;
-import net.minecraft.server.MinecraftServer;
+import com.wiyuka.acceleratedrecoiling.AcceleratedRecoiling;
+import com.wiyuka.acceleratedrecoiling.natives.NativeInterface;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;

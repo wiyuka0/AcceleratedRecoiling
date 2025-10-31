@@ -1,17 +1,13 @@
-package com.wiyuka.acceleratedRecoiling;
+package com.wiyuka.acceleratedrecoiling;
 
 import com.mojang.logging.LogUtils;
-import com.wiyuka.acceleratedRecoiling.commands.ToggleFoldCommand;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.world.item.CreativeModeTab;
+import com.wiyuka.acceleratedrecoiling.commands.ToggleFoldCommand;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
-import net.neoforged.neoforge.registries.DeferredRegister;
 import org.slf4j.Logger;
 
 @Mod(AcceleratedRecoiling.MODID)

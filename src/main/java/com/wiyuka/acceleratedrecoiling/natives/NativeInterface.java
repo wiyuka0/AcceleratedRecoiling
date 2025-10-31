@@ -1,8 +1,8 @@
-package com.wiyuka.acceleratedRecoiling.natives;
+package com.wiyuka.acceleratedrecoiling.natives;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.wiyuka.acceleratedRecoiling.AcceleratedRecoiling;
+import com.wiyuka.acceleratedrecoiling.AcceleratedRecoiling;
 import org.slf4j.Logger;
 
 import java.io.File;

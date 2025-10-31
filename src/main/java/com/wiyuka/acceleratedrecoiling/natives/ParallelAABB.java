@@ -1,12 +1,10 @@
-package com.wiyuka.acceleratedRecoiling.natives;
+package com.wiyuka.acceleratedrecoiling.natives;
 
-import com.wiyuka.acceleratedRecoiling.api.ICustomBB;
-import com.wiyuka.acceleratedRecoiling.mixin.EntityMixin;
+import com.wiyuka.acceleratedrecoiling.api.ICustomBB;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.GameRules;
-import net.minecraft.world.level.Level;
 
 import java.util.HashMap;
 import java.util.List;
