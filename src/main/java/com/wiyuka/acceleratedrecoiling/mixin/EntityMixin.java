@@ -1,6 +1,6 @@
-package com.wiyuka.acceleratedRecoiling.mixin;
+package com.wiyuka.acceleratedrecoiling.mixin;
 
-import com.wiyuka.acceleratedRecoiling.api.ICustomBB;
+import com.wiyuka.acceleratedrecoiling.api.ICustomBB;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;

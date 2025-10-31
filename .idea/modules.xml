@@ -2,9 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/FoldMC.iml" filepath="$PROJECT_DIR$/.idea/modules/FoldMC.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/FoldMC.main.iml" filepath="$PROJECT_DIR$/.idea/modules/FoldMC.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/FoldMC.test.iml" filepath="$PROJECT_DIR$/.idea/modules/FoldMC.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling.main.iml" filepath="$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling.test.iml" filepath="$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling.test.iml" />
     </modules>
   </component>
 </project>
