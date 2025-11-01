@@ -5,7 +5,7 @@
       <profile name="Gradle Imported" enabled="true">
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
-          <entry name="E:/gradle/caches/modules-2/files-2.1/org.spongepowered/mixin/0.8.5/6d1c8bf4c28e697f472a83bd6add76ec4951734/mixin-0.8.5-processor.jar" />
+          <entry name="E:/gradle/caches/modules-2/files-2.1/org.spongepowered/mixin/0.8.7/3d051c66329d162a52fc062f7da912c37904a6a0/mixin-0.8.7-processor.jar" />
         </processorPath>
         <module name="com.wiyuka.AcceleratedRecoiling.main" />
       </profile>

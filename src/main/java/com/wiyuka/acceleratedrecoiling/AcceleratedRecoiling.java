@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 // The value here should match an entry in the META-INF/mods.toml file
 
 @Mod(AcceleratedRecoiling.MODID)
-@Mod.EventBusSubscriber
+@Mod.EventBusSubscriber(modid = AcceleratedRecoiling.MODID)
 public class AcceleratedRecoiling {
     // Define mod id in a common place for everything to reference
     public static final String MODID = "acceleratedrecoiling";
@@ -22,7 +22,7 @@ public class AcceleratedRecoiling {
     }
 
     @SubscribeEvent
-    public void onRegisterCommands(RegisterCommandsEvent event) {
+    public static void onRegisterCommands(RegisterCommandsEvent event) {
         // 调用你的指令类的注册方法
         ToggleFoldCommand.register(event.getDispatcher());
     }

@@ -29,7 +29,6 @@ public abstract class ServerLevelMixin {
             )
     )
     private void onTickEntities(EntityTickList entityTickList, Consumer<Entity> originalConsumer) {
-        System.out.println("printf");
         List<LivingEntity> livingEntities = new ArrayList<>();
         List<Player> playerEntities = new ArrayList<>();
 
