@@ -6,6 +6,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.GameRules;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,8 +46,9 @@ public class ParallelAABB {
         int[] resultCounts = new int[1];
 
         int[] result = nativePush(locations, aabb, resultCounts);
+        System.out.println("Calc finish");
         if (result == null || result.length % 2 != 0) return;
-
+        System.out.println("Result: aaa");
         for (int i = 0; i * 2 + 1 < result.length && i < resultCounts[0]; i++) {
             int e1Index = result[i * 2];
             int e2Index = result[i * 2 + 1];
@@ -56,7 +58,7 @@ public class ParallelAABB {
             LivingEntity e2 = livingEntities.get(e2Index);
 
             if(!e1.getBoundingBox().intersects(e2.getBoundingBox())) continue;
-
+            System.out.println("doPush");
             e1.doPush(e2);
 //            e2.doPush(e1);
 

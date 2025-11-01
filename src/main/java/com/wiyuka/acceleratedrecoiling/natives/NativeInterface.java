@@ -64,18 +64,22 @@ public class NativeInterface {
 
 //            java.lang.foreign.MemorySegment locationsMem = tempArena.allocateFrom(JAVA_DOUBLE, locations);
 //            java.lang.foreign.MemorySegment aabbMem = tempArena.allocateFrom(JAVA_DOUBLE, aabb);
-            java.lang.foreign.MemorySegment locationsMem = tempArena.allocateArray(JAVA_DOUBLE, locations);
-            java.lang.foreign.MemorySegment aabbMem = tempArena.allocateArray(JAVA_DOUBLE, aabb);
+            java.lang.foreign.MemorySegment locationsMem = tempArena.allocateFrom(JAVA_DOUBLE, locations);
+            java.lang.foreign.MemorySegment aabbMem = tempArena.allocateFrom(JAVA_DOUBLE, aabb);
             java.lang.foreign.MemorySegment collisionPairs = tempArena.allocate(JAVA_INT.byteSize() * resultSize * 2);
 
             int collisionSize = -1;
             try {
+                System.out.println("Invoking");
                 collisionSize = (int) pushMethodHandle.invoke(locationsMem, aabbMem, collisionPairs, count, K, GRID_SIZE);
+                System.out.println("Invoked");
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
+            System.out.println("Resulted");
             resultSizeOut[0] = collisionSize;
             if (collisionSize == -1) return new int[0];
+            System.out.println("ResultSizeOut[0]=" + resultSizeOut[0]);
             return collisionPairs.toArray(JAVA_INT);
         }
     }
@@ -90,10 +94,9 @@ public class NativeInterface {
 
         String fullDllName = System.mapLibraryName(dllName);
 
-
-        try (InputStream dllStream = AcceleratedRecoiling.class.getResourceAsStream(STR."/\{fullDllName}")) {
+        try (InputStream dllStream = AcceleratedRecoiling.class.getResourceAsStream("/" + fullDllName)) {
             if (dllStream == null) {
-                throw new java.io.FileNotFoundException(STR."Cannot find /\{fullDllName}");
+                throw new java.io.FileNotFoundException("Cannot find " + fullDllName);
             }
 
             // 目标路径：JAR 同级目录 ./acceleratedRecoilingLib.dll
@@ -105,12 +108,12 @@ public class NativeInterface {
             if (!targetDll.exists()) {
                 try (java.io.OutputStream out = new java.io.FileOutputStream(targetDll)) {
                     dllStream.transferTo(out);
-                    logger.info(STR."\{fullDllName}: \{targetDll.getAbsolutePath()}");
+                    logger.info("fullDllName: " + targetDll.getAbsolutePath());
                 }
             }
 
         } catch (IOException e) {
-            throw new RuntimeException(STR."Load failed: \{e.getMessage()}", e);
+            throw new RuntimeException("Load failed: "+ e.getMessage(), e);
         }
 
         logger.info("DLL: {}", dllPath);
