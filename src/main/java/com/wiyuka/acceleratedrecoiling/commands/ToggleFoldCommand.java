@@ -23,7 +23,7 @@ public class ToggleFoldCommand {
 
         ParallelAABB.useFold = !ParallelAABB.useFold;
 
-        source.sendSuccess(() -> Component.literal(STR."Toggle FOLD to \{ParallelAABB.useFold}"), false);
+        source.sendSuccess(() -> Component.literal("Toggle FOLD to " + ParallelAABB.useFold), false);
 
         return 1;
     }
