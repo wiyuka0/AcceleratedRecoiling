@@ -70,16 +70,16 @@ public class NativeInterface {
 
             int collisionSize = -1;
             try {
-                System.out.println("Invoking");
+
                 collisionSize = (int) pushMethodHandle.invoke(locationsMem, aabbMem, collisionPairs, count, K, GRID_SIZE);
-                System.out.println("Invoked");
+
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
-            System.out.println("Resulted");
+
             resultSizeOut[0] = collisionSize;
             if (collisionSize == -1) return new int[0];
-            System.out.println("ResultSizeOut[0]=" + resultSizeOut[0]);
+
             return collisionPairs.toArray(JAVA_INT);
         }
     }
