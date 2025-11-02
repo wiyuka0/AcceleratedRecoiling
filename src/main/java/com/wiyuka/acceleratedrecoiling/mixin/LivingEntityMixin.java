@@ -1,13 +1,16 @@
 package com.wiyuka.acceleratedrecoiling.mixin;
 
 
+import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
 import com.wiyuka.acceleratedrecoiling.natives.ParallelAABB;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LivingEntity.class)
 public class LivingEntityMixin {
@@ -23,7 +26,7 @@ public class LivingEntityMixin {
         if(self.level().isClientSide) return;
 
 //        ci.cancel();
-        if((ParallelAABB.useFold) && self.getType() != EntityType.PLAYER) {
+        if((FoldConfig.fold) && self.getType() != EntityType.PLAYER) {
             ci.cancel();
         }
     }

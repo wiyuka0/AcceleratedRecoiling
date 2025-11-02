@@ -1,5 +1,6 @@
 package com.wiyuka.acceleratedrecoiling.mixin;
 
+import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
 import com.wiyuka.acceleratedrecoiling.natives.ParallelAABB;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -44,7 +45,7 @@ public abstract class ServerLevelMixin {
                 }
             }
         });
-        if (ParallelAABB.useFold) {
+        if (FoldConfig.fold) {
             ParallelAABB.handleEntityPush(livingEntities);
         }
     }
