@@ -1,20 +1,18 @@
 package com.wiyuka.acceleratedrecoiling.natives;
 
 import com.wiyuka.acceleratedrecoiling.api.ICustomBB;
-import com.wiyuka.acceleratedrecoiling.mixin.EntityMixin;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.GameRules;
-import net.minecraft.world.level.Level;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class ParallelAABB {
 
-    public static boolean useFold = true;
     static boolean isInitialized = false;
 
     static class  EntityData {
@@ -47,6 +45,7 @@ public class ParallelAABB {
         int[] resultCounts = new int[1];
 
         int[] result = nativePush(locations, aabb, resultCounts);
+
         if (result == null || result.length % 2 != 0) return;
 
         for (int i = 0; i * 2 + 1 < result.length && i < resultCounts[0]; i++) {
@@ -58,7 +57,6 @@ public class ParallelAABB {
             LivingEntity e2 = livingEntities.get(e2Index);
 
             if(!e1.getBoundingBox().intersects(e2.getBoundingBox())) continue;
-
             e1.doPush(e2);
 //            e2.doPush(e1);
 
@@ -70,8 +68,8 @@ public class ParallelAABB {
             Entity entity = data.entity;
             if (entity.level() instanceof ServerLevel serverLevel) {
                 int maxCollisionLimit = serverLevel.getGameRules().getInt(GameRules.RULE_MAX_ENTITY_CRAMMING);
-                if (entity instanceof LivingEntity living && data.count >= maxCollisionLimit) {
-                    living.hurtServer(serverLevel, living.damageSources().cramming(), 6.0F);
+                if (entity instanceof LivingEntity living && data.count >= maxCollisionLimit && maxCollisionLimit >= 0) {
+                    living.hurt(living.damageSources().cramming(), 6.0F);
                 }
             }
         });

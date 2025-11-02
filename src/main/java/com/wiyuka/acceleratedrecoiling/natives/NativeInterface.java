@@ -3,6 +3,7 @@ package com.wiyuka.acceleratedrecoiling.natives;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.wiyuka.acceleratedrecoiling.AcceleratedRecoiling;
+import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -47,9 +48,6 @@ public class NativeInterface {
         return java.lang.foreign.SymbolLookup.libraryLookup(dllPath, arena);
     }
 
-    static int K = 32;
-    static int GRID_SIZE = 8;
-    static int gpuIndex = 0;
     static boolean useCPU = false;
 
     public static int[] push(
@@ -59,7 +57,7 @@ public class NativeInterface {
     ){
         try(java.lang.foreign.Arena tempArena = java.lang.foreign.Arena.ofConfined()) {
             int count = locations.length / 3;
-            int resultSize = locations.length * K;
+            int resultSize = locations.length * FoldConfig.maxCollision;
             if (count > maxSizeTouched) maxSizeTouched = count;
 
 //            java.lang.foreign.MemorySegment locationsMem = tempArena.allocateFrom(JAVA_DOUBLE, locations);
@@ -70,12 +68,16 @@ public class NativeInterface {
 
             int collisionSize = -1;
             try {
-                collisionSize = (int) pushMethodHandle.invoke(locationsMem, aabbMem, collisionPairs, count, K, GRID_SIZE);
+
+                collisionSize = (int) pushMethodHandle.invoke(locationsMem, aabbMem, collisionPairs, count, FoldConfig.maxCollision, FoldConfig.gridSize);
+
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
+
             resultSizeOut[0] = collisionSize;
             if (collisionSize == -1) return new int[0];
+
             return collisionPairs.toArray(JAVA_INT);
         }
     }
@@ -90,7 +92,6 @@ public class NativeInterface {
 
         String fullDllName = System.mapLibraryName(dllName);
 
-
         try (InputStream dllStream = AcceleratedRecoiling.class.getResourceAsStream("/" + fullDllName)) {
             if (dllStream == null) {
                 throw new java.io.FileNotFoundException("Cannot find " + fullDllName);
@@ -101,13 +102,10 @@ public class NativeInterface {
 
             dllPath = targetDll.getAbsolutePath();
 
-            // 如果文件不存在，就提取出来
-            if (!targetDll.exists()) {
                 try (java.io.OutputStream out = new java.io.FileOutputStream(targetDll)) {
                     dllStream.transferTo(out);
-                    logger.info(fullDllName + ":" + targetDll.getAbsolutePath());
+                    logger.info("fullDllName: " + targetDll.getAbsolutePath());
                 }
-            }
 
         } catch (IOException e) {
             throw new RuntimeException("Load failed: " + e.getMessage(), e);
@@ -146,17 +144,17 @@ public class NativeInterface {
         JsonObject configJson = JsonParser.parseString(config).getAsJsonObject();
 
 
-        ParallelAABB.useFold = configJson.get("useFold").getAsBoolean();
-        GRID_SIZE = configJson.get("gridSize").getAsInt();
-        K = configJson.get("maxCollision").getAsInt();
-        gpuIndex = configJson.get("gpuIndex").getAsInt();
+        FoldConfig.fold = configJson.get("useFold").getAsBoolean();
+        FoldConfig.gridSize = configJson.get("gridSize").getAsInt();
+        FoldConfig.maxCollision = configJson.get("maxCollision").getAsInt();
+        FoldConfig.gpuIndex = configJson.get("gpuIndex").getAsInt();
         useCPU = configJson.get("useCPU").getAsBoolean();
 
 
         logger.info("acceleratedRecoiling initialized");
-        logger.info("Use grid size: {}", GRID_SIZE);
-        logger.info("Use max collisions: {}", K);
-        logger.info("Use gpu index: {}", gpuIndex);
+        logger.info("Use grid size: {}", FoldConfig.gridSize);
+        logger.info("Use max collisions: {}", FoldConfig.maxCollision);
+        logger.info("Use gpu index: {}", FoldConfig.gpuIndex);
         logger.info("Use CPU: {}", useCPU);
 
         linker = java.lang.foreign.Linker.nativeLinker();
@@ -182,7 +180,7 @@ public class NativeInterface {
         );
 
         try {
-            initializeMethodHandle.invoke(gpuIndex, useCPU);
+            initializeMethodHandle.invoke(FoldConfig.gpuIndex, useCPU);
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
