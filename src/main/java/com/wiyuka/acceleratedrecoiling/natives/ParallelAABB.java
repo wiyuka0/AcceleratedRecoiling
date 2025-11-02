@@ -12,7 +12,6 @@ import java.util.Map;
 
 public class ParallelAABB {
 
-    public static boolean useFold = true;
     static boolean isInitialized = false;
 
     static class  EntityData {
@@ -67,7 +66,7 @@ public class ParallelAABB {
             Entity entity = data.entity;
             if (entity.level() instanceof ServerLevel serverLevel) {
                 int maxCollisionLimit = serverLevel.getGameRules().getInt(GameRules.RULE_MAX_ENTITY_CRAMMING);
-                if (entity instanceof LivingEntity living && data.count >= maxCollisionLimit) {
+                if (entity instanceof LivingEntity living && data.count >= maxCollisionLimit && maxCollisionLimit >= 0) {
                     living.hurt(living.damageSources().cramming(), 6.0F);
                 }
             }
