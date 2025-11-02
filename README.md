@@ -14,7 +14,12 @@
     * 对于其他发行版，请使用您的包管理器安装对应的 OpenCL 运行时。
 * **OpenCL** 你需要一个兼容的显卡或能正常运行OpenCL的驱动程序。
 
-* **如果游戏/服务器无法启动，请首先尝试添加JVM参数 `--enable-preview`**
+## 游戏崩溃了！
+如果游戏无法正常启动……
+
+你的客户端是 Forge 1.20.1，尝试在 JVM 启动参数中添加 `--enable-preview`。
+你的客户端是 NeoForge 1.21.1/1.21.8，请使用 Java 22+ 启动游戏。
+如果这些方法都不起作用，请更新此模组，并删除文件 `.minecraft/acceleratedRecoilingLib.dll`，然后重启客户端。（文件位于 `.minecraft/` 或你的客户端根目录下）
 
 ---
 
