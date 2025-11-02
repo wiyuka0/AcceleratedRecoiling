@@ -62,8 +62,8 @@ public class NativeInterface {
 
 //            java.lang.foreign.MemorySegment locationsMem = tempArena.allocateFrom(JAVA_DOUBLE, locations);
 //            java.lang.foreign.MemorySegment aabbMem = tempArena.allocateFrom(JAVA_DOUBLE, aabb);
-            java.lang.foreign.MemorySegment locationsMem = tempArena.allocateFrom(JAVA_DOUBLE, locations);
-            java.lang.foreign.MemorySegment aabbMem = tempArena.allocateFrom(JAVA_DOUBLE, aabb);
+            java.lang.foreign.MemorySegment locationsMem = tempArena.allocateArray(JAVA_DOUBLE, locations);
+            java.lang.foreign.MemorySegment aabbMem = tempArena.allocateArray(JAVA_DOUBLE, aabb);
             java.lang.foreign.MemorySegment collisionPairs = tempArena.allocate(JAVA_INT.byteSize() * resultSize * 2);
 
             int collisionSize = -1;
