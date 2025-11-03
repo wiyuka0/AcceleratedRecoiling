@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.foreign.Arena;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
@@ -27,6 +28,7 @@ public class NativeInterface {
             return;
         }
 
+
         // 2. 立即设置标志位
         ParallelAABB.isInitialized = false;
 
@@ -35,7 +37,6 @@ public class NativeInterface {
             // 这将释放为加载库符号而分配的本机内存
             nativeArena.close();
         }
-
         // 5. 将静态句柄设为 null，帮助 GC 并防止“use-after-close”
         nativeArena = null;
         linker = null;
@@ -68,9 +69,7 @@ public class NativeInterface {
 
             int collisionSize = -1;
             try {
-
                 collisionSize = (int) pushMethodHandle.invoke(locationsMem, aabbMem, collisionPairs, count, FoldConfig.maxCollision, FoldConfig.gridSize);
-
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
@@ -158,31 +157,33 @@ public class NativeInterface {
         logger.info("Use CPU: {}", useCPU);
 
         linker = java.lang.foreign.Linker.nativeLinker();
-        nativeArena = java.lang.foreign.Arena.ofConfined();
-        java.lang.foreign.SymbolLookup lib = findFoldLib(nativeArena, dllPath);
+        try(Arena arena = java.lang.foreign.Arena.ofConfined()) {
+            java.lang.foreign.SymbolLookup lib = findFoldLib(arena, dllPath);
 
-        pushMethodHandle = linker.downcallHandle(
-            lib.find("push").orElseThrow(),
-            java.lang.foreign.FunctionDescriptor.of(
-                java.lang.foreign.ValueLayout.JAVA_INT,   // collisionTimes
-                java.lang.foreign.ValueLayout.ADDRESS,    // const double* entityLoc
-                java.lang.foreign.ValueLayout.ADDRESS,    // const double* aabbs
-                java.lang.foreign.ValueLayout.ADDRESS,    // int* output
-                java.lang.foreign.ValueLayout.JAVA_INT,   // int count
-                java.lang.foreign.ValueLayout.JAVA_INT,   // int K
-                java.lang.foreign.ValueLayout.JAVA_INT    // int gridSize
-            )
-        );
+            pushMethodHandle = linker.downcallHandle(
+                    lib.find("push").orElseThrow(),
+                    java.lang.foreign.FunctionDescriptor.of(
+                            java.lang.foreign.ValueLayout.JAVA_INT,   // collisionTimes
+                            java.lang.foreign.ValueLayout.ADDRESS,    // const double* entityLoc
+                            java.lang.foreign.ValueLayout.ADDRESS,    // const double* aabbs
+                            java.lang.foreign.ValueLayout.ADDRESS,    // int* output
+                            java.lang.foreign.ValueLayout.JAVA_INT,   // int count
+                            java.lang.foreign.ValueLayout.JAVA_INT,   // int K
+                            java.lang.foreign.ValueLayout.JAVA_INT    // int gridSize
+                    )
+            );
 
-        java.lang.invoke.MethodHandle initializeMethodHandle = linker.downcallHandle(
-            lib.find("initialize").orElseThrow(),
-            java.lang.foreign.FunctionDescriptor.ofVoid(JAVA_INT, JAVA_BOOLEAN)
-        );
+            java.lang.invoke.MethodHandle initializeMethodHandle = linker.downcallHandle(
+                    lib.find("initialize").orElseThrow(),
+                    java.lang.foreign.FunctionDescriptor.ofVoid(JAVA_INT, JAVA_BOOLEAN)
+            );
 
-        try {
-            initializeMethodHandle.invoke(FoldConfig.gpuIndex, useCPU);
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
+            try {
+                initializeMethodHandle.invoke(FoldConfig.gpuIndex, useCPU);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+            nativeArena = arena;
         }
     }
 }
