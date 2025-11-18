@@ -157,7 +157,8 @@ public class NativeInterface {
         logger.info("Use CPU: {}", useCPU);
 
         linker = java.lang.foreign.Linker.nativeLinker();
-        try(Arena arena = java.lang.foreign.Arena.ofConfined()) {
+        try {
+            Arena arena = java.lang.foreign.Arena.ofConfined();
             java.lang.foreign.SymbolLookup lib = findFoldLib(arena, dllPath);
 
             pushMethodHandle = linker.downcallHandle(
@@ -184,6 +185,8 @@ public class NativeInterface {
                 throw new RuntimeException(e);
             }
             nativeArena = arena;
+        }catch (Throwable e) {
+            throw new RuntimeException(e);
         }
     }
 }
