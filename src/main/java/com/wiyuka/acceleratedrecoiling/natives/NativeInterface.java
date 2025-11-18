@@ -101,10 +101,10 @@ public class NativeInterface {
 
             dllPath = targetDll.getAbsolutePath();
 
-                try (java.io.OutputStream out = new java.io.FileOutputStream(targetDll)) {
-                    dllStream.transferTo(out);
-                    logger.info("fullDllName: " + targetDll.getAbsolutePath());
-                }
+            try (java.io.OutputStream out = new java.io.FileOutputStream(targetDll)) {
+                dllStream.transferTo(out);
+                logger.info("fullDllName: " + targetDll.getAbsolutePath());
+            }
 
         } catch (IOException e) {
             throw new RuntimeException("Load failed: " + e.getMessage(), e);
@@ -114,16 +114,16 @@ public class NativeInterface {
 
 
         String config = """
-            {
-                "useFold": true,
-                "gridSize": 8,
-                "maxCollision": 32,
-                "gpuIndex": 0,
-                "useCPU": false
-            }
-            """;
+                {
+                    "useFold": true,
+                    "gridSize": 8,
+                    "maxCollision": 32,
+                    "gpuIndex": 0,
+                    "useCPU": false
+                }
+                """;
         File foldConfig = new File("acceleratedRecoiling.json");
-        if(!foldConfig.exists()) {
+        if (!foldConfig.exists()) {
             // foldConfig.mkdirs();
             try {
                 foldConfig.createNewFile();
@@ -157,33 +157,32 @@ public class NativeInterface {
         logger.info("Use CPU: {}", useCPU);
 
         linker = java.lang.foreign.Linker.nativeLinker();
-        try(Arena arena = java.lang.foreign.Arena.ofConfined()) {
-            java.lang.foreign.SymbolLookup lib = findFoldLib(arena, dllPath);
+        Arena arena = java.lang.foreign.Arena.ofConfined();
+        java.lang.foreign.SymbolLookup lib = findFoldLib(arena, dllPath);
 
-            pushMethodHandle = linker.downcallHandle(
-                    lib.find("push").orElseThrow(),
-                    java.lang.foreign.FunctionDescriptor.of(
-                            java.lang.foreign.ValueLayout.JAVA_INT,   // collisionTimes
-                            java.lang.foreign.ValueLayout.ADDRESS,    // const double* entityLoc
-                            java.lang.foreign.ValueLayout.ADDRESS,    // const double* aabbs
-                            java.lang.foreign.ValueLayout.ADDRESS,    // int* output
-                            java.lang.foreign.ValueLayout.JAVA_INT,   // int count
-                            java.lang.foreign.ValueLayout.JAVA_INT,   // int K
-                            java.lang.foreign.ValueLayout.JAVA_INT    // int gridSize
-                    )
-            );
+        pushMethodHandle = linker.downcallHandle(
+                lib.find("push").orElseThrow(),
+                java.lang.foreign.FunctionDescriptor.of(
+                        java.lang.foreign.ValueLayout.JAVA_INT,   // collisionTimes
+                        java.lang.foreign.ValueLayout.ADDRESS,    // const double* entityLoc
+                        java.lang.foreign.ValueLayout.ADDRESS,    // const double* aabbs
+                        java.lang.foreign.ValueLayout.ADDRESS,    // int* output
+                        java.lang.foreign.ValueLayout.JAVA_INT,   // int count
+                        java.lang.foreign.ValueLayout.JAVA_INT,   // int K
+                        java.lang.foreign.ValueLayout.JAVA_INT    // int gridSize
+                )
+        );
 
-            java.lang.invoke.MethodHandle initializeMethodHandle = linker.downcallHandle(
-                    lib.find("initialize").orElseThrow(),
-                    java.lang.foreign.FunctionDescriptor.ofVoid(JAVA_INT, JAVA_BOOLEAN)
-            );
+        java.lang.invoke.MethodHandle initializeMethodHandle = linker.downcallHandle(
+                lib.find("initialize").orElseThrow(),
+                java.lang.foreign.FunctionDescriptor.ofVoid(JAVA_INT, JAVA_BOOLEAN)
+        );
 
-            try {
-                initializeMethodHandle.invoke(FoldConfig.gpuIndex, useCPU);
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
-            }
-            nativeArena = arena;
+        try {
+            initializeMethodHandle.invoke(FoldConfig.gpuIndex, useCPU);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
         }
+        nativeArena = arena;
     }
 }
