@@ -1,11 +1,13 @@
 package com.wiyuka.acceleratedrecoiling.natives;
 
 import com.wiyuka.acceleratedrecoiling.api.ICustomBB;
+import com.wiyuka.acceleratedrecoiling.mixin.LivingEntityMixin;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.GameRules;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +30,9 @@ public class ParallelAABB {
     }
 
     public static void handleEntityPush(final List<LivingEntity> livingEntities) {
-        Map<String, EntityData> entityCollisionMap = new HashMap<>();
+
+        CollisionMapTemp.clear();
+
 
         double[] aabb = new double[livingEntities.size() * 6];
         double[] locations = new double[livingEntities.size() * 3];
@@ -44,6 +48,7 @@ public class ParallelAABB {
         int[] resultCounts = new int[1];
 
         int[] result = nativePush(locations, aabb, resultCounts);
+
         if (result == null || result.length % 2 != 0) return;
 
         for (int i = 0; i * 2 + 1 < result.length && i < resultCounts[0]; i++) {
@@ -56,21 +61,23 @@ public class ParallelAABB {
 
             if(!e1.getBoundingBox().intersects(e2.getBoundingBox())) continue;
 
-            e1.push(e2);
+            CollisionMapTemp.putCollision(e1.getId(), e2.getId());
+//            e1.doPush(e2);
+//            e2.doPush(e1);
 
-            entityCollisionMap.computeIfAbsent(e1.getUUID().toString(), k -> new EntityData(e1, 0)).count++;
-            entityCollisionMap.computeIfAbsent(e2.getUUID().toString(), k -> new EntityData(e2, 0)).count++;
+//            entityCollisionMap.computeIfAbsent(e1.getUUID().toString(), k -> new EntityData(e1, 0)).count++;
+//            entityCollisionMap.computeIfAbsent(e2.getUUID().toString(), k -> new EntityData(e2, 0)).count++;
         }
 
-        entityCollisionMap.forEach((id, data) -> {
-            Entity entity = data.entity;
-            if (entity.level() instanceof ServerLevel serverLevel) {
-                int maxCollisionLimit = serverLevel.getGameRules().getInt(GameRules.RULE_MAX_ENTITY_CRAMMING);
-                if (entity instanceof LivingEntity living && data.count >= maxCollisionLimit && maxCollisionLimit >= 0) {
-                    living.hurt(living.damageSources().cramming(), 6.0F);
-                }
-            }
-        });
+//        entityCollisionMap.forEach((id, data) -> {
+//            Entity entity = data.entity;
+//            if (entity.level() instanceof ServerLevel serverLevel) {
+//                int maxCollisionLimit = serverLevel.getGameRules().getInt(GameRules.RULE_MAX_ENTITY_CRAMMING);
+//                if (entity instanceof LivingEntity living && data.count >= maxCollisionLimit && maxCollisionLimit >= 0) {
+//                    living.hurt(living.damageSources().cramming(), 6.0F);
+//                }
+//            }
+//        });
     }
 
     public static int[] nativePush(double[] positions, double[] aabbs, int[] resultSizeOut) {
