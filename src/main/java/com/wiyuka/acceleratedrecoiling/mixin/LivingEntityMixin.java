@@ -1,6 +1,8 @@
 package com.wiyuka.acceleratedrecoiling.mixin;
 
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
 import com.wiyuka.acceleratedrecoiling.natives.CollisionMapTemp;
 import com.wiyuka.acceleratedrecoiling.natives.ParallelAABB;
@@ -20,16 +22,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
 import java.util.function.Predicate;
 
-@Mixin(LivingEntity.class)
+@Mixin(value = LivingEntity.class, priority = 1001)
 public class LivingEntityMixin {
 
-    @Redirect(
+    @WrapOperation(
             method = "pushEntities",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/Level;getEntities(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;")
+                    target = "Lnet/minecraft/world/level/Level;getEntities(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;"
+            )
     )
-    private List<Entity> replace(Level instance, Entity entity, AABB boundingBoxes, Predicate<? super Entity> predicate) {
+    private List<Entity> replace(Level instance, Entity entity, AABB boundingBox, Predicate<? super Entity> predicate, Operation<List<Entity>> original) {
 //        Set<UUID> entities = CollisionMapTemp.get(entity.getUUID());
 //        if(entities == null) return Collections.emptyList();
 //        List<Entity> result = new ArrayList<>();
