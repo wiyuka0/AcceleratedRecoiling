@@ -31,7 +31,7 @@ public abstract class ServerLevelMixin {
 
     @Inject(
             method = "tick(Ljava/util/function/BooleanSupplier;)V",
-            at = @At("RETURN")
+            at = @At("HEAD")
     )
     private void tick(BooleanSupplier booleanSupplier, CallbackInfo ci) {
         List<LivingEntity> livingEntities = new ArrayList<>();
