@@ -5,6 +5,7 @@
       <profile name="Gradle Imported" enabled="true">
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
+          <entry name="E:/gradle/caches/modules-2/files-2.1/io.github.llamalad7/mixinextras-common/0.5.0/286da96036621082491d971dfc62bee8fc37d161/mixinextras-common-0.5.0.jar" />
           <entry name="E:/gradle/caches/modules-2/files-2.1/org.spongepowered/mixin/0.8.7/3d051c66329d162a52fc062f7da912c37904a6a0/mixin-0.8.7-processor.jar" />
         </processorPath>
         <module name="papermc.FoldMC.AcceleratedRecoiling.main" />
