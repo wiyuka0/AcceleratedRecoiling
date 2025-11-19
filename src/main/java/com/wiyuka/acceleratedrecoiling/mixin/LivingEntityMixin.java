@@ -2,18 +2,49 @@ package com.wiyuka.acceleratedrecoiling.mixin;
 
 
 import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
+import com.wiyuka.acceleratedrecoiling.natives.CollisionMapTemp;
 import com.wiyuka.acceleratedrecoiling.natives.ParallelAABB;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.List;
+import java.util.function.Predicate;
 
 @Mixin(LivingEntity.class)
 public class LivingEntityMixin {
+
+    @Redirect(
+            method = "pushEntities",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/world/level/Level;getEntities(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;")
+    )
+    private List<Entity> replace(Level instance, Entity entity, AABB boundingBoxes, Predicate<? super Entity> predicate) {
+//        Set<UUID> entities = CollisionMapTemp.get(entity.getUUID());
+//        if(entities == null) return Collections.emptyList();
+//        List<Entity> result = new ArrayList<>();
+//        for (UUID uuid : entities) {
+//            Entity entity1 = instance.getEntity(uuid);
+//            if (entity1 == null) continue;
+//            result.add(entity1);
+//        }
+//        return result;
+        if(FoldConfig.fold)
+            return CollisionMapTemp.replace1(entity, instance);
+        else
+            return instance.getEntities(entity, entity.getBoundingBox(), EntitySelector.pushableBy(entity));
+    }
+
+
     @Inject(
             method = "pushEntities",
             at = @At(
