@@ -54,7 +54,7 @@ public class ParallelAABB {
 
             if(!e1.getBoundingBox().inflate(inflate).intersects(e2.getBoundingBox().inflate(inflate))) continue;
 
-            CollisionMapData.putCollision(e1.getUUID(), e2.getUUID());
+            CollisionMapData.putCollision(e1.getId(), e2.getId());
 //            e1.doPush(e2);
 //            e2.doPush(e1);
 

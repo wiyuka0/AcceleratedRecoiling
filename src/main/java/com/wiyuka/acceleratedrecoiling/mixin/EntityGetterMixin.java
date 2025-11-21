@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 
 @Mixin(value = EntityGetter.class)
@@ -27,7 +28,7 @@ public interface EntityGetterMixin {
     )
     default List<Entity> getEntityCollisions(EntityGetter instance, Entity entity, AABB aabb, Predicate<? super Entity> predicate, Operation<List<Entity>> original) {
         if(FoldConfig.enableEntityGetterOptimization && !(entity instanceof Player) && entity != null)
-            return CollisionMapData.replace1(entity, entity.level(), true);
+            return CollisionMapData.replace1(entity, entity.level(), true).stream().filter(predicate).collect(Collectors.toList());
         else
             return original.call(instance, entity, aabb, predicate);
     }
