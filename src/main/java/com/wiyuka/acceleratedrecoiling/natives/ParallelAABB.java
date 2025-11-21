@@ -1,16 +1,9 @@
 package com.wiyuka.acceleratedrecoiling.natives;
 
 import com.wiyuka.acceleratedrecoiling.api.ICustomBB;
-import com.wiyuka.acceleratedrecoiling.mixin.LivingEntityMixin;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.GameRules;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class ParallelAABB {
 
@@ -31,7 +24,7 @@ public class ParallelAABB {
 
     public static void handleEntityPush(final List<LivingEntity> livingEntities) {
 
-        CollisionMapTemp.clear();
+        CollisionMapData.clear();
 
 
         double[] aabb = new double[livingEntities.size() * 6];
@@ -61,7 +54,7 @@ public class ParallelAABB {
 
             if(!e1.getBoundingBox().intersects(e2.getBoundingBox())) continue;
 
-            CollisionMapTemp.putCollision(e1.getUUID(), e2.getUUID());
+            CollisionMapData.putCollision(e1.getUUID(), e2.getUUID());
 //            e1.doPush(e2);
 //            e2.doPush(e1);
 

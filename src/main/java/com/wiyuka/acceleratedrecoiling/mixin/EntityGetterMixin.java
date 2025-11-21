@@ -4,15 +4,12 @@ package com.wiyuka.acceleratedrecoiling.mixin;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
-import com.wiyuka.acceleratedrecoiling.natives.CollisionMapTemp;
+import com.wiyuka.acceleratedrecoiling.natives.CollisionMapData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.EntityGetter;
 import net.minecraft.world.phys.AABB;
-import net.neoforged.neoforge.common.NeoForge;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
 import java.util.List;
@@ -30,7 +27,7 @@ public interface EntityGetterMixin {
     )
     default List<Entity> getEntityCollisions(EntityGetter instance, Entity entity, AABB aabb, Predicate<? super Entity> predicate, Operation<List<Entity>> original) {
         if(FoldConfig.enableEntityGetterOptimization && !(entity instanceof Player) && entity != null)
-            return CollisionMapTemp.replace1(entity, entity.level());
+            return CollisionMapData.replace1(entity, entity.level(), true);
         else
             return original.call(instance, entity, aabb, predicate);
     }
