@@ -3,7 +3,6 @@ package com.wiyuka.acceleratedrecoiling.mixin;
 import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
 import com.wiyuka.acceleratedrecoiling.natives.ParallelAABB;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.entity.EntityTickList;
@@ -12,13 +11,11 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
 
 @Mixin(ServerLevel.class)
 public abstract class ServerLevelMixin {
@@ -45,8 +42,8 @@ public abstract class ServerLevelMixin {
                 }
             }
         });
-        if (FoldConfig.fold) {
-            ParallelAABB.handleEntityPush(livingEntities);
+        if (FoldConfig.enableEntityCollision) {
+            ParallelAABB.handleEntityPush(livingEntities, 1.0E-3);
         }
     }
 

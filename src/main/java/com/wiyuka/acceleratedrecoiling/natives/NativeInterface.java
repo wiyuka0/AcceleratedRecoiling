@@ -42,6 +42,7 @@ public class NativeInterface {
         linker = null;
         pushMethodHandle = null;
     }
+
     /**
      * @return Null if the server cannot find the library
      */
@@ -52,11 +53,11 @@ public class NativeInterface {
     static boolean useCPU = false;
 
     public static int[] push(
-        double[] locations,
-        double[] aabb,
-        int[] resultSizeOut
-    ){
-        try(java.lang.foreign.Arena tempArena = java.lang.foreign.Arena.ofConfined()) {
+            double[] locations,
+            double[] aabb,
+            int[] resultSizeOut
+    ) {
+        try (java.lang.foreign.Arena tempArena = java.lang.foreign.Arena.ofConfined()) {
             int count = locations.length / 3;
             int resultSize = locations.length * FoldConfig.maxCollision;
             if (count > maxSizeTouched) maxSizeTouched = count;
@@ -80,6 +81,7 @@ public class NativeInterface {
             return collisionPairs.toArray(JAVA_INT);
         }
     }
+
     public static void initialize() {
 //        final Logger logger = Logger.getLogger("Fold");
 
@@ -113,9 +115,10 @@ public class NativeInterface {
         logger.info("DLL: {}", dllPath);
 
 
-        String config = """
+        String defaultConfig = """
                 {
-                    "useFold": true,
+                    "enableEntityCollision": true,
+                    "enableEntityGetterOptimization": true,
                     "gridSize": 8,
                     "maxCollision": 32,
                     "gpuIndex": 0,
@@ -123,30 +126,31 @@ public class NativeInterface {
                 }
                 """;
         File foldConfig = new File("acceleratedRecoiling.json");
-        if (!foldConfig.exists()) {
-            // foldConfig.mkdirs();
-            try {
-                foldConfig.createNewFile();
+        createConfigFile(foldConfig, defaultConfig);
 
-                Files.writeString(foldConfig.toPath(), config);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        String configFile = "";
         try {
-            config = (Files.readString(foldConfig.toPath(), StandardCharsets.UTF_8));
+            configFile = (Files.readString(foldConfig.toPath(), StandardCharsets.UTF_8));
         } catch (IOException e) {
             // e.printStackTrace();
             logger.info("Failed to read acceleratedRecoiling config, reason: " + e.getMessage());
+            logger.info("Using default config");
+            foldConfig.deleteOnExit();
+            configFile = defaultConfig;
         }
 
-        JsonObject configJson = JsonParser.parseString(config).getAsJsonObject();
+        JsonObject configJson = JsonParser.parseString(configFile).getAsJsonObject();
 
 
-        FoldConfig.fold = configJson.get("useFold").getAsBoolean();
-        FoldConfig.gridSize = configJson.get("gridSize").getAsInt();
-        FoldConfig.maxCollision = configJson.get("maxCollision").getAsInt();
-        FoldConfig.gpuIndex = configJson.get("gpuIndex").getAsInt();
+        try {
+            initConfig(configJson);
+        }catch (Exception e) {
+            logger.info("Config file is broken, reason: " + e.getMessage());
+            logger.info("Using default config");
+            foldConfig.deleteOnExit();
+            createConfigFile(foldConfig, defaultConfig);
+            initConfig(JsonParser.parseString(defaultConfig).getAsJsonObject());
+        }
         useCPU = configJson.get("useCPU").getAsBoolean();
 
 
@@ -184,5 +188,26 @@ public class NativeInterface {
             throw new RuntimeException(e);
         }
         nativeArena = arena;
+    }
+
+    private static void initConfig(JsonObject configJson) {
+        FoldConfig.enableEntityCollision = configJson.get("enableEntityCollision").getAsBoolean();
+        FoldConfig.enableEntityGetterOptimization = configJson.get("enableEntityGetterOptimization").getAsBoolean();
+        FoldConfig.gridSize = configJson.get("gridSize").getAsInt();
+        FoldConfig.maxCollision = configJson.get("maxCollision").getAsInt();
+        FoldConfig.gpuIndex = configJson.get("gpuIndex").getAsInt();
+    }
+
+    private static void createConfigFile(File foldConfig, String config) {
+        if (!foldConfig.exists()) {
+            // foldConfig.mkdirs();
+            try {
+                foldConfig.createNewFile();
+
+                Files.writeString(foldConfig.toPath(), config);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

@@ -165,8 +165,8 @@ dependencies {
     annotationProcessor 'io.github.llamalad7:mixinextras-common:0.5.0'
 
     implementation(jarJar("io.github.llamalad7:mixinextras-neoforge:0.5.0")) {
-            jarJar.ranged(it, "[0.5.0,)")
-        }
+        jarJar.ranged(it, "[0.5.0,)")
+    }
 
 
     // Specify the version of Minecraft to use.
