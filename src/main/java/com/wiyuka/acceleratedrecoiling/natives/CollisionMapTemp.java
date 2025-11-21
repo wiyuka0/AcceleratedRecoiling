@@ -9,18 +9,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class CollisionMapTemp {
-    private static final ConcurrentHashMap<UUID, CopyOnWriteArraySet<UUID>> collisionMap = new ConcurrentHashMap<>();
+    private static final HashMap<UUID, ArrayList<UUID>> collisionMap = new HashMap<>();
 
-    public static void addKey(UUID key, CopyOnWriteArraySet<UUID> collisionMap) {
+    public static void addKey(UUID key, ArrayList<UUID> collisionMap) {
         CollisionMapTemp.collisionMap.put(key, collisionMap);
     }
 
-    public static Set<UUID> get(UUID key) {
+    public static ArrayList<UUID> get(UUID key) {
         return collisionMap.get(key);
     }
 
     public static void putCollision(UUID key, UUID value) {
-        Set<UUID> collisionSet = collisionMap.computeIfAbsent(key, k -> new CopyOnWriteArraySet<>());
+        ArrayList<UUID> collisionSet = collisionMap.computeIfAbsent(key, k -> new ArrayList<>());
         collisionSet.add(value);
     }
 
@@ -29,10 +29,10 @@ public class CollisionMapTemp {
     }
 
     public static List<Entity> replace1(Entity entity, Level instance) {
-        Set<UUID> entities = CollisionMapTemp.get(entity.getUUID());
+        ArrayList<UUID> entities = CollisionMapTemp.get(entity.getUUID());
         if(entities == null) return Collections.emptyList();
         List<Entity> result = new ArrayList<>();
-        for (UUID uuid : entities) {
+        for (UUID uuid : (ArrayList<UUID>) entities.clone()) {
             Entity entity1 = instance.getEntity(uuid);
             if (entity1 == null) continue;
             result.add(entity1);

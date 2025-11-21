@@ -11,9 +11,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.*;
 
@@ -55,10 +53,10 @@ public class LivingEntityMixin {
 //            result.add(entity1);
 //        }
 //        return result;
-        if(FoldConfig.fold && !(entity instanceof Player))
+        if(FoldConfig.enableEntityCollision && !(entity instanceof Player))
             return CollisionMapTemp.replace1(entity, instance);
         else
-            return instance.getPushableEntities(entity, boundingBox);
+            return original.call(instance, entity, boundingBox);
     }
 
 //    @Inject(

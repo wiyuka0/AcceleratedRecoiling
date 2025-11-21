@@ -22,12 +22,12 @@ public abstract class EntityMixin implements ICustomBB {
 
     @Override
     public final void extractionBoundingBox(double[] doubleArray, int offset) {
-        doubleArray[offset + 0] = this.bbMinX;
-        doubleArray[offset + 1] = this.bbMinY;
-        doubleArray[offset + 2] = this.bbMinZ;
-        doubleArray[offset + 3] = this.bbMaxX;
-        doubleArray[offset + 4] = this.bbMaxY;
-        doubleArray[offset + 5] = this.bbMaxZ;
+        doubleArray[offset + 0] = (double) this.bbMinX;
+        doubleArray[offset + 1] = (double) this.bbMinY;
+        doubleArray[offset + 2] = (double) this.bbMinZ;
+        doubleArray[offset + 3] = (double) this.bbMaxX;
+        doubleArray[offset + 4] = (double) this.bbMaxY;
+        doubleArray[offset + 5] = (double) this.bbMaxZ;
     }
 
     @Shadow
@@ -36,9 +36,9 @@ public abstract class EntityMixin implements ICustomBB {
 
     @Override
     public final void extractionPosition(double[] doubleArray, int offset) {
-        doubleArray[offset + 0] = this.position.x;
-        doubleArray[offset + 1] = this.position.y;
-        doubleArray[offset + 2] = this.position.z;
+        doubleArray[offset + 0] = (double) this.position.x;
+        doubleArray[offset + 1] = (double) this.position.y;
+        doubleArray[offset + 2] = (double) this.position.z;
     }
 
     @Inject(

@@ -8,7 +8,6 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
-import com.wiyuka.acceleratedrecoiling.natives.ParallelAABB;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -57,9 +56,16 @@ public class ToggleFoldCommand {
                         )
 
 
-                        .then(Commands.literal("fold")
+                        .then(Commands.literal("enableEntityCollision")
                                 .then(Commands.argument("value", BoolArgumentType.bool())
-                                        .executes(ToggleFoldCommand::setFold)
+                                        .executes(ToggleFoldCommand::setEnableEntityCollision)
+                                )
+                        )
+
+
+                        .then(Commands.literal("enableEntityGetterOptimization")
+                                .then(Commands.argument("value", BoolArgumentType.bool())
+                                        .executes(ToggleFoldCommand::setEnableEntityGetter)
                                 )
                         )
 
@@ -145,7 +151,8 @@ public class ToggleFoldCommand {
         message.append(Component.literal("\n--------------------\n")
                 .withStyle(ChatFormatting.RESET, ChatFormatting.DARK_GRAY));
 
-        message.append(buildConfigLine("fold", FoldConfig.fold));
+        message.append(buildConfigLine("enableEntityCollision", FoldConfig.enableEntityCollision));
+        message.append(buildConfigLine("enableEntityGetterOptimization", FoldConfig.enableEntityGetterOptimization));
         message.append(buildConfigLine("gridSize", FoldConfig.gridSize));
         message.append(buildConfigLine("maxCollision", FoldConfig.maxCollision));
         message.append(buildConfigLine("gpuIndex", FoldConfig.gpuIndex));
@@ -162,14 +169,16 @@ public class ToggleFoldCommand {
 
     private static class ConfigData {
         @SerializedName("useFold")
-        public boolean fold;
+        public boolean enableEntityCollision;
+        public boolean enableEntityGetterOptimization;
         public int gridSize;
         public int maxCollision;
         public int gpuIndex;
         public boolean useCPU;
 
-        public ConfigData(boolean fold, int gridSize, int maxCollision, int gpuIndex, boolean useCPU) {
-            this.fold = fold;
+        public ConfigData(boolean enableEntityCollision, boolean enableEntityGetterOptimization, int gridSize, int maxCollision, int gpuIndex, boolean useCPU) {
+            this.enableEntityCollision = enableEntityCollision;
+            this.enableEntityGetterOptimization = enableEntityGetterOptimization;
             this.gridSize = gridSize;
             this.maxCollision = maxCollision;
             this.gpuIndex = gpuIndex;
@@ -184,7 +193,8 @@ public class ToggleFoldCommand {
         File targetFile = new File("acceleratedRecoiling.json");
 
         ConfigData data = new ConfigData(
-                FoldConfig.fold,
+                FoldConfig.enableEntityCollision,
+                FoldConfig.enableEntityGetterOptimization,
                 FoldConfig.gridSize,
                 FoldConfig.maxCollision,
                 FoldConfig.gpuIndex,
@@ -217,10 +227,16 @@ public class ToggleFoldCommand {
             return 0;
         }
     }
-    private static int setFold(CommandContext<CommandSourceStack> context) {
+    private static int setEnableEntityCollision(CommandContext<CommandSourceStack> context) {
         boolean value = BoolArgumentType.getBool(context, "value");
-        FoldConfig.fold = value;
-        sendSuccessMessage(context.getSource(), "fold", value);
+        FoldConfig.enableEntityCollision = value;
+        sendSuccessMessage(context.getSource(), "enableEntityCollision", value);
+        return 1;
+    }
+    private static int setEnableEntityGetter(CommandContext<CommandSourceStack> context) {
+        boolean value = BoolArgumentType.getBool(context, "value");
+        FoldConfig.enableEntityGetterOptimization = value;
+        sendSuccessMessage(context.getSource(), "enableEntityGetter", value);
         return 1;
     }
 
