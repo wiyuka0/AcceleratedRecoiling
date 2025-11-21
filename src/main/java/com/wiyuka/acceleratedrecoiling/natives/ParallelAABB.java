@@ -1,16 +1,9 @@
 package com.wiyuka.acceleratedrecoiling.natives;
 
 import com.wiyuka.acceleratedrecoiling.api.ICustomBB;
-import com.wiyuka.acceleratedrecoiling.mixin.LivingEntityMixin;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.GameRules;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class ParallelAABB {
 
@@ -29,9 +22,9 @@ public class ParallelAABB {
         }
     }
 
-    public static void handleEntityPush(final List<LivingEntity> livingEntities) {
+    public static void handleEntityPush(final List<LivingEntity> livingEntities, double inflate) {
 
-        CollisionMapTemp.clear();
+        CollisionMapData.clear();
 
 
         double[] aabb = new double[livingEntities.size() * 6];
@@ -40,7 +33,7 @@ public class ParallelAABB {
         int index = 0;
         for (LivingEntity entity : livingEntities) {
             ICustomBB customBB = (ICustomBB) entity;
-            customBB.extractionBoundingBox(aabb, index * 6);
+            customBB.extractionBoundingBox(aabb, index * 6, inflate);
             customBB.extractionPosition(locations, index * 3);
             index++;
         }
@@ -59,13 +52,11 @@ public class ParallelAABB {
             LivingEntity e1 = livingEntities.get(e1Index);
             LivingEntity e2 = livingEntities.get(e2Index);
 
-            if(!e1.getBoundingBox().intersects(e2.getBoundingBox())) continue;
+            if(!e1.getBoundingBox().inflate(inflate).intersects(e2.getBoundingBox().inflate(inflate))) continue;
 
-            CollisionMapTemp.putCollision(e1.getId(), e2.getId());
+            CollisionMapData.putCollision(e1.getUUID(), e2.getUUID());
 //            e1.doPush(e2);
 //            e2.doPush(e1);
-
-
 
 //            entityCollisionMap.computeIfAbsent(e1.getUUID().toString(), k -> new EntityData(e1, 0)).count++;
 //            entityCollisionMap.computeIfAbsent(e2.getUUID().toString(), k -> new EntityData(e2, 0)).count++;
