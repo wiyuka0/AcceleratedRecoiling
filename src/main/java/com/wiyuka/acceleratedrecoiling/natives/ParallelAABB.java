@@ -22,7 +22,7 @@ public class ParallelAABB {
         }
     }
 
-    public static void handleEntityPush(final List<LivingEntity> livingEntities) {
+    public static void handleEntityPush(final List<LivingEntity> livingEntities, double inflate) {
 
         CollisionMapData.clear();
 
@@ -33,7 +33,7 @@ public class ParallelAABB {
         int index = 0;
         for (LivingEntity entity : livingEntities) {
             ICustomBB customBB = (ICustomBB) entity;
-            customBB.extractionBoundingBox(aabb, index * 6);
+            customBB.extractionBoundingBox(aabb, index * 6, inflate);
             customBB.extractionPosition(locations, index * 3);
             index++;
         }
@@ -52,7 +52,7 @@ public class ParallelAABB {
             LivingEntity e1 = livingEntities.get(e1Index);
             LivingEntity e2 = livingEntities.get(e2Index);
 
-            if(!e1.getBoundingBox().intersects(e2.getBoundingBox())) continue;
+            if(!e1.getBoundingBox().inflate(inflate).intersects(e2.getBoundingBox().inflate(inflate))) continue;
 
             CollisionMapData.putCollision(e1.getUUID(), e2.getUUID());
 //            e1.doPush(e2);

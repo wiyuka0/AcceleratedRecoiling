@@ -21,13 +21,13 @@ public abstract class EntityMixin implements ICustomBB {
 
 
     @Override
-    public final void extractionBoundingBox(double[] doubleArray, int offset) {
-        doubleArray[offset + 0] = (double) this.bbMinX;
-        doubleArray[offset + 1] = (double) this.bbMinY;
-        doubleArray[offset + 2] = (double) this.bbMinZ;
-        doubleArray[offset + 3] = (double) this.bbMaxX;
-        doubleArray[offset + 4] = (double) this.bbMaxY;
-        doubleArray[offset + 5] = (double) this.bbMaxZ;
+    public final void extractionBoundingBox(double[] doubleArray, int offset, double inflate) {
+        doubleArray[offset + 0] = (double) this.bbMinX - inflate;
+        doubleArray[offset + 1] = (double) this.bbMinY - inflate;
+        doubleArray[offset + 2] = (double) this.bbMinZ - inflate;
+        doubleArray[offset + 3] = (double) this.bbMaxX + inflate;
+        doubleArray[offset + 4] = (double) this.bbMaxY + inflate;
+        doubleArray[offset + 5] = (double) this.bbMaxZ + inflate;
     }
 
     @Shadow
