@@ -70,7 +70,9 @@ public class NativeInterface {
 
             int collisionSize = -1;
             try {
+//                System.out.println("Invoke start");
                 collisionSize = (int) pushMethodHandle.invoke(locationsMem, aabbMem, collisionPairs, count, FoldConfig.maxCollision, FoldConfig.gridSize);
+//                System.out.println("Invoke end");
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
@@ -183,7 +185,9 @@ public class NativeInterface {
         );
 
         try {
+            System.out.println("Invoke start");
             initializeMethodHandle.invoke(FoldConfig.gpuIndex, useCPU);
+            System.out.println("Invoke end");
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }

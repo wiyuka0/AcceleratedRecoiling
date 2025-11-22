@@ -47,6 +47,9 @@ public class ParallelAABB {
         for (int i = 0; i * 2 + 1 < result.length && i < resultCounts[0]; i++) {
             int e1Index = result[i * 2];
             int e2Index = result[i * 2 + 1];
+            if(e1Index <0 || e2Index <0) {
+                System.out.println("Error: e1Index=" + e1Index + ", e2Index=" + e2Index);
+            };
             if (e1Index >= livingEntities.size() || e2Index >= livingEntities.size()) continue;
 
             LivingEntity e1 = livingEntities.get(e1Index);
