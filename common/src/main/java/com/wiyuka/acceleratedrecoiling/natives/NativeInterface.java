@@ -9,16 +9,16 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.foreign.Arena;
+import java.lang.foreign.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 import static java.lang.foreign.ValueLayout.*;
 
 public class NativeInterface {
-    private static java.lang.foreign.SegmentAllocator allocator;
-    private static java.lang.foreign.Linker linker;
-    private static java.lang.foreign.Arena nativeArena;
+    private static SegmentAllocator allocator;
+    private static Linker linker;
+    private static Arena nativeArena;
     private static java.lang.invoke.MethodHandle pushMethodHandle = null;
     private static long maxSizeTouched = -1;
 
@@ -46,8 +46,8 @@ public class NativeInterface {
     /**
      * @return Null if the server cannot find the library
      */
-    private static java.lang.foreign.SymbolLookup findFoldLib(java.lang.foreign.Arena arena, String dllPath) {
-        return java.lang.foreign.SymbolLookup.libraryLookup(dllPath, arena);
+    private static SymbolLookup findFoldLib(Arena arena, String dllPath) {
+        return SymbolLookup.libraryLookup(dllPath, arena);
     }
 
     static boolean useCPU = false;
@@ -57,16 +57,16 @@ public class NativeInterface {
             double[] aabb,
             int[] resultSizeOut
     ) {
-        try (java.lang.foreign.Arena tempArena = java.lang.foreign.Arena.ofConfined()) {
+        try (Arena tempArena = Arena.ofConfined()) {
             int count = locations.length / 3;
             int resultSize = locations.length * FoldConfig.maxCollision;
             if (count > maxSizeTouched) maxSizeTouched = count;
 
-//            java.lang.foreign.MemorySegment locationsMem = tempArena.allocateFrom(JAVA_DOUBLE, locations);
-//            java.lang.foreign.MemorySegment aabbMem = tempArena.allocateFrom(JAVA_DOUBLE, aabb);
-            java.lang.foreign.MemorySegment locationsMem = tempArena.allocateFrom(JAVA_DOUBLE, locations);
-            java.lang.foreign.MemorySegment aabbMem = tempArena.allocateFrom(JAVA_DOUBLE, aabb);
-            java.lang.foreign.MemorySegment collisionPairs = tempArena.allocate(JAVA_INT.byteSize() * resultSize * 2);
+//            MemorySegment locationsMem = tempArena.allocateFrom(JAVA_DOUBLE, locations);
+//            MemorySegment aabbMem = tempArena.allocateFrom(JAVA_DOUBLE, aabb);
+            MemorySegment locationsMem = tempArena.allocateFrom(JAVA_DOUBLE, locations);
+            MemorySegment aabbMem = tempArena.allocateFrom(JAVA_DOUBLE, aabb);
+            MemorySegment collisionPairs = tempArena.allocate(JAVA_INT.byteSize() * resultSize * 2);
 
             int collisionSize = -1;
             try {
@@ -160,26 +160,26 @@ public class NativeInterface {
         logger.info("Use gpu index: {}", FoldConfig.gpuIndex);
         logger.info("Use CPU: {}", useCPU);
 
-        linker = java.lang.foreign.Linker.nativeLinker();
-        Arena arena = java.lang.foreign.Arena.ofConfined();
-        java.lang.foreign.SymbolLookup lib = findFoldLib(arena, dllPath);
+        linker = Linker.nativeLinker();
+        Arena arena = Arena.ofConfined();
+        SymbolLookup lib = findFoldLib(arena, dllPath);
 
         pushMethodHandle = linker.downcallHandle(
                 lib.find("push").orElseThrow(),
-                java.lang.foreign.FunctionDescriptor.of(
-                        java.lang.foreign.ValueLayout.JAVA_INT,   // collisionTimes
-                        java.lang.foreign.ValueLayout.ADDRESS,    // const double* entityLoc
-                        java.lang.foreign.ValueLayout.ADDRESS,    // const double* aabbs
-                        java.lang.foreign.ValueLayout.ADDRESS,    // int* output
-                        java.lang.foreign.ValueLayout.JAVA_INT,   // int count
-                        java.lang.foreign.ValueLayout.JAVA_INT,   // int K
-                        java.lang.foreign.ValueLayout.JAVA_INT    // int gridSize
+                FunctionDescriptor.of(
+                        ValueLayout.JAVA_INT,   // collisionTimes
+                        ValueLayout.ADDRESS,    // const double* entityLoc
+                        ValueLayout.ADDRESS,    // const double* aabbs
+                        ValueLayout.ADDRESS,    // int* output
+                        ValueLayout.JAVA_INT,   // int count
+                        ValueLayout.JAVA_INT,   // int K
+                        ValueLayout.JAVA_INT    // int gridSize
                 )
         );
 
         java.lang.invoke.MethodHandle initializeMethodHandle = linker.downcallHandle(
                 lib.find("initialize").orElseThrow(),
-                java.lang.foreign.FunctionDescriptor.ofVoid(JAVA_INT, JAVA_BOOLEAN)
+                FunctionDescriptor.ofVoid(JAVA_INT, JAVA_BOOLEAN)
         );
 
         try {
