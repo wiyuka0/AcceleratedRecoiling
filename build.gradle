@@ -6,6 +6,7 @@ buildscript {
     }
     dependencies {
         classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
+        classpath 'org.ow2.asm:asm:9.6'
     }
 }
 
@@ -15,6 +16,71 @@ plugins {
     id 'idea'
     id 'net.minecraftforge.gradle' version '[6.0.16,6.2)'
 }
+
+import org.objectweb.asm.*
+import java.util.jar.*
+
+jar.doLast {
+    // 获取生成的 jar 文件路径
+    File jarFile = archiveFile.get().asFile
+    println "正在移除预览版标记: ${jarFile.name}..."
+
+    // 创建一个临时文件
+    File tempFile = new File(jarFile.parent, jarFile.name + ".temp")
+
+    // 这里的逻辑就是把你 Main.java 里的代码翻译成了 Groovy
+    try (JarFile jar = new JarFile(jarFile);
+         JarOutputStream jos = new JarOutputStream(new FileOutputStream(tempFile))) {
+
+        Enumeration<JarEntry> entries = jar.entries()
+        while (entries.hasMoreElements()) {
+            JarEntry entry = entries.nextElement()
+            InputStream is = jar.getInputStream(entry)
+
+            if (!entry.getName().endsWith(".class")) {
+                jos.putNextEntry(new JarEntry(entry.getName()))
+                is.transferTo(jos)
+                continue
+            }
+
+            // ASM 读取和修改
+            ClassReader cr = new ClassReader(is)
+            ClassWriter cw = new ClassWriter(0)
+
+            // 自定义 Visitor
+            ClassVisitor cv = new ClassVisitor(Opcodes.ASM9, cw) {
+                @Override
+                void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+                    // 关键修复：移除版本号中的预览标记 (0xFFFF0000)
+                    int newVersion = version & ~Opcodes.V_PREVIEW
+                    // 关键修复：移除 Access Flag 中的预览标记 (虽然 Version 才是导致报错的主因)
+                    // 0x10000 在某些版本指 ACC_RECORD，但也可能指预览。
+                    // 这里只修改 version 即可解决 UnsupportedClassVersionError，
+                    // 但为了和你之前的逻辑一致，如果不影响 Record 功能，可以不改 Access。
+                    // 这里我们只改 Version，这是最稳妥的。
+                    super.visit(newVersion, access, name, signature, superName, interfaces)
+                }
+            }
+
+            cr.accept(cv, 0)
+
+            JarEntry newEntry = new JarEntry(entry.getName())
+            jos.putNextEntry(newEntry)
+            jos.write(cw.toByteArray())
+        }
+    }
+
+    // 3. 用修复后的文件覆盖原文件
+    if (jarFile.delete()) {
+        if (!tempFile.renameTo(jarFile)) {
+            throw new RuntimeException("无法重命名临时文件！")
+        }
+        println "预览版标记移除成功！"
+    } else {
+        throw new RuntimeException("无法删除原始 Jar 文件！")
+    }
+}
+
 
 apply plugin: 'org.spongepowered.mixin'
 

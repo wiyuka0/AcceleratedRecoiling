@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.wiyuka.acceleratedrecoiling.AcceleratedRecoiling;
 import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
+import com.wiyuka.acceleratedrecoiling.ffm.FFM;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -64,13 +65,15 @@ public class NativeInterface {
 
 //            java.lang.foreign.MemorySegment locationsMem = tempArena.allocateFrom(JAVA_DOUBLE, locations);
 //            java.lang.foreign.MemorySegment aabbMem = tempArena.allocateFrom(JAVA_DOUBLE, aabb);
-            java.lang.foreign.MemorySegment locationsMem = tempArena.allocateArray(JAVA_DOUBLE, locations);
-            java.lang.foreign.MemorySegment aabbMem = tempArena.allocateArray(JAVA_DOUBLE, aabb);
+            java.lang.foreign.MemorySegment locationsMem = FFM.allocateArray(tempArena, locations);
+            java.lang.foreign.MemorySegment aabbMem = FFM.allocateArray(tempArena, aabb);
             java.lang.foreign.MemorySegment collisionPairs = tempArena.allocate(JAVA_INT.byteSize() * resultSize * 2);
 
             int collisionSize = -1;
             try {
+//                System.out.println("Invoke start");
                 collisionSize = (int) pushMethodHandle.invoke(locationsMem, aabbMem, collisionPairs, count, FoldConfig.maxCollision, FoldConfig.gridSize);
+//                System.out.println("Invoke end");
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
@@ -183,7 +186,9 @@ public class NativeInterface {
         );
 
         try {
+            System.out.println("Invoke start");
             initializeMethodHandle.invoke(FoldConfig.gpuIndex, useCPU);
+            System.out.println("Invoke end");
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
