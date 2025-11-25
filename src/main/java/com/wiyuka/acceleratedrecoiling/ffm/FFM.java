@@ -1,5 +1,8 @@
 package com.wiyuka.acceleratedrecoiling.ffm;
 
+import com.wiyuka.acceleratedrecoiling.AcceleratedRecoiling;
+import org.slf4j.Logger;
+
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
@@ -15,6 +18,8 @@ public class FFM {
     private static final MethodHandle ALLOCATE_HANDLE;
 
     static {
+        Logger logger = AcceleratedRecoiling.LOGGER;
+
         MethodHandles.Lookup lookup = MethodHandles.publicLookup();
         MethodHandle handle = null;
         int version = -1;
@@ -48,7 +53,7 @@ public class FFM {
         ALLOCATE_HANDLE = handle;
         JDK_VERSION = version;
 
-        System.out.println("[FFM] Native Linker initialized. Detected JDK Compatibility Level: " + version);
+        logger.info("[FFM] Native Linker initialized. Detected JDK Compatibility Level: {}", version);
     }
 
     /**
