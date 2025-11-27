@@ -43,14 +43,16 @@
 **默认配置：**
 ```json
 {
-    "useFold": true, 
+    "enableEntityCollision": true,
+    "enableEntityGetterOptimization": true,
     "gridSize": 8,
-    "maxCollision": 32, 
-    "gpuIndex": 0, 
-    "useCPU": false 
+    "maxCollision": 32,
+    "gpuIndex": 0,
+    "useCPU": false
 }
 ```
-* useFold 是否启用优化 (游戏内可以通过`/togglefold`来切换)
+* enableEntityCollision: 是否启用实体挤压优化
+* enableEntityGetterOptimization: 是否启用EntityGetter接口优化
 * gridSize 世界分格大小
 * maxCollision 每个实体最多与其周围几个实体相互碰撞（受限于OpenCL输出缓冲区）
 * gpuIndex 使用的GPU索引
