@@ -4,12 +4,13 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.wiyuka.acceleratedrecoiling.AcceleratedRecoiling;
 import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
+import com.wiyuka.acceleratedrecoiling.ffm.FFM;
 import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.foreign.Arena;
+import java.lang.foreign.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
@@ -64,8 +65,8 @@ public class NativeInterface {
 
 //            MemorySegment locationsMem = tempArena.allocateFrom(JAVA_DOUBLE, locations);
 //            MemorySegment aabbMem = tempArena.allocateFrom(JAVA_DOUBLE, aabb);
-            MemorySegment locationsMem = tempArena.allocateFrom(JAVA_DOUBLE, locations);
-            MemorySegment aabbMem = tempArena.allocateFrom(JAVA_DOUBLE, aabb);
+            MemorySegment locationsMem = FFM.allocateArray(tempArena, locations);
+            MemorySegment aabbMem = FFM.allocateArray(tempArena, aabb);
             MemorySegment collisionPairs = tempArena.allocate(JAVA_INT.byteSize() * resultSize * 2);
 
             int collisionSize = -1;
