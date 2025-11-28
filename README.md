@@ -19,9 +19,9 @@
 ## 游戏崩溃了！
 如果游戏无法正常启动……
 
-你的客户端是 Forge 1.20.1，尝试在 JVM 启动参数中添加 `--enable-preview`。
-你的客户端是 NeoForge 1.21.1/1.21.8，请使用 Java 22+ 启动游戏。
-如果这些方法都不起作用，请更新此模组，并删除文件 `.minecraft/acceleratedRecoilingLib.dll`，然后重启客户端。（文件位于 `.minecraft/` 或你的客户端根目录下）
+* 你的客户端是 Forge 1.20.1，尝试在 JVM 启动参数中添加 `--enable-preview`。
+* 你的客户端是 NeoForge 1.21.1/1.21.8，请使用 Java 22+ 启动游戏。
+* 如果这些方法都不起作用，请更新此模组，并删除文件 `.minecraft/acceleratedRecoilingLib.dll`，然后重启客户端。（文件位于 `.minecraft/` 或你的客户端根目录下）
 
 ---
 
@@ -29,16 +29,6 @@
 模组在首次启动时，会自动在服务器/客户端**根目录**下解压 `acceleratedRecoilingLib.dll`（或 `.so`）文件，并创建一个 `acceleratedRecoiling.json` 配置文件。
 
 你可以在服务器/客户端**根目录**（与 `mods文件夹` 同级）找到 `acceleratedRecoiling.json` 文件。
-
-**游戏崩溃了！**
-如果游戏无法正常启动……
-
-你的客户端是 **Forge 1.20.1**，请尝试在 JVM 启动参数中添加 `--enable-preview`。
-你的客户端是 **NeoForge 1.21.1 / 1.21.8**，请使用 **Java 22** 及以上版本 启动游戏。
-
-如果这仍然无效，请更新此模组，并删除文件：
-`.minecraft/acceleratedRecoilingLib.dll`，然后重新启动客户端。
-(.minecraft/下或者你的游戏根目录)
 
 **默认配置：**
 ```json
