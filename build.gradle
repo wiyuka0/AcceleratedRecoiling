@@ -25,7 +25,7 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs.add('--enable-preview')
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.toolchain.languageVersion = JavaLanguageVersion.of(22)
 
 allprojects {
     group = rootProject.maven_group
@@ -83,12 +83,12 @@ subprojects {
         // If you remove this line, sources will not be generated.
         withSourcesJar()
 
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_22
+        targetCompatibility = JavaVersion.VERSION_22
     }
 
     tasks.withType(JavaCompile).configureEach {
-        options.release = 21
+        options.release = 22
         options.compilerArgs.add('--enable-preview')
     }
 
@@ -101,7 +101,7 @@ subprojects {
         File tempFile = new File(jarFile.parent, jarFile.name + ".temp")
 
         // 这里的逻辑就是把你 Main.java 里的代码翻译成了 Groovy
-        try (JarFile jar = new JarFile(jarFile);
+        try (JarFile jar = new JarFile(jarFile)
              JarOutputStream jos = new JarOutputStream(new FileOutputStream(tempFile))) {
 
             Enumeration<JarEntry> entries = jar.entries()
