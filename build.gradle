@@ -21,6 +21,7 @@ plugins {
 architectury {
     minecraft = project.minecraft_version
 }
+
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs.add('--enable-preview')
 }
@@ -66,6 +67,18 @@ subprojects {
 
     loom {
         silentMojangMappingsLicense()
+
+        runs {
+            client {
+                property 'fabric.log.level', 'debug'
+                vmArgs '--enable-preview'
+            }
+
+            server {
+                property 'fabric.log.level', 'debug'
+                vmArgs '--enable-preview'
+            }
+        }
     }
 
     dependencies {
