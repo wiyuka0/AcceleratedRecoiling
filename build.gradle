@@ -25,7 +25,7 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs.add('--enable-preview')
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(22)
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 allprojects {
     group = rootProject.maven_group
@@ -83,12 +83,12 @@ subprojects {
         // If you remove this line, sources will not be generated.
         withSourcesJar()
 
-        sourceCompatibility = JavaVersion.VERSION_22
-        targetCompatibility = JavaVersion.VERSION_22
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     tasks.withType(JavaCompile).configureEach {
-        options.release = 22
+        options.release = 21
         options.compilerArgs.add('--enable-preview')
     }
 
