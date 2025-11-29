@@ -77,6 +77,28 @@ subprojects {
         }
     }
 
+    processResources {
+        var replaceProperties = [minecraft_version      : minecraft_version,
+                                 minecraft_version_range: minecraft_version_range,
+                                 neo_version            : neoforge_version,
+                                 neo_version_range      : neo_version_range,
+                                 loader_version_range   : loader_version_range,
+                                 fabric_loader_version  : fabric_loader_version,
+                                 mod_id                 : mod_id,
+                                 mod_name               : mod_name,
+                                 mod_license            : mod_license,
+                                 mod_version            : mod_version,
+                                 mod_authors            : mod_authors,
+                                 mod_description        : mod_description]
+        inputs.properties replaceProperties
+        filesMatching('META-INF/neoforge.mods.toml') {
+            expand replaceProperties
+        }
+        filesMatching('fabric.mod.json') {
+            expand replaceProperties
+        }
+    }
+
     java {
         // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
         // if it is present.
