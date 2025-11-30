@@ -70,12 +70,12 @@ subprojects {
 
         runs {
             client {
-                property 'fabric.log.level', project.mod.log_level
+                property 'fabric.log.level', project.mod_log_level
                 vmArgs '--enable-preview'
             }
 
             server {
-                property 'fabric.log.level', project.mod.log_level
+                property 'fabric.log.level', project.mod_log_level
                 vmArgs '--enable-preview'
             }
         }
