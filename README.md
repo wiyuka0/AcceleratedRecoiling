@@ -23,8 +23,6 @@
 * 你的客户端是 NeoForge 1.21.1/1.21.8，请使用 Java 22+ 启动游戏。
 * 如果这些方法都不起作用，请更新此模组，并删除文件 `.minecraft/acceleratedRecoilingLib.dll`，然后重启客户端。（文件位于 `.minecraft/` 或你的客户端根目录下）
 
----
-
 ## 安装
 模组在首次启动时，会自动在服务器/客户端**根目录**下解压 `acceleratedRecoilingLib.dll`（或 `.so`）文件，并创建一个 `acceleratedRecoiling.json` 配置文件。
 
@@ -47,4 +45,37 @@
 * maxCollision 每个实体最多与其周围几个实体相互碰撞（受限于OpenCL输出缓冲区）
 * gpuIndex 使用的GPU索引
 * useCPU 是否使用CPU
-<img width="1364" height="588" alt="image" src="https://github.com/user-attachments/assets/4aac1540-3646-4486-a0f2-8d8ddab89d9c" />
+  
+## 基准测试
+#### 测试环境
+* **CPU**: Intel Core i5-12600KF
+* **内存**: 32GB (分配堆内存 24GB)
+* **显卡**: NVIDIA RTX 3060 Ti
+* **服务端**: `Leaves 1.21.8-138-master@9331167 (2025-10-18T16:10:30Z)`
+* **Java**: Eclipse Adoptium JDK 21
+* **启动参数**: `-Dleavesclip.enable.mixin=true -Xmx24G -Xms24G`
+* **模组版本** `AcceleratedRecoilingLeaves-0.7-alpha-leaves-all.jar`
+
+#### 测试方法
+在同一个区块内的 2x2 空间内生成指定数量的猪，记录服务器 TPS 变化
+
+#### 测试结果
+
+| 实体数量 | LeavesMC + 加速碰撞 (TPS) | LeavesMC (TPS) | 提升倍率 |
+| :--- | :--- | :--- | :--- |
+| **2,048** | **20.0** | 3.0 | 6.6x  |
+| **4,096** | **19.0** | 0.5 | 38x |
+| **8,192** | **10.0** | - | - |
+| **16,384** | **5.3** | - | - |
+| **32,768** | **2.8** | - | - |
+| **65,536** | **1.3** | - | - |
+| **131,072** | **~0.4** | - | - |
+| **294,912** | **~0.2** | - | - |
+
+## 贡献与致谢
+
+非常感谢以下开发者和所有为本项目提交issues与pr的人的帮助与支持！！
+*   **[**Argon4W**](https://github.com/Argon4W)**: 提供了该项目的原始构思与核心原理。
+*   **[**fireboy637**](https://github.com/fireboy637)**: 提供了该项目的ArchitecturyAPI移植方案与核心代码。
+*   **[**hydropuse**](https://github.com/hydropuse)**: 提供了该项目的JDK 22兼容方案与核心代码。
+
