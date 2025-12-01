@@ -58,6 +58,18 @@
 * **启动参数**: `-Dleavesclip.enable.mixin=true -Xmx24G -Xms24G`
 * **模组版本** `AcceleratedRecoilingLeaves-0.7-alpha-leaves-all.jar`
 
+#### 使用配置
+```json
+{
+    "enableEntityCollision": true,
+    "enableEntityGetterOptimization": true,
+    "gridSize": 8,
+    "maxCollision": 32,
+    "gpuIndex": 0,
+    "useCPU": false
+}
+```
+
 #### 测试方法
 在同一个区块内的 2x2 空间内生成指定数量的猪，记录服务器 TPS 变化
 
