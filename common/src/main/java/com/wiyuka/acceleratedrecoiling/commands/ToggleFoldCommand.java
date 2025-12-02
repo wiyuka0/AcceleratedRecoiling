@@ -78,7 +78,7 @@ public class ToggleFoldCommand {
 
 
                         .then(Commands.literal("maxCollision")
-                                .then(Commands.argument("value", IntegerArgumentType.integer(16))
+                                .then(Commands.argument("value", IntegerArgumentType.integer(1))
                                         .executes(ToggleFoldCommand::setMaxCollision)
                                 )
                         )
@@ -145,11 +145,11 @@ public class ToggleFoldCommand {
     private static int checkConfig(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
 
-        var message = Component.literal("Current Accelerated Recoiling Config")
-                .withStyle(ChatFormatting.WHITE);
+        var message = Component.literal("Accelerated Recoiling")
+                .withStyle(ChatFormatting.AQUA);
 
         message.append(Component.literal("\n--------------------\n")
-                .withStyle(ChatFormatting.RESET, ChatFormatting.DARK_GRAY));
+                .withStyle(ChatFormatting.DARK_GRAY));
 
         message.append(buildConfigLine("enableEntityCollision", FoldConfig.enableEntityCollision));
         message.append(buildConfigLine("enableEntityGetterOptimization", FoldConfig.enableEntityGetterOptimization));
