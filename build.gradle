@@ -47,6 +47,7 @@ allprojects {
 import org.objectweb.asm.*
 import java.util.jar.*
 
+
 subprojects {
     apply plugin: 'dev.architectury.loom'
     apply plugin: 'architectury-plugin'
@@ -126,7 +127,6 @@ subprojects {
         options.release = 21
         options.compilerArgs.add('--enable-preview')
     }
-
     jar.doLast {
         // 获取生成的 jar 文件路径
         File jarFile = archiveFile.get().asFile
