@@ -3,7 +3,7 @@ package com.wiyuka.acceleratedrecoiling.mixin;
 import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
 import com.wiyuka.acceleratedrecoiling.natives.ParallelAABB;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.entity.EntityTickList;
 import org.spongepowered.asm.mixin.Final;
@@ -31,14 +31,15 @@ public abstract class ServerLevelMixin {
             at = @At("HEAD")
     )
     private void tick(BooleanSupplier booleanSupplier, CallbackInfo ci) {
-        List<LivingEntity> livingEntities = new ArrayList<>();
+        List<Entity> livingEntities = new ArrayList<>();
+//        List<Entity> entityList = new ArrayList<>();
         List<Player> playerEntities = new ArrayList<>();
         this.entityTickList.forEach( entity -> {
             if (!entity.isRemoved()) {
                 if (entity instanceof Player) {
                     playerEntities.add((Player) entity);
-                } else if (entity instanceof LivingEntity) {
-                    livingEntities.add((LivingEntity) entity);
+                } else if (entity instanceof Entity) {
+                    livingEntities.add((Entity) entity);
                 }
             }
         });
