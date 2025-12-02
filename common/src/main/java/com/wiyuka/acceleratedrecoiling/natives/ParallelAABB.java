@@ -1,6 +1,7 @@
 package com.wiyuka.acceleratedrecoiling.natives;
 
 import com.wiyuka.acceleratedrecoiling.api.ICustomBB;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 
 import java.util.List;
@@ -22,7 +23,7 @@ public class ParallelAABB {
         }
     }
 
-    public static void handleEntityPush(final List<LivingEntity> livingEntities, double inflate) {
+    public static void handleEntityPush(final List<Entity> livingEntities, double inflate) {
 
         CollisionMapData.clear();
 
@@ -31,7 +32,7 @@ public class ParallelAABB {
         double[] locations = new double[livingEntities.size() * 3];
 
         int index = 0;
-        for (LivingEntity entity : livingEntities) {
+        for (Entity entity : livingEntities) {
             ICustomBB customBB = (ICustomBB) entity;
             customBB.extractionBoundingBox(aabb, index * 6, inflate);
             customBB.extractionPosition(locations, index * 3);
@@ -49,12 +50,24 @@ public class ParallelAABB {
             int e2Index = result[i * 2 + 1];
             if (e1Index >= livingEntities.size() || e2Index >= livingEntities.size()) continue;
 
-            LivingEntity e1 = livingEntities.get(e1Index);
-            LivingEntity e2 = livingEntities.get(e2Index);
+            Entity e1 = livingEntities.get(e1Index);
+            Entity e2 = livingEntities.get(e2Index);
 
             if(!e1.getBoundingBox().inflate(inflate).intersects(e2.getBoundingBox().inflate(inflate))) continue;
 
             CollisionMapData.putCollision(e1.getUUID(), e2.getUUID());
+            LivingEntity livingEntity;
+            Entity entity;
+
+            if(e1 instanceof LivingEntity) {
+                livingEntity = (LivingEntity) e1;
+                entity =  e2;
+            } else if(e2 instanceof LivingEntity) {
+                livingEntity = (LivingEntity) e2;
+                entity = e1;
+            } else continue;
+
+            CollisionMapData.putCollision(livingEntity.getUUID(), entity.getUUID());
 //            e1.doPush(e2);
 //            e2.doPush(e1);
 
