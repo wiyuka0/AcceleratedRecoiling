@@ -11,7 +11,7 @@ public class ParallelAABB {
 
     static boolean isInitialized = false;
 
-    static class  EntityData {
+    static class EntityData {
         LivingEntity entity;
         int count;
         EntityData(LivingEntity entity, int count) {
@@ -46,7 +46,6 @@ public class ParallelAABB {
 
         if (result == null || result.length % 2 != 0) return;
 
-        HashSet<Long> collisions = new HashSet<>();
 
         for (int i = 0; i * 2 + 1 < result.length && i < resultCounts[0]; i++) {
             int e1Index = result[i * 2];
@@ -58,12 +57,7 @@ public class ParallelAABB {
 
             if(!e1.getBoundingBox().inflate(inflate).intersects(e2.getBoundingBox().inflate(inflate))) continue;
 
-            long collisionId = ((long) e1Index << 32 | (long) e2Index);
-            if(collisions.contains(collisionId)) continue;
-
-            collisions.add(collisionId);
-
-//            CollisionMapData.putCollision(e1.getId(), e2.getUUID());
+//            CollisionMapData.putCollision(e1.getUUID(), e2.getUUID());
             LivingEntity livingEntity;
             Entity entity;
 
