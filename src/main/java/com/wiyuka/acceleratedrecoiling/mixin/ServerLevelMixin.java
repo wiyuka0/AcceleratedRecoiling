@@ -44,7 +44,7 @@ public abstract class ServerLevelMixin {
             }
         });
         if (FoldConfig.enableEntityCollision) {
-            ParallelAABB.handleEntityPush(livingEntities, 1.0E-3);
+            ParallelAABB.handleEntityPush(livingEntities, 1.0E-7);
         }
     }
 
