@@ -81,6 +81,10 @@ public class NativeInterface {
             double[] aabb,
             int[] resultSizeOut
     ) {
+
+//        int[] output = new int[locations.length * FoldConfig.maxCollision];
+//        resultSizeOut[0] = SAP.push(locations, aabb, output, locations.length / 3, FoldConfig.maxCollision, 0);
+//        return output;
         try (java.lang.foreign.Arena tempArena = java.lang.foreign.Arena.ofConfined()) {
             int count = locations.length / 3;
             int resultSize = locations.length * FoldConfig.maxCollision;
