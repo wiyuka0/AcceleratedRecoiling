@@ -26,6 +26,13 @@ public abstract class ServerLevelMixin {
      * 重定向 ServerLevel.tick() 方法中对 entityTickList.forEach() 的调用
      */
 
+//    @Inject(
+//            method = "addEntity",
+//            at = @At("RETURN")
+//    )
+//    private void addEntity(Entity entity, CallbackInfoReturnable<Boolean> cir) {
+//        NativeIDManager.register(entity);
+//    }
     @Inject(
             method = "tick(Ljava/util/function/BooleanSupplier;)V",
             at = @At("HEAD")

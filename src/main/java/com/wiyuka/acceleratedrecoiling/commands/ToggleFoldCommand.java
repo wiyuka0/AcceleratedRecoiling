@@ -70,30 +70,9 @@ public class ToggleFoldCommand {
                         )
 
 
-                        .then(Commands.literal("gridSize")
-                                .then(Commands.argument("value", IntegerArgumentType.integer(8))
-                                        .executes(ToggleFoldCommand::setGridSize)
-                                )
-                        )
-
-
                         .then(Commands.literal("maxCollision")
                                 .then(Commands.argument("value", IntegerArgumentType.integer(1))
                                         .executes(ToggleFoldCommand::setMaxCollision)
-                                )
-                        )
-
-
-                        .then(Commands.literal("gpuIndex")
-                                .then(Commands.argument("value", IntegerArgumentType.integer(0))
-                                        .executes(ToggleFoldCommand::setGpuIndex)
-                                )
-                        )
-
-
-                        .then(Commands.literal("useCPU")
-                                .then(Commands.argument("value", BoolArgumentType.bool())
-                                        .executes(ToggleFoldCommand::setUseCPU)
                                 )
                         )
                         .then(Commands.literal("save")
@@ -153,10 +132,7 @@ public class ToggleFoldCommand {
 
         message.append(buildConfigLine("enableEntityCollision", FoldConfig.enableEntityCollision));
         message.append(buildConfigLine("enableEntityGetterOptimization", FoldConfig.enableEntityGetterOptimization));
-        message.append(buildConfigLine("gridSize", FoldConfig.gridSize));
         message.append(buildConfigLine("maxCollision", FoldConfig.maxCollision));
-        message.append(buildConfigLine("gpuIndex", FoldConfig.gpuIndex));
-        message.append(buildConfigLine("useCPU", FoldConfig.useCPU));
 
         message.append(Component.literal("--------------------")
                 .withStyle(ChatFormatting.DARK_GRAY));
@@ -171,18 +147,12 @@ public class ToggleFoldCommand {
         @SerializedName("useFold")
         public boolean enableEntityCollision;
         public boolean enableEntityGetterOptimization;
-        public int gridSize;
         public int maxCollision;
-        public int gpuIndex;
-        public boolean useCPU;
 
-        public ConfigData(boolean enableEntityCollision, boolean enableEntityGetterOptimization, int gridSize, int maxCollision, int gpuIndex, boolean useCPU) {
+        public ConfigData(boolean enableEntityCollision, boolean enableEntityGetterOptimization, int maxCollision) {
             this.enableEntityCollision = enableEntityCollision;
             this.enableEntityGetterOptimization = enableEntityGetterOptimization;
-            this.gridSize = gridSize;
             this.maxCollision = maxCollision;
-            this.gpuIndex = gpuIndex;
-            this.useCPU = useCPU;
         }
     }
 
@@ -195,10 +165,7 @@ public class ToggleFoldCommand {
         ConfigData data = new ConfigData(
                 FoldConfig.enableEntityCollision,
                 FoldConfig.enableEntityGetterOptimization,
-                FoldConfig.gridSize,
-                FoldConfig.maxCollision,
-                FoldConfig.gpuIndex,
-                FoldConfig.useCPU
+                FoldConfig.maxCollision
         );
 
 
@@ -240,12 +207,6 @@ public class ToggleFoldCommand {
         return 1;
     }
 
-    private static int setGridSize(CommandContext<CommandSourceStack> context) {
-        int value = IntegerArgumentType.getInteger(context, "value");
-        FoldConfig.gridSize = value;
-        sendSuccessMessage(context.getSource(), "gridSize", value);
-        return 1;
-    }
 
     private static int setMaxCollision(CommandContext<CommandSourceStack> context) {
         int value = IntegerArgumentType.getInteger(context, "value");
@@ -254,17 +215,5 @@ public class ToggleFoldCommand {
         return 1;
     }
 
-    private static int setGpuIndex(CommandContext<CommandSourceStack> context) {
-        int value = IntegerArgumentType.getInteger(context, "value");
-        FoldConfig.gpuIndex = value;
-        sendSuccessMessage(context.getSource(), "gpuIndex", value);
-        return 1;
-    }
 
-    private static int setUseCPU(CommandContext<CommandSourceStack> context) {
-        boolean value = BoolArgumentType.getBool(context, "value");
-        FoldConfig.useCPU = value;
-        sendSuccessMessage(context.getSource(), "useCPU", value);
-        return 1;
-    }
 }

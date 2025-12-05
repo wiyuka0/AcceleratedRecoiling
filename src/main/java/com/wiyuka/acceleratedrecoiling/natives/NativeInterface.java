@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
@@ -53,11 +54,32 @@ public class NativeInterface {
 
     static boolean useCPU = false;
 
+    private static Arena collisionPairsArena = null;
+    private static MemorySegment collisionPairsBuf;
+    private static int currentSize = -1;
+
+    private static MemorySegment reallocOutputBuf(int newSize) {
+        if (collisionPairsArena == null) collisionPairsArena = Arena.ofConfined();
+        long newSizeTotal = Math.max(1024, (long)((newSize * 2) * 1.2) * JAVA_INT.byteSize());
+
+        if (newSizeTotal > currentSize) {
+            collisionPairsArena.close();
+            collisionPairsArena = Arena.ofConfined();
+            collisionPairsBuf = collisionPairsArena.allocate(newSizeTotal);
+            currentSize = (int) newSizeTotal;
+        }
+        return collisionPairsBuf;
+    }
+
     public static int[] push(
             double[] locations,
             double[] aabb,
             int[] resultSizeOut
     ) {
+
+//        int[] output = new int[locations.length * FoldConfig.maxCollision];
+//        resultSizeOut[0] = SAP.push(locations, aabb, output, locations.length / 3, FoldConfig.maxCollision, 0);
+//        return output;
         try (java.lang.foreign.Arena tempArena = java.lang.foreign.Arena.ofConfined()) {
             int count = locations.length / 3;
             int resultSize = locations.length * FoldConfig.maxCollision;
@@ -67,11 +89,12 @@ public class NativeInterface {
 //            java.lang.foreign.MemorySegment aabbMem = tempArena.allocateFrom(JAVA_DOUBLE, aabb);
             java.lang.foreign.MemorySegment locationsMem = FFM.allocateArray(tempArena, locations);
             java.lang.foreign.MemorySegment aabbMem = FFM.allocateArray(tempArena, aabb);
-            java.lang.foreign.MemorySegment collisionPairs = tempArena.allocate(JAVA_INT.byteSize() * resultSize * 2);
+            java.lang.foreign.MemorySegment collisionPairs = reallocOutputBuf(resultSize);
+//            java.lang.foreign.MemorySegment collisionPairs = tempArena.allocate(JAVA_INT.byteSize() * resultSize * 2);
 
             int collisionSize = -1;
             try {
-                collisionSize = (int) pushMethodHandle.invoke(locationsMem, aabbMem, collisionPairs, count, FoldConfig.maxCollision, FoldConfig.gridSize);
+                collisionSize = (int) pushMethodHandle.invoke(locationsMem, aabbMem, collisionPairs, count, FoldConfig.maxCollision, 0);
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
@@ -116,14 +139,21 @@ public class NativeInterface {
         logger.info("DLL: {}", dllPath);
 
 
+//        String defaultConfig = """
+//                {
+//                    "enableEntityCollision": true,
+//                    "enableEntityGetterOptimization": true,
+//                    "gridSize": 8,
+//                    "maxCollision": 32,
+//                    "gpuIndex": 0,
+//                    "useCPU": false
+//                }
+//                """;
         String defaultConfig = """
                 {
                     "enableEntityCollision": true,
                     "enableEntityGetterOptimization": true,
-                    "gridSize": 8,
                     "maxCollision": 32,
-                    "gpuIndex": 0,
-                    "useCPU": false
                 }
                 """;
         File foldConfig = new File("acceleratedRecoiling.json");
@@ -152,14 +182,14 @@ public class NativeInterface {
             createConfigFile(foldConfig, defaultConfig);
             initConfig(JsonParser.parseString(defaultConfig).getAsJsonObject());
         }
-        useCPU = configJson.get("useCPU").getAsBoolean();
+//        useCPU = configJson.get("useCPU").getAsBoolean();
 
 
         logger.info("acceleratedRecoiling initialized");
-        logger.info("Use grid size: {}", FoldConfig.gridSize);
+//        logger.info("Use grid size: {}", FoldConfig.gridSize);
         logger.info("Use max collisions: {}", FoldConfig.maxCollision);
-        logger.info("Use gpu index: {}", FoldConfig.gpuIndex);
-        logger.info("Use CPU: {}", useCPU);
+//        logger.info("Use gpu index: {}", FoldConfig.gpuIndex);
+//        logger.info("Use CPU: {}", useCPU);
 
         linker = java.lang.foreign.Linker.nativeLinker();
         Arena arena = java.lang.foreign.Arena.ofConfined();
@@ -178,13 +208,13 @@ public class NativeInterface {
                 )
         );
 
-        java.lang.invoke.MethodHandle initializeMethodHandle = linker.downcallHandle(
-                lib.find("initialize").orElseThrow(),
-                java.lang.foreign.FunctionDescriptor.ofVoid(JAVA_INT, JAVA_BOOLEAN)
-        );
+//        java.lang.invoke.MethodHandle initializeMethodHandle = linker.downcallHandle(
+//                lib.find("initialize").orElseThrow(),
+//                java.lang.foreign.FunctionDescriptor.ofVoid(JAVA_INT, JAVA_BOOLEAN)
+//        );
 
         try {
-            initializeMethodHandle.invoke(FoldConfig.gpuIndex, useCPU);
+//            initializeMethodHandle.invoke(FoldConfig.gpuIndex, useCPU);
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
@@ -194,9 +224,7 @@ public class NativeInterface {
     private static void initConfig(JsonObject configJson) {
         FoldConfig.enableEntityCollision = configJson.get("enableEntityCollision").getAsBoolean();
         FoldConfig.enableEntityGetterOptimization = configJson.get("enableEntityGetterOptimization").getAsBoolean();
-        FoldConfig.gridSize = configJson.get("gridSize").getAsInt();
         FoldConfig.maxCollision = configJson.get("maxCollision").getAsInt();
-        FoldConfig.gpuIndex = configJson.get("gpuIndex").getAsInt();
     }
 
     private static void createConfigFile(File foldConfig, String config) {
