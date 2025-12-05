@@ -63,7 +63,7 @@ public class ParallelAABB {
 
             collisions.add(collisionId);
 
-            CollisionMapData.putCollision(e1.getUUID(), e2.getUUID());
+//            CollisionMapData.putCollision(e1.getUUID(), e2.getUUID());
             LivingEntity livingEntity;
             Entity entity;
 
