@@ -4,6 +4,7 @@ import com.wiyuka.acceleratedrecoiling.api.ICustomBB;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 
+import java.util.HashSet;
 import java.util.List;
 
 public class ParallelAABB {
@@ -45,12 +46,11 @@ public class ParallelAABB {
 
         if (result == null || result.length % 2 != 0) return;
 
+        HashSet<Long> collisions = new HashSet<>();
+
         for (int i = 0; i * 2 + 1 < result.length && i < resultCounts[0]; i++) {
             int e1Index = result[i * 2];
             int e2Index = result[i * 2 + 1];
-            if(e1Index <0 || e2Index <0) {
-                System.out.println("Error: e1Index=" + e1Index + ", e2Index=" + e2Index);
-            };
             if (e1Index >= livingEntities.size() || e2Index >= livingEntities.size()) continue;
 
             Entity e1 = livingEntities.get(e1Index);
@@ -58,6 +58,12 @@ public class ParallelAABB {
 
             if(!e1.getBoundingBox().inflate(inflate).intersects(e2.getBoundingBox().inflate(inflate))) continue;
 
+            long collisionId = ((long) e1Index << 32 | (long) e2Index);
+            if(collisions.contains(collisionId)) continue;
+
+            collisions.add(collisionId);
+
+            CollisionMapData.putCollision(e1.getUUID(), e2.getUUID());
             LivingEntity livingEntity;
             Entity entity;
 
