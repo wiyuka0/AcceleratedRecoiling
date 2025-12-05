@@ -4,6 +4,8 @@ import com.wiyuka.acceleratedrecoiling.api.ICustomBB;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.util.HashSet;
 import java.util.List;
 
@@ -42,20 +44,22 @@ public class ParallelAABB {
 
         int[] resultCounts = new int[1];
 
-        int[] result = nativePush(locations, aabb, resultCounts);
+        MemorySegment result = nativePush(locations, aabb, resultCounts);
 
         if (result == null) return;
 
 
-        for (int i = 0; i * 2 + 1 < result.length && i < resultCounts[0]; i++) {
-            int e1Index = result[i * 2];
-            int e2Index = result[i * 2 + 1];
+        for (int i = 0; i < resultCounts[0]; i++) {
+//            int e1Index = result[i * 2];
+//            int e2Index = result[i * 2 + 1];
+            int e1Index = result.getAtIndex(ValueLayout.JAVA_INT, i * 2);
+            int e2Index = result.getAtIndex(ValueLayout.JAVA_INT, i * 2 + 1);
             if (e1Index >= livingEntities.size() || e2Index >= livingEntities.size()) continue;
 
             Entity e1 = livingEntities.get(e1Index);
             Entity e2 = livingEntities.get(e2Index);
 
-            if(!e1.getBoundingBox().inflate(inflate).intersects(e2.getBoundingBox().inflate(inflate))) continue;
+//            if(!e1.getBoundingBox().inflate(inflate).intersects(e2.getBoundingBox().inflate(inflate))) continue;
 
 //            CollisionMapData.putCollision(e1.getUUID(), e2.getUUID());
             LivingEntity livingEntity;
@@ -69,7 +73,8 @@ public class ParallelAABB {
                 entity = e1;
             } else continue;
 
-            CollisionMapData.putCollision(livingEntity.getId(), entity.getId());
+//            CollisionMapData.putCollision(livingEntity.getId(), entity.getId());
+            CollisionMapData.putCollision(TempID.getId(livingEntity), TempID.getId(entity));
 //            e1.doPush(e2);
 //            e2.doPush(e1);
 
@@ -88,7 +93,7 @@ public class ParallelAABB {
 //        });
     }
 
-    public static int[] nativePush(double[] positions, double[] aabbs, int[] resultSizeOut) {
+    public static MemorySegment nativePush(double[] positions, double[] aabbs, int[] resultSizeOut) {
         if(!isInitialized) {
             NativeInterface.initialize();
             isInitialized = true;

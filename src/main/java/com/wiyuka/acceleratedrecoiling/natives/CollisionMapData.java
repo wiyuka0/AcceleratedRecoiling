@@ -34,7 +34,8 @@ public class CollisionMapData {
     }
 
     public static List<Entity> replace1(Entity source, Level level) {
-        IntArrayList ids = collisionMap.get(source.getId());
+        IntArrayList ids = collisionMap.get(TempID.getId(source));
+//        IntArrayList ids = collisionMap.get(source.getId());
         if (ids == null || ids.isEmpty()) return Collections.emptyList();
         return new EntityListView(ids, level, source);
     }
@@ -53,7 +54,8 @@ public class CollisionMapData {
         @Override
         public Entity get(int index) {
             int entityId = ids.getInt(index);
-            Entity target = level.getEntity(entityId);
+//            Entity target = level.getEntity(entityId);
+            Entity target = TempID.getEntity(entityId);
             if(target == null) return source;
             return target;
         }

@@ -76,7 +76,7 @@ public class NativeInterface {
         return collisionPairsBuf;
     }
 
-    public static int[] push(
+    public static MemorySegment push(
             double[] locations,
             double[] aabb,
             int[] resultSizeOut
@@ -105,9 +105,10 @@ public class NativeInterface {
             }
 
             resultSizeOut[0] = collisionSize;
-            if (collisionSize == -1) return new int[0];
+            if (collisionSize == -1) return null;
 
-            return collisionPairs.toArray(JAVA_INT);
+//            return collisionPairs.toArray(JAVA_INT);
+            return collisionPairs;
         }
     }
 
