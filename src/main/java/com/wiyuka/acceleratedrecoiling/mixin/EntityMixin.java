@@ -7,6 +7,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -19,6 +20,19 @@ public abstract class EntityMixin implements ICustomBB {
     private double bbMaxX = 0.0;
     private double bbMaxY = 0.0;
     private double bbMaxZ = 0.0;
+
+    @Unique
+    private int nativeId = -1;
+
+    @Override
+    public int getNativeId() {
+        return nativeId;
+    }
+
+    @Override
+    public void setNativeId(int nativeId) {
+        this.nativeId = nativeId;
+    }
 
 
     @Override
@@ -34,6 +48,8 @@ public abstract class EntityMixin implements ICustomBB {
     @Shadow
     private Vec3 position;
 
+
+    @Shadow public abstract boolean isRemoved();
 
     @Override
     public final void extractionPosition(double[] doubleArray, int offset) {
@@ -54,4 +70,12 @@ public abstract class EntityMixin implements ICustomBB {
         this.bbMaxY = bb.maxY;
         this.bbMaxZ = bb.maxZ;
     }
+
+//    @Inject(
+//            method = "onRemoval",
+//            at = @At("TAIL")
+//    )
+//    private void onOnRemoval(Entity.RemovalReason r, CallbackInfo ci) {
+//        NativeIDManager.unregister((Entity) (Object) this);
+//    }
 }
