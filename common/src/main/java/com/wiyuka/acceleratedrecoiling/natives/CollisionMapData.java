@@ -33,7 +33,7 @@ public class CollisionMapData {
         collisionMap.clear();
     }
 
-    public static List<Entity> replace1(Entity source, Level level) {
+    public static List<Entity> getCollisionList(Entity source, Level level) {
         IntArrayList ids = collisionMap.get(TempID.getId(source));
 //        IntArrayList ids = collisionMap.get(source.getId());
         if (ids == null || ids.isEmpty()) return Collections.emptyList();

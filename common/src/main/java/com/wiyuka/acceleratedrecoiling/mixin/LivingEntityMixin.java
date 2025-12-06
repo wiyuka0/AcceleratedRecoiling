@@ -54,7 +54,7 @@ public class LivingEntityMixin {
 //        }
 //        return result;
         if(FoldConfig.enableEntityCollision && !(entity instanceof Player) && !entity.level().isClientSide())
-            return CollisionMapData.replace1(entity, instance);
+            return CollisionMapData.getCollisionList(entity, instance);
         else
             return original.call(instance, entity, boundingBox);
     }
