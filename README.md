@@ -36,7 +36,7 @@
 ```
 * enableEntityCollision: 是否启用实体挤压优化
 * enableEntityGetterOptimization: 是否启用EntityGetter接口优化 (暂时无效)
-* maxCollision 每个实体最多与其周围几个实体相互碰撞
+* maxCollision: 每个实体最多与其周围几个实体相互碰撞
   
 ## 基准测试
 #### 测试环境
@@ -44,21 +44,10 @@
 * **内存**: 32GB (分配堆内存 24GB)
 * **显卡**: NVIDIA RTX 3060 Ti
 * **服务端**: `Leaves 1.21.8-138-master@9331167 (2025-10-18T16:10:30Z)`
-* **Java**: Eclipse Adoptium JDK 21
+* **Java**: GraalVM JDK 21
 * **启动参数**: `-Dleavesclip.enable.mixin=true -Xmx24G -Xms24G`
-* **模组版本** `AcceleratedRecoilingLeaves-0.7-alpha-leaves-all.jar`
-
-#### 使用配置
-```json
-{
-    "enableEntityCollision": true,
-    "enableEntityGetterOptimization": true,
-    "gridSize": 8,
-    "maxCollision": 32,
-    "gpuIndex": 0,
-    "useCPU": false
-}
-```
+* **模组版本**: `AcceleratedRecoilingLeaves-0.7.3-alpha-leaves-all.jar`
+* **使用配置**: 默认
 
 #### 测试方法
 在同一个区块内的 2x2 空间内生成指定数量的猪，记录服务器 TPS 变化
@@ -67,14 +56,11 @@
 
 | 实体数量 | LeavesMC + 加速碰撞 (TPS) | LeavesMC (TPS) | 提升倍率 |
 | :--- | :--- | :--- | :--- |
-| **2,048** | **20.0** | 3.0 | 6.6x  |
-| **4,096** | **19.0** | 0.5 | 38x |
-| **8,192** | **10.0** | - | - |
-| **16,384** | **5.3** | - | - |
-| **32,768** | **2.8** | - | - |
-| **65,536** | **1.3** | - | - |
-| **131,072** | **~0.4** | - | - |
-| **294,912** | **~0.2** | - | - |
+| **2,048** | **20.0** (16 MSPT) | 3.0 | 20.8x  |
+| **4,096** | **20.0** (27 MSPT) | 0.5 | 74x |
+| **8,192** | **19.7** (51 MSPT) | - | - |
+| **16,384** | **8.6** (115 MSPT) | - | - |
+| **32,768** | **4.3** (230 MSPT) | - | - |
 
 ## 贡献与致谢
 
