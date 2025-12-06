@@ -44,7 +44,7 @@ public class ParallelAABB {
 
         int[] result = nativePush(locations, aabb, resultCounts);
 
-        if (result == null || result.length % 2 != 0) return;
+        if (result == null) return;
 
 
         for (int i = 0; i * 2 + 1 < result.length && i < resultCounts[0]; i++) {
