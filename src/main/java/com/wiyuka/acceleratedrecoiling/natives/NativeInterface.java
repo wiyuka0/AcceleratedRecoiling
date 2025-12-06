@@ -45,9 +45,9 @@ public class NativeInterface {
         pushMethodHandle = null;
 
         collisionPairsArena.close();
-        currentSize = -1;
-        collisionPairsBuf = null;
         collisionPairsArena = null;
+        collisionPairsBuf = null;
+        currentSize = -1;
     }
 
     /**
