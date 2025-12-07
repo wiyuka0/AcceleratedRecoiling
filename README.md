@@ -13,14 +13,14 @@
 * **Java 21 或更高版本**：FFM API 是 Java 21 的预览功能。**你必须使用 Java 21+ 来启动你的服务器/客户端。**
 * **64位操作系统**：本机库（`.dll` / `.so`）需要64位环境。
 * **Windows 平台** [**Microsoft Visual C++ 运行库**](https://aka.ms/vs/17/release/vc_redist.x64.exe)：如果启动失败，请首先安装此运行库。
-* **LeavesMC** 如果你用的是加速碰撞的LeavesMC移植版，请确保服务器的启动参数中包含 `-Dleavesclip.enable.mixin=true`
+* **Leaves** 如果你用的是加速碰撞的Leaves移植版，请确保服务器的启动参数中包含 `-Dleavesclip.enable.mixin=true`
 
 ## 游戏崩溃了！
 如果游戏无法正常启动……
 
 * 你的客户端是 Forge 1.20.1，尝试在 JVM 启动参数中添加 `--enable-preview`。
 * 你的客户端是 NeoForge 1.21.1/1.21.8，请使用 Java 22+ 启动游戏。
-* 你的环境是 LeavesMC，请确保服务器的启动参数中包含 `-Dleavesclip.enable.mixin=true`。
+* 你的环境是 Leaves，请确保服务器的启动参数中包含 `-Dleavesclip.enable.mixin=true`。
 * 如果这些方法都不起作用，请更新此模组，并删除文件 `.minecraft/acceleratedRecoilingLib.dll`，然后重启客户端。（文件位于 `.minecraft/` 或你的客户端根目录下）
 
 ## 安装
@@ -56,7 +56,7 @@
 
 #### 测试结果
 
-| 实体数量 | LeavesMC + 加速碰撞 (TPS) | LeavesMC (TPS) | 提升倍率 |
+| 实体数量 | Leaves + 加速碰撞 (TPS) | Leaves (TPS) | 提升倍率 |
 | :--- | :--- | :--- | :--- |
 | **2,048** | **20.0** (16 MSPT) | 3.0 | 20.8x  |
 | **4,096** | **20.0** (27 MSPT) | 0.5 | 74x |
