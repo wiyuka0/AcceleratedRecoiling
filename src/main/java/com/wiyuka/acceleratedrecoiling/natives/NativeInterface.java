@@ -160,7 +160,7 @@ public class NativeInterface {
                 {
                     "enableEntityCollision": true,
                     "enableEntityGetterOptimization": true,
-                    "maxCollision": 32,
+                    "maxCollision": 32
                 }
                 """;
         File foldConfig = new File("acceleratedRecoiling.json");
