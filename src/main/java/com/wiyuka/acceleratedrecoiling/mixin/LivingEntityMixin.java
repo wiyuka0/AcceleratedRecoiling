@@ -18,6 +18,34 @@ import java.util.function.Predicate;
 
 @Mixin(LivingEntity.class)
 public class LivingEntityMixin {
+//    @Inject(
+//            method = "pushEntities",
+//            at = @At(
+//                    "HEAD"
+//            ),
+//            cancellable = true
+//    )
+//    private void pushEntities(final CallbackInfo ci) {
+//        LivingEntity self = (LivingEntity)(Object)this;
+//        if(self.level().isClientSide) return;
+//
+////        ci.cancel();
+//        if((FoldConfig.fold) && self.getType() != EntityType.PLAYER) {
+//            ci.cancel();
+//        }
+//    }
+
+
+    @WrapOperation(
+            method = "pushEntities",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/world/entity/LivingEntity;doPush(Lnet/minecraft/world/entity/Entity;)V"
+            )
+    )
+    private void doPushVerify(LivingEntity instance, Entity entity, Operation<Void> original) {
+        if(instance.getBoundingBox().intersects(entity.getBoundingBox())) original.call(instance, entity);
+    }
 
     @WrapOperation(
             method = "pushEntities",
