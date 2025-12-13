@@ -2,6 +2,7 @@ package com.wiyuka.acceleratedrecoiling.natives;
 
 import com.wiyuka.acceleratedrecoiling.api.ICustomBB;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.LivingEntity;
 
 import java.lang.foreign.MemorySegment;
@@ -74,7 +75,8 @@ public class ParallelAABB {
             } else continue;
 
 //            CollisionMapData.putCollision(livingEntity.getId(), entity.getId());
-            CollisionMapData.putCollision(TempID.getId(livingEntity), TempID.getId(entity));
+            if(EntitySelector.pushableBy(livingEntity).test(entity))
+                CollisionMapData.putCollision(TempID.getId(livingEntity), TempID.getId(entity));
 //            e1.doPush(e2);
 //            e2.doPush(e1);
 

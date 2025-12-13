@@ -13,11 +13,40 @@ import net.minecraft.world.phys.AABB;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
-@Mixin(value = LivingEntity.class, priority = 1001)
+@Mixin(LivingEntity.class)
 public class LivingEntityMixin {
+//    @Inject(
+//            method = "pushEntities",
+//            at = @At(
+//                    "HEAD"
+//            ),
+//            cancellable = true
+//    )
+//    private void pushEntities(final CallbackInfo ci) {
+//        LivingEntity self = (LivingEntity)(Object)this;
+//        if(self.level().isClientSide) return;
+//
+////        ci.cancel();
+//        if((FoldConfig.fold) && self.getType() != EntityType.PLAYER) {
+//            ci.cancel();
+//        }
+//    }
+
+
+    @WrapOperation(
+            method = "pushEntities",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/world/entity/LivingEntity;doPush(Lnet/minecraft/world/entity/Entity;)V"
+            )
+    )
+    private void doPushVerify(LivingEntity instance, Entity entity, Operation<Void> original) {
+        if(instance.getBoundingBox().intersects(entity.getBoundingBox())) original.call(instance, entity);
+    }
 
     @WrapOperation(
             method = "pushEntities",
@@ -26,7 +55,7 @@ public class LivingEntityMixin {
                     target = "Lnet/minecraft/world/level/Level;getEntities(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;"
             )
     )
-    private List<Entity> replace(Level instance, Entity entity, AABB boundingBox, Predicate<? super Entity> predicate, Operation<List<Entity>> original) {
+    private List<Entity> replace(Level instance, Entity entity, AABB aabb, Predicate<? super Entity> predicate, Operation<List<Entity>> original) {
 //        Set<UUID> entities = CollisionMapTemp.get(entity.getUUID());
 //        if(entities == null) return Collections.emptyList();
 //        List<Entity> result = new ArrayList<>();
@@ -36,30 +65,14 @@ public class LivingEntityMixin {
 //            result.add(entity1);
 //        }
 //        return result;
+
+//        var source = CollisionMapData.getCollisionList(entity, instance);
+
         if(FoldConfig.enableEntityCollision && !(entity instanceof Player) && !entity.level().isClientSide)
             return CollisionMapData.getCollisionList(entity, instance);
         else
-            return original.call(instance, entity, boundingBox, predicate);
+            return original.call(instance, entity, aabb, predicate);
     }
-
-//    @WrapOperation(
-//            method = "pushEntities",
-//            at = @At(
-//                    value = "INVOKE",
-//                    target = "Lnet/minecraft/world/level/Level;getEntities(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;"
-//            )
-//    )
-////        Set<UUID> entities = CollisionMapTemp.get(entity.getUUID());
-////        if(entities == null) return Collections.emptyList();
-////        List<Entity> result = new ArrayList<>();
-////        for (UUID uuid : entities) {
-////            Entity entity1 = instance.getEntity(uuid);
-////            if (entity1 == null) continue;
-////            result.add(entity1);
-////        }
-////        return result;
-//        else
-//    }
 
 //    @Inject(
 //            method = "aiStep",
