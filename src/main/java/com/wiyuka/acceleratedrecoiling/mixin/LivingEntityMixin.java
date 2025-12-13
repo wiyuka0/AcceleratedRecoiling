@@ -6,6 +6,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
 import com.wiyuka.acceleratedrecoiling.natives.CollisionMapData;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -14,6 +15,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Mixin(LivingEntity.class)
 public class LivingEntityMixin {
@@ -35,6 +37,16 @@ public class LivingEntityMixin {
 //    }
 
 
+    @WrapOperation(
+            method = "pushEntities",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/world/entity/LivingEntity;doPush(Lnet/minecraft/world/entity/Entity;)V"
+            )
+    )
+    private void doPushVerify(LivingEntity instance, Entity entity, Operation<Void> original) {
+        if(instance.getBoundingBox().intersects(entity.getBoundingBox())) original.call(instance, entity);
+    }
 
     @WrapOperation(
             method = "pushEntities",
@@ -53,6 +65,9 @@ public class LivingEntityMixin {
 //            result.add(entity1);
 //        }
 //        return result;
+
+//        var source = CollisionMapData.getCollisionList(entity, instance);
+
         if(FoldConfig.enableEntityCollision && !(entity instanceof Player) && !entity.level().isClientSide)
             return CollisionMapData.getCollisionList(entity, instance);
         else
