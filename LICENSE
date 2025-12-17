@@ -1,3 +1,15 @@
+License Overview
+This project uses a mixed licensing model:
+Open Source Part (Java):
+The source code located in the src/main/java directory.
+The Java interface is licensed under the MIT License. You are free to use, modify, and distribute this part as long as you include the original copyright notice.
+
+Proprietary Part (C++ / Native Libraries):
+The C++ compiled dynamic libraries located in root/acceleratedRecoilingLib.dll are Proprietary and All Rights Reserved.
+No Commercial Use without permission. 
+No Reverse Engineering. 
+No Redistribution of the binary alone.
+
 The MIT License (MIT)
 Copyright © 2025 wiyuka
 
