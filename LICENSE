@@ -6,7 +6,6 @@ The Java interface is licensed under the MIT License. You are free to use, modif
 
 Proprietary Part (C++ / Native Libraries):
 The C++ compiled dynamic libraries located in root/acceleratedRecoilingLib.dll are Proprietary and All Rights Reserved.
-No Commercial Use without permission. 
 No Reverse Engineering. 
 No Redistribution of the binary alone.
 
