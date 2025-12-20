@@ -71,3 +71,14 @@
 *   **[**fireboy637**](https://github.com/fireboy637)**: 提供了该项目的ArchitecturyAPI移植方案与核心代码。
 *   **[**hydropuse**](https://github.com/hydropuse)**: 提供了该项目的JDK 22兼容方案与核心代码。
 
+（其实我想新开一个仓库用来放这个的但是我懒 TwT
+汇报一下战绩：
+| 实体数量 | MS/Frame(每帧耗时，仅BroadPhase) | MSPF |
+| :--- | :--- | :--- |
+| 10000 | 0.2 | 5000 FPS |
+| 50000 | 1.1 | 909 FPS |
+| 100000 | 2.5 | 400 FPS |
+| 200000 | 6.7 | 149 FPS |
+| 400000 | 21.3 | 46 FPS |
+）
+
