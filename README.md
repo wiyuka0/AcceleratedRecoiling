@@ -1,4 +1,5 @@
-# 加速碰撞（Accelerated Recoiling） 
+###### 十年优化无人问，一举____天下知。
+# 加速碰撞（Accelerated Recoiling）
 加速碰撞是一个作用于服务器的实体碰撞逻辑优化模组，旨在显著降低实体的碰撞计算开销
 通过 Java 21+ 的 Foreign Function & Memory (FFM) API来接管实体AABB碰撞检测，将计算压力从Java转移。
 
