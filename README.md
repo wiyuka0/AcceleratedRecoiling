@@ -74,6 +74,9 @@ AcceleratedRecoiling is a Minecraft optimization mod that improves server perfor
 *   **[**fireboy637**](https://github.com/fireboy637)**: 提供了该项目的ArchitecturyAPI移植方案与核心代码。
 *   **[**hydropuse**](https://github.com/hydropuse)**: 提供了该项目的JDK 22兼容方案与核心代码。
 
+## 开源协议
+该项目使用 MIT 开源协议开源。
+
 （其实我想新开一个仓库用来放这个的但是我懒 TwT
 汇报一下战绩：
 | 实体数量 | MS/Frame(每帧耗时，仅BroadPhase) | MSPF |
