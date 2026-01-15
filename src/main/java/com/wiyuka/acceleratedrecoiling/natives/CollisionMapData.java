@@ -2,6 +2,7 @@ package com.wiyuka.acceleratedrecoiling.natives;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import net.minecraft.client.renderer.chunk.SectionCompiler;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 
@@ -23,7 +24,7 @@ public class CollisionMapData {
         IntArrayList list = collisionMap.get(source);
         if (list == null) {
             list = new IntArrayList();
-//            collisionMap[source] = list;
+            SectionCompiler
             collisionMap.put(source, list);
         }
         list.add(target);
@@ -35,7 +36,6 @@ public class CollisionMapData {
 
     public static List<Entity> getCollisionList(Entity source, Level level) {
         IntArrayList ids = collisionMap.get(TempID.getId(source));
-//        IntArrayList ids = collisionMap.get(source.getId());
         if (ids == null || ids.isEmpty()) return Collections.emptyList();
         return new EntityListView(ids, level, source);
     }

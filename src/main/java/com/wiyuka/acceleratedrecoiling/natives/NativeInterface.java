@@ -2,9 +2,11 @@ package com.wiyuka.acceleratedrecoiling.natives;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.wiyuka.acceleratedrecoiling.AcceleratedRecoiling;
 import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
 import com.wiyuka.acceleratedrecoiling.ffm.FFM;
+import net.minecraft.client.renderer.LevelRenderer;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -30,6 +32,7 @@ public class NativeInterface {
             return;
         }
 
+        BufferBuilder
 
         // 2. 立即设置标志位
         ParallelAABB.isInitialized = false;
@@ -49,6 +52,8 @@ public class NativeInterface {
         collisionPairsBuf = null;
 
         currentSize = -1;
+
+        LevelRenderer
     }
 
     /**

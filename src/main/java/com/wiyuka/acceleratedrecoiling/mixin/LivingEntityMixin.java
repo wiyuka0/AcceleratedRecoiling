@@ -52,6 +52,24 @@ public class LivingEntityMixin {
             method = "pushEntities",
             at = @At(
                     value = "INVOKE",
+                    target = "Lnet/minecraft/world/entity/Entity;isPassenger()Z"
+            )
+    )
+    private boolean isPassenger(Entity instance, Operation<Boolean> original) {
+        if (instance.isPassenger()) {
+            return true;
+        }
+        AABB myBox = ((LivingEntity)(Object)this).getBoundingBox();
+        AABB otherBox = instance.getBoundingBox();
+        if (!myBox.intersects(otherBox)) return true;
+        return false;
+    }
+
+
+    @WrapOperation(
+            method = "pushEntities",
+            at = @At(
+                    value = "INVOKE",
                     target = "Lnet/minecraft/world/level/Level;getPushableEntities(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;"
             )
     )
