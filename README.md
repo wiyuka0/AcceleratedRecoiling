@@ -3,6 +3,8 @@
 加速碰撞是一个作用于服务器的实体碰撞逻辑优化模组，旨在显著降低实体的碰撞计算开销
 通过 Java 21+ 的 Foreign Function & Memory (FFM) API来接管实体AABB碰撞检测，将计算压力从Java转移。
 
+AcceleratedRecoiling is a Minecraft optimization mod that improves server performance by optimizing AABB collision detection algorithms.
+
 *本模组目前为实验性质，目前来说本模组的 **实体挤压表现与原版不完全一致**。请在使用前做好存档备份，并谨慎使用。*
 
 官方交流群：1023713677
