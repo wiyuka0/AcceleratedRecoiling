@@ -14,6 +14,9 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.Random;
 import java.util.concurrent.*;
 
 import static java.lang.foreign.ValueLayout.JAVA_INT;
@@ -131,6 +134,8 @@ public class NativeInterface {
         }
     }
 
+    private static final Random rnd = new Random();
+
     public static void initialize() {
         Logger logger = AcceleratedRecoiling.LOGGER;
         String dllPath = "";
@@ -141,12 +146,29 @@ public class NativeInterface {
             if (dllStream == null) {
                 throw new java.io.FileNotFoundException("Cannot find " + fullDllName);
             }
-            File targetDll = new File(fullDllName);
-            dllPath = targetDll.getAbsolutePath();
-            try (java.io.OutputStream out = new java.io.FileOutputStream(targetDll)) {
-                dllStream.transferTo(out);
-                logger.info("fullDllName: " + targetDll.getAbsolutePath());
+
+            String extension = ".dll"; // 默认
+            int i = fullDllName.lastIndexOf('.');
+            if (i > 0) {
+                extension = fullDllName.substring(i);
             }
+
+            Path tempPath = Files.createTempFile(dllName + rnd.nextLong(), extension);
+            File targetDll = tempPath.toFile();
+
+            targetDll.deleteOnExit();
+
+            dllPath = targetDll.getAbsolutePath();
+
+            Files.copy(dllStream, tempPath, StandardCopyOption.REPLACE_EXISTING);
+
+            logger.info("Extracted native lib to temp: " + targetDll.getAbsolutePath());
+//            File targetDll = new File(fullDllName);
+//            dllPath = targetDll.getAbsolutePath();
+//            try (java.io.OutputStream out = new java.io.FileOutputStream(targetDll)) {
+//                dllStream.transferTo(out);
+//                logger.info("fullDllName: " + targetDll.getAbsolutePath());
+//            }
         } catch (IOException e) {
             throw new RuntimeException("Load failed: " + e.getMessage(), e);
         }
