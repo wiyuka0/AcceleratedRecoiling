@@ -110,8 +110,8 @@ void ensureSize(int n) {
 }
 
 inline void log(std::string str){
-     std::cout << str << "\n";
-     fflush(stdout);
+//     std::cout << str << "\n";
+//     fflush(stdout);
 }
 static auto startTime = std::chrono::high_resolution_clock::now();
 static auto endTime = std::chrono::high_resolution_clock::now();
