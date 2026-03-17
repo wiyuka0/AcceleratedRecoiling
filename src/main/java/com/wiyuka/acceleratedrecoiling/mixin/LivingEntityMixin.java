@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Mixin(LivingEntity.class)
@@ -74,22 +75,24 @@ public class LivingEntityMixin {
             )
     )
     private List<Entity> replace(Level instance, Entity entity, AABB boundingBox, Operation<List<Entity>> original) {
-//        Set<UUID> entities = CollisionMapTemp.get(entity.getUUID());
-//        if(entities == null) return Collections.emptyList();
-//        List<Entity> result = new ArrayList<>();
-//        for (UUID uuid : entities) {
-//            Entity entity1 = instance.getEntity(uuid);
-//            if (entity1 == null) continue;
-//            result.add(entity1);
-//        }
-//        return result;
+        if (FoldConfig.enableEntityCollision && !(entity instanceof Player) && !entity.level().isClientSide()) {
 
-//        var source = CollisionMapData.getCollisionList(entity, instance);
+            List<Entity> rawList = CollisionMapData.getCollisionList(entity, instance);
 
-        if(FoldConfig.enableEntityCollision && !(entity instanceof Player) && !entity.level().isClientSide)
-            return CollisionMapData.getCollisionList(entity, instance);
-        else
+            Predicate<? super Entity> pushablePredicate = EntitySelector.pushableBy(entity);
+
+            List<Entity> filteredList = new ArrayList<>();
+            for (Entity e : rawList) {
+                if (pushablePredicate.test(e)) {
+                    filteredList.add(e);
+                }
+            }
+
+            return filteredList;
+
+        } else {
             return original.call(instance, entity, boundingBox);
+        }
     }
 
 //    @Inject(
