@@ -110,8 +110,8 @@ void ensureSize(int n) {
 }
 
 inline void log(std::string str){
-    // std::cout << str << "\n";
-    // fflush(stdout);
+     std::cout << str << "\n";
+     fflush(stdout);
 }
 static auto startTime = std::chrono::high_resolution_clock::now();
 static auto endTime = std::chrono::high_resolution_clock::now();
@@ -294,7 +294,7 @@ extern "C" EXPORT void destroyCtx(void* context_ptr) {
 extern "C" EXPORT int push(const double *aabbs, int *outputA, int *outputB, int entityCount, int K, int gridSize, void* memDataPtrOri)
 {
 
-    if (entityCount < 2 || aabbs == nullptr || outputA == nullptr || outputB == nullptr)
+    if (entityCount < 2 || aabbs == nullptr || outputA == nullptr || outputB == nullptr  || memDataPtrOri == nullptr)
     {
         return 0;
     }
