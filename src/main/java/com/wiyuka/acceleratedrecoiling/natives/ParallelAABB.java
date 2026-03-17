@@ -45,16 +45,21 @@ public class ParallelAABB {
 
         int[] resultCounts = new int[1];
 
-        MemorySegment result = nativePush(locations, aabb, resultCounts);
+        NativeInterface.MemPair result = nativePush(locations, aabb, resultCounts);
 
-        if (result == null) return;
+        var outputA = result.A();
+        var outputB = result.B();
+
+        if (outputA == null || outputB == null) return;
 
 
         for (int i = 0; i < resultCounts[0]; i++) {
 //            int e1Index = result[i * 2];
 //            int e2Index = result[i * 2 + 1];
-            int e1Index = result.getAtIndex(ValueLayout.JAVA_INT, i * 2);
-            int e2Index = result.getAtIndex(ValueLayout.JAVA_INT, i * 2 + 1);
+//            int e1Index = result.getAtIndex(ValueLayout.JAVA_INT, i * 2);
+//            int e2Index = result.getAtIndex(ValueLayout.JAVA_INT, i * 2 + 1);
+            int e1Index = outputA.getAtIndex(ValueLayout.JAVA_INT, i);
+            int e2Index = outputB.getAtIndex(ValueLayout.JAVA_INT, i);
             if (e1Index >= livingEntities.size() || e2Index >= livingEntities.size()) continue;
 
             Entity e1 = livingEntities.get(e1Index);
@@ -95,7 +100,7 @@ public class ParallelAABB {
 //        });
     }
 
-    public static MemorySegment nativePush(double[] positions, double[] aabbs, int[] resultSizeOut) {
+    public static NativeInterface.MemPair nativePush(double[] positions, double[] aabbs, int[] resultSizeOut) {
         if(!isInitialized) {
             NativeInterface.initialize();
             isInitialized = true;
