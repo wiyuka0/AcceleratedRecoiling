@@ -56,24 +56,18 @@ public class LivingEntityMixin {
             )
     )
     private List<Entity> replace(Level instance, Entity entity, AABB aabb, Predicate<? super Entity> predicate, Operation<List<Entity>> original) {
-//        Set<UUID> entities = CollisionMapTemp.get(entity.getUUID());
-//        if(entities == null) return Collections.emptyList();
-//        List<Entity> result = new ArrayList<>();
-//        for (UUID uuid : entities) {
-//            Entity entity1 = instance.getEntity(uuid);
-//            if (entity1 == null) continue;
-//            result.add(entity1);
-//        }
-//        return result;
-
-//        var source = CollisionMapData.getCollisionList(entity, instance);
-
-        if(FoldConfig.enableEntityCollision && !(entity instanceof Player) && !entity.level().isClientSide) {
-            List<Entity> collisionList = CollisionMapData.getCollisionList(entity, instance);
-            collisionList.removeIf(predicate);
-            return collisionList;
-        } else
+        if (FoldConfig.enableEntityCollision && !(entity instanceof Player) && !entity.level().isClientSide()) {
+            List<Entity> rawList = CollisionMapData.getCollisionList(entity, instance);
+            List<Entity> filteredList = new ArrayList<>();
+            for (Entity e : rawList) {
+                if (e != entity && predicate.test(e)) {
+                    filteredList.add(e);
+                }
+            }
+            return filteredList;
+        } else {
             return original.call(instance, entity, aabb, predicate);
+        }
     }
 
 //    @Inject(
