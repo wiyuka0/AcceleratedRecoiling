@@ -68,9 +68,11 @@ public class LivingEntityMixin {
 
 //        var source = CollisionMapData.getCollisionList(entity, instance);
 
-        if(FoldConfig.enableEntityCollision && !(entity instanceof Player) && !entity.level().isClientSide)
-            return CollisionMapData.getCollisionList(entity, instance);
-        else
+        if(FoldConfig.enableEntityCollision && !(entity instanceof Player) && !entity.level().isClientSide) {
+            List<Entity> collisionList = CollisionMapData.getCollisionList(entity, instance);
+            collisionList.removeIf(predicate);
+            return collisionList;
+        } else
             return original.call(instance, entity, aabb, predicate);
     }
 
