@@ -294,7 +294,7 @@ extern "C" EXPORT void destroyCtx(void* context_ptr) {
 extern "C" EXPORT int push(const double *aabbs, int *outputA, int *outputB, int entityCount, int K, int gridSize, void* memDataPtrOri)
 {
 
-    if (entityCount < 2 || aabbs == nullptr || outputA == nullptr || outputB == nullptr)
+    if (entityCount < 2 || aabbs == nullptr || outputA == nullptr || outputB == nullptr  || memDataPtrOri == nullptr)
     {
         return 0;
     }

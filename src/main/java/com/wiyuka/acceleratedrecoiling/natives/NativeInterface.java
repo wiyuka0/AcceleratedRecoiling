@@ -21,28 +21,79 @@ import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static java.lang.foreign.ValueLayout.*;
 
 public class NativeInterface {
     private static Linker linker;
     private static Arena nativeArena;
+
     private static MethodHandle pushMethodHandle = null;
     private static MethodHandle createCtxMethodHandle = null;
-    private static MethodHandle destroyCtxMethodHandle = null; // todo
-    private static long maxSizeTouched = -1;
+    private static MethodHandle destroyCtxMethodHandle = null;
 
-    static boolean useCPU = false;
+    private static final AtomicLong maxSizeTouched = new AtomicLong(-1);
 
-    private static Arena collisionPairsArena = null;
-    private static MemorySegment collisionPairsBufA;
-    private static MemorySegment collisionPairsBufB;
-    private static MemorySegment context;
-    private static int currentSize = -1;
 
     public record MemPair(MemorySegment A, MemorySegment B) {}
+
+    private static class ThreadState {
+        Arena bufferArena = null;
+        MemorySegment bufA;
+        MemorySegment bufB;
+        MemorySegment context;
+        int currentSize = -1;
+
+        ThreadState() {
+            try {
+                if (createCtxMethodHandle != null) {
+                    context = (MemorySegment) createCtxMethodHandle.invokeExact();
+                }
+            } catch (Throwable e) {
+                throw new RuntimeException("Failed to create native context for thread", e);
+            }
+        }
+
+        MemPair reallocOutputBuf(int newSize) {
+            long newSizeTotal = Math.max(1024L, (long) (newSize * 1.2) * JAVA_INT.byteSize());
+
+            if (newSizeTotal > currentSize) {
+                if (bufferArena != null) {
+                    bufferArena.close();
+                }
+                bufferArena = Arena.ofConfined();
+                bufA = bufferArena.allocate(newSizeTotal);
+                bufB = bufferArena.allocate(newSizeTotal);
+                currentSize = (int) newSizeTotal;
+            }
+            return new MemPair(bufA, bufB);
+        }
+
+        void destroy() {
+            if (bufferArena != null) {
+                try { bufferArena.close(); } catch (Exception ignored) {}
+            }
+            if (context != null && destroyCtxMethodHandle != null) {
+                try {
+                    destroyCtxMethodHandle.invokeExact(context);
+                } catch (Throwable e) {
+                    AcceleratedRecoiling.LOGGER.error("Failed to destroy native context", e);
+                }
+            }
+        }
+    }
+
+    private static final Set<ThreadState> ALL_THREAD_STATES = ConcurrentHashMap.newKeySet();
+
+    private static final ThreadLocal<ThreadState> THREAD_STATE = ThreadLocal.withInitial(() -> {
+        ThreadState state = new ThreadState();
+        ALL_THREAD_STATES.add(state);
+        return state;
+    });
 
     public static void destroy() {
         if (!ParallelAABB.isInitialized) {
@@ -51,13 +102,10 @@ public class NativeInterface {
 
         ParallelAABB.isInitialized = false;
 
-        if (nativeArena != null) {
-            nativeArena.close();
+        for (ThreadState state : ALL_THREAD_STATES) {
+            state.destroy();
         }
-
-        if (collisionPairsArena != null) {
-            collisionPairsArena.close();
-        }
+        ALL_THREAD_STATES.clear();
 
         nativeArena = null;
         linker = null;
@@ -65,33 +113,11 @@ public class NativeInterface {
         createCtxMethodHandle = null;
         destroyCtxMethodHandle = null;
 
-        collisionPairsArena = null;
-        collisionPairsBufA = null;
-        collisionPairsBufB = null;
-        context = null;
-        currentSize = -1;
-        maxSizeTouched = -1;
+        maxSizeTouched.set(-1);
     }
 
     private static SymbolLookup findFoldLib(Arena arena, String dllPath) {
         return SymbolLookup.libraryLookup(dllPath, arena);
-    }
-
-    private static MemPair reallocOutputBuf(int newSize) {
-        if (collisionPairsArena == null) {
-            collisionPairsArena = Arena.ofConfined();
-        }
-
-        long newSizeTotal = Math.max(1024, (long) (newSize * 1.2) * JAVA_INT.byteSize());
-
-        if (newSizeTotal > currentSize) {
-            collisionPairsArena.close();
-            collisionPairsArena = Arena.ofConfined();
-            collisionPairsBufA = collisionPairsArena.allocate(newSizeTotal);
-            collisionPairsBufB = collisionPairsArena.allocate(newSizeTotal);
-            currentSize = (int) newSizeTotal;
-        }
-        return new MemPair(collisionPairsBufA, collisionPairsBufB);
     }
 
     public static MemPair push(
@@ -99,15 +125,24 @@ public class NativeInterface {
             double[] aabb,
             int[] resultSizeOut
     ) {
+        if (!ParallelAABB.isInitialized) {
+            return null;
+        }
+
+        ThreadState state = THREAD_STATE.get();
+        if (state.context == null) {
+            return null;
+        }
+
         try (Arena tempArena = Arena.ofConfined()) {
             int count = locations.length / 3;
             int resultSize = locations.length * FoldConfig.maxCollision;
-            if (count > maxSizeTouched) maxSizeTouched = count;
+            maxSizeTouched.updateAndGet(current -> Math.max(current, count));
 
             MemorySegment aabbMem = FFM.allocateArray(tempArena, aabb);
-            MemPair collisionPairs = reallocOutputBuf(resultSize);
+            MemPair collisionPairs = state.reallocOutputBuf(resultSize);
 
-            int collisionSize;
+            int collisionSize = 0;
             try {
                 collisionSize = (int) pushMethodHandle.invokeExact(
                         aabbMem,
@@ -116,7 +151,7 @@ public class NativeInterface {
                         count,
                         FoldConfig.maxCollision,
                         0,
-                        context
+                        state.context
                 );
             } catch (Throwable e) {
                 throw new RuntimeException("Failed to invoke native push method", e);
@@ -186,10 +221,9 @@ public class NativeInterface {
         logger.info("acceleratedRecoiling initialized.");
         logger.info("Use max collisions: {}", FoldConfig.maxCollision);
 
-        // 3. 绑定 FFM
         linker = Linker.nativeLinker();
-        Arena arena = Arena.ofShared();
-        SymbolLookup lib = findFoldLib(arena, dllPath);
+        nativeArena = Arena.global();
+        SymbolLookup lib = findFoldLib(nativeArena, dllPath);
 
         pushMethodHandle = linker.downcallHandle(
                 lib.find("push").orElseThrow(() -> new RuntimeException("Cannot find symbol 'push'")),
@@ -211,12 +245,14 @@ public class NativeInterface {
         );
 
         try {
-            context = (MemorySegment) createCtxMethodHandle.invokeExact();
-        } catch (Throwable e) {
-            throw new RuntimeException("Failed to create native context", e);
+            destroyCtxMethodHandle = linker.downcallHandle(
+                    lib.find("destroyCtx").orElseThrow(),
+                    FunctionDescriptor.ofVoid(ADDRESS)
+            );
+        } catch (Exception e) {
+            logger.warn("Cannot find symbol 'destroyCtx'");
         }
 
-        nativeArena = arena;
     }
 
     private static void initConfig(JsonObject configJson) {
