@@ -34,7 +34,7 @@
 //     }
 //     void deallocate(T* p, std::size_t) {
 //         _mm_free(p);
-//     }
+//     }1
 // };
 
 #if defined(_MSC_VER)
@@ -68,7 +68,7 @@ public:
     };
 
     AlignedAllocator() noexcept {}
-    
+
     template <typename U>
     AlignedAllocator(const AlignedAllocator<U, Alignment>&) noexcept {}
 
@@ -127,14 +127,14 @@ void logTime(std::string str){
     log(str + ": " + std::to_string(duration()) + "ms\n");
 }
 
-#include <cstdint> 
+#include <cstdint>
 #include <cmath>
 
 
-const double WORLD_OFFSET = 50000000.0; 
+const double WORLD_OFFSET = 50000000.0;
 
-const int BITS_X = 36;             
-const int BITS_GRID = 64 - BITS_X; 
+const int BITS_X = 36;
+const int BITS_GRID = 64 - BITS_X;
 
 const uint64_t MASK_X = (1ULL << BITS_X) - 1;
 
@@ -149,7 +149,7 @@ struct CompressTable {
                     table[i][count++] = bit;
                 }
             }
-            
+
             for (; count < 8; ++count) {
                 table[i][count] = 0;
             }
@@ -228,7 +228,6 @@ static inline void radixSort64_OMP(SAPNode* src, std::vector<SAPNode>& buffer, s
 
 struct EntityData
 {
-
     AlignedVector<SAPNode> sortedList;
     AlignedVector<int> sortedMinX, sortedMaxX;
     AlignedVector<int> sortedMinY, sortedMaxY;
@@ -239,7 +238,10 @@ struct EntityData
     AlignedVector<int> runIndexPerItem;
     std::vector<int> runStarts;
     std::vector<size_t> sortHistograms;
-    // std::vector<int> gridStarts(range + 2, entityCount);
+
+    // 【新增】用于记录每个 entity 实际写入了多少个碰撞结果
+    AlignedVector<int> collisionCounts;
+
     int currentSize = -1;
 
     void ensureSize(int n)
@@ -258,6 +260,7 @@ struct EntityData
                 sortedOriginalIDs = AlignedVector<int>(n);
                 quantized = AlignedVector<int>(n * 6);
                 runIndexPerItem = AlignedVector<int>(n);
+                collisionCounts = AlignedVector<int>(n); // 【新增】
             }
             currentSize = n;
             sortedList.resize(n);
@@ -270,6 +273,7 @@ struct EntityData
             sortedOriginalIDs.resize(n);
             quantized.resize(n * 6);
             runIndexPerItem.resize(n);
+            collisionCounts.resize(n); // 【新增】
         }
     }
 };
@@ -277,9 +281,17 @@ struct EntityData
 
 #define SCALE 64
 
-// #error This library is not allow any bounding box's size bigger than 2 * gridSize, if you know what you doing, remove this #error
+// #error This library is not allow any bounding box's size bigger than 2 * gridSize, if you know what you are doing, remove this #error
 
-extern "C" EXPORT int push(const double *aabbs, int *outputA, int *outputB, int entityCount, int K, int gridSize)
+extern "C" EXPORT void* createCtx() {
+    return new EntityData();
+}
+
+extern "C" EXPORT void destroyCtx(void* context_ptr) {
+    if(context_ptr) delete context_ptr;
+}
+
+extern "C" EXPORT int push(const double *aabbs, int *outputA, int *outputB, int entityCount, int K, int gridSize, void* memDataPtrOri)
 {
 
     if (entityCount < 2 || aabbs == nullptr || outputA == nullptr || outputB == nullptr)
@@ -287,25 +299,25 @@ extern "C" EXPORT int push(const double *aabbs, int *outputA, int *outputB, int 
         return 0;
     }
 
-    
-    
+
+
     ensureSize(entityCount);
 
     double invGridSize = 1.0 / ((double) gridSize);
-    static thread_local EntityData memData;
-    auto memDataPtr = &memData;
+    // static thread_local EntityData memData;
+    auto memDataPtr = (EntityData*) memDataPtrOri;
     memDataPtr->ensureSize(entityCount);
 
 
-    SAPNode* __restrict sortedList = memData.sortedList.data();
-    int* __restrict sortedMinX = memData.sortedMinX.data();
-    int* __restrict sortedMaxX = memData.sortedMaxX.data();
-    int* __restrict sortedMinY = memData.sortedMinY.data();
-    int* __restrict sortedMaxY = memData.sortedMaxY.data();
-    int* __restrict sortedMinZ = memData.sortedMinZ.data();
-    int* __restrict sortedMaxZ = memData.sortedMaxZ.data();
-    int* __restrict sortedOriginalIDs = memData.sortedOriginalIDs.data();
-    int* __restrict quantizedData = memData.quantized.data();
+    SAPNode* __restrict sortedList = memDataPtr->sortedList.data();
+    int* __restrict sortedMinX = memDataPtr->sortedMinX.data();
+    int* __restrict sortedMaxX = memDataPtr->sortedMaxX.data();
+    int* __restrict sortedMinY = memDataPtr->sortedMinY.data();
+    int* __restrict sortedMaxY = memDataPtr->sortedMaxY.data();
+    int* __restrict sortedMinZ = memDataPtr->sortedMinZ.data();
+    int* __restrict sortedMaxZ = memDataPtr->sortedMaxZ.data();
+    int* __restrict sortedOriginalIDs = memDataPtr->sortedOriginalIDs.data();
+    int* __restrict quantizedData = memDataPtr->quantized.data();
 
     start();
 
@@ -344,14 +356,14 @@ extern "C" EXPORT int push(const double *aabbs, int *outputA, int *outputB, int 
 
     start();
     std::vector<SAPNode>& sortBuffer = memDataPtr->sortBuffer;
-    radixSort64_OMP(sortedList, sortBuffer, memData.sortHistograms, entityCount);
+    radixSort64_OMP(sortedList, sortBuffer, memDataPtr->sortHistograms, entityCount);
     stop();
 
     logTime("Sort");
 
     start();
-    int* __restrict runIndexPerItem = memData.runIndexPerItem.data();
-    auto& runStarts = memData.runStarts;
+    int* __restrict runIndexPerItem = memDataPtr->runIndexPerItem.data();
+    auto& runStarts = memDataPtr->runStarts;
     runStarts.clear();
     runStarts.reserve(1024);
     runStarts.push_back(0);
@@ -403,6 +415,9 @@ extern "C" EXPORT int push(const double *aabbs, int *outputA, int *outputB, int 
     const int *__restrict pMaxX = sortedMaxX;
     const int *__restrict pMinX = sortedMinX;
     const int *__restrict pIDs = sortedOriginalIDs;
+
+    int* __restrict counts = memDataPtr->collisionCounts.data();
+
 
     #pragma omp parallel for schedule(guided, 64) reduction(+ : collisionCount)
     for (int i = 0; i < entityCount; ++i)
@@ -480,7 +495,7 @@ extern "C" EXPORT int push(const double *aabbs, int *outputA, int *outputB, int 
 
                     #ifdef _WIN32
                         int cnt = __popcnt((unsigned int) mask8);//__builtin_popcount((unsigned int)mask8);
-                    #else 
+                    #else
                         int cnt = __builtin_popcount((unsigned int)mask8);
                     #endif
                     const int* bits = compressLUT.table[mask8];
@@ -528,8 +543,33 @@ extern "C" EXPORT int push(const double *aabbs, int *outputA, int *outputB, int 
             }
         }
         collisionCount += currentCollisions;
+        counts[i] = currentCollisions;
+
     }
     stop();
     logTime("SAP");
+    start();
+    int currentOffset = 0;
+    for (int i = 0; i < entityCount; ++i)
+    {
+        int count = counts[i];
+        if (count > 0)
+        {
+            int srcOffset = i * K;
+            int dstOffset = currentOffset;
+
+            if (srcOffset != dstOffset)
+            {
+                for (int c = 0; c < count; ++c)
+                {
+                    outputA[dstOffset + c] = outputA[srcOffset + c];
+                    outputB[dstOffset + c] = outputB[srcOffset + c];
+                }
+            }
+            currentOffset += count;
+        }
+    }
+    stop();
+    logTime("Compaction");
     return collisionCount;
 }

@@ -24,7 +24,6 @@ public class CollisionMapData {
         IntArrayList list = collisionMap.get(source);
         if (list == null) {
             list = new IntArrayList();
-            SectionCompiler
             collisionMap.put(source, list);
         }
         list.add(target);

@@ -92,6 +92,39 @@ repositories {
     mavenCentral()
 }
 
+// 1. 创建编译原生 C++ 的任务
+tasks.register("compileNativeLib", Exec) {
+    group = "build"
+    description = "Compiles the C++ Native Library using MSVC."
+    onlyIf { System.getProperty("os.name").toLowerCase().contains("windows") }
+    def cppSource = layout.projectDirectory.file("acceleratedRecoilingLib.cpp")
+    def dllOutput = layout.projectDirectory.file("build/acceleratedRecoilingLib.dll")
+
+    inputs.file(cppSource)
+    outputs.file(dllOutput)
+    workingDir = layout.projectDirectory.asFile
+    // replace your vcvars64.bat
+    def vcvarsScript = "I:\\vs\\VC\\Auxiliary\\Build\\vcvars64.bat"
+    def compileCmd = """call "${vcvarsScript}" && cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /MD /Zi /W3 /I"E:\\qucistart\\acceleratedrecoilingnative" acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /LIBPATH:"I:\\vcpkg\\vcpkg\\installed\\x64-windows\\lib" /OPT:REF /OPT:ICF"""
+
+    commandLine 'cmd', '/c', compileCmd
+    doFirst {
+        // 3. 在执行阶段 (doFirst) 中，必须使用纯 Java API 创建文件夹，绝对不能用 mkdir()
+        File bDir = new File(getWorkingDir(), "build")
+        if (!bDir.exists()) {
+            bDir.mkdirs()
+        }
+        println "正在使用 MSVC 编译 acceleratedRecoilingLib.cpp ..."
+    }
+}
+tasks.named('processResources', ProcessResources) {
+    dependsOn 'compileNativeLib'
+
+    from(layout.projectDirectory.file("build/acceleratedRecoilingLib.dll")) {
+        into ""
+    }
+}
+
 base {
     archivesName = mod_id
 }
@@ -107,11 +140,6 @@ neoForge {
         minecraftVersion = project.parchment_minecraft_version
     }
 
-    // This line is optional. Access Transformers are automatically detected
-    // accessTransformers.add('src/main/resources/META-INF/accesstransformer.cfg')
-
-    // Default run configurations.
-    // These can be tweaked, removed, or duplicated as needed.
     runs {
         client {
             client()
