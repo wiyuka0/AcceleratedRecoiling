@@ -69,8 +69,6 @@ AcceleratedRecoiling is a Minecraft optimization mod that improves server perfor
 
 ## TODO
 - [ ] 兼容1.21.11
-- [ ] 修复[Issue #12](https://github.com/wiyuka0/AcceleratedRecoiling/issues/12)
-- [X] 兼容多线程世界tick模组
 - [ ] 兼容MAC(?)
 - [ ] Luminol 支持
 
