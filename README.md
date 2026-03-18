@@ -1,4 +1,4 @@
-# 此分支的`README.md`已过时，请查看master分支的最新`README.md`
+# 该分支已停止更新，请查看master分支的最新`README.md`
 
 # 加速碰撞（Accelerated Recoiling）
 加速碰撞是一个作用于服务器的实体碰撞逻辑优化模组，旨在显著降低实体密集区域的碰撞计算开销
