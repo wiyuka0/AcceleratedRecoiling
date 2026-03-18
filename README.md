@@ -74,6 +74,44 @@ AcceleratedRecoiling is a Minecraft optimization mod that improves server perfor
 - [ ] 兼容MAC(?)
 - [ ] Luminol 支持
 
+## 如何编译 (How to Compile)
+
+本项目包含通过 Java FFM 调用的原生 C++ 核心库。目前的 Gradle 构建脚本配置为 **在 Windows 主机下利用 WSL 自动化交叉编译双端动态库**（同时生成 `.dll` 和 `.so`）。
+
+因此，如果你想从源码编译本项目，**建议在装有 WSL 的 Windows 10/11 系统下进行**。
+
+### 1. 环境准备
+* **Java**: 安装 JDK 21。
+* **Windows (MSVC)**: 安装 [Visual Studio 2022](https://visualstudio.microsoft.com/zh-hans/)，并在安装程序中勾选 **“使用 C++ 的桌面开发”**。
+* **Linux (WSL)**: 确保你安装了 WSL。打开 WSL 终端，安装 GCC 工具链和 OpenMP 运行时：
+  ```bash
+  sudo apt update
+  sudo apt install build-essential libgomp1 -y
+  ```
+
+### 2. 修改编译脚本路径
+由于每台电脑的 Visual Studio 安装路径不同，在编译前，你**必须**修改 `build.gradle.kts` 中的 MSVC 环境脚本路径。
+
+打开 `build.gradle.kts`，找到 `compileNativeLib` 任务中的这一行：
+```kotlin
+val vcvarsScript = "I:\\vs\\VC\\Auxiliary\\Build\\vcvars64.bat"
+```
+将其替换为你本机实际的 `vcvars64.bat` 路径。通常默认路径类似于：
+`C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat`
+
+### 3. 开始构建
+在项目根目录下，打开命令行（PowerShell 或 CMD），运行以下命令：
+```powershell
+# Windows
+gradlew build
+# shadowJar
+gradlew shadowJar
+```
+Gradle 将自动调用 MSVC 编译 `.dll`，并通过 WSL 调用 `g++` 编译 `.so`，最后将其一起打包进 Jar 中。编译产物将位于 `build/libs/` 目录下。
+
+---
+
+
 ## 贡献与致谢
 
 非常感谢以下开发者和所有为本项目提交issues与pr的人的帮助与支持！！
