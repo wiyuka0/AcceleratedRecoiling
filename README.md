@@ -113,9 +113,9 @@ Gradle 将自动调用 MSVC 编译 `.dll`，并通过 WSL 调用 `g++` 编译 `.
 ## 贡献与致谢
 
 非常感谢以下开发者和所有为本项目提交issues与pr的人的帮助与支持！！
-*   **[**Argon4W**](https://github.com/Argon4W)**: 提供了该项目的原始构思与核心原理。
-*   **[**fireboy637**](https://github.com/fireboy637)**: 提供了该项目的ArchitecturyAPI移植方案与核心代码。
-*   **[**hydropuse**](https://github.com/hydropuse)**: 提供了该项目的JDK 22兼容方案与核心代码。
+*   **[**Argon4W**](https://github.com/Argon4W)**: 提供了该项目的原始构思与灵感。
+*   **[**fireboy637**](https://github.com/fireboy637)**: 提供了该项目的ArchitecturyAPI移植方案的核心代码。
+*   **[**hydropuse**](https://github.com/hydropuse)**: 提供了该项目的JDK 22兼容方案的核心代码。
 
 ## 开源协议
 该项目使用 MIT 开源协议开源。
