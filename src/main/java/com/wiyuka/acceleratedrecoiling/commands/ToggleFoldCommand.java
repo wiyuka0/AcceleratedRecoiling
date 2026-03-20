@@ -16,6 +16,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.permissions.Permissions;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -35,7 +36,7 @@ public class ToggleFoldCommand {
 
     private static void registerCommand(CommandDispatcher<CommandSourceStack> dispatcher, String name) {
         LiteralArgumentBuilder<CommandSourceStack> baseCommand = Commands.literal(name)
-                .requires(source -> source.hasPermission(2));
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER));
 
         baseCommand.then(Commands.literal("check").executes(ToggleFoldCommand::checkConfig));
         baseCommand.then(Commands.literal("save").executes(ToggleFoldCommand::save));
