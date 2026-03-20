@@ -206,7 +206,7 @@ public class NativeInterface {
                     "maxCollision": 32,
                     "gridSize": 1,
                     "densityWindow": 4,
-                    "densitythreshold"
+                    "densityThreshold": 16
                 }
                 """;
         File foldConfig = new File("acceleratedRecoiling.json");
