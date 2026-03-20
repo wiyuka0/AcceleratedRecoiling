@@ -1,13 +1,14 @@
 package com.wiyuka.acceleratedrecoiling.natives;
 
-import com.wiyuka.acceleratedrecoiling.api.ICustomBB;
+import com.wiyuka.acceleratedrecoiling.api.ICustomData;
+import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.LivingEntity;
 
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
-import java.util.HashSet;
 import java.util.List;
 
 public class ParallelAABB {
@@ -37,20 +38,47 @@ public class ParallelAABB {
 
         int index = 0;
         for (Entity entity : livingEntities) {
-            ICustomBB customBB = (ICustomBB) entity;
+            ICustomData customBB = (ICustomData) entity;
             customBB.extractionBoundingBox(aabb, index * 6, inflate);
             customBB.extractionPosition(locations, index * 3);
+
+            customBB.setDensity(0);
             index++;
         }
 
         int[] resultCounts = new int[1];
 
-        NativeInterface.MemPair result = nativePush(locations, aabb, resultCounts);
+        NativeInterface.PushResult result = nativePush(locations, aabb, resultCounts);
 
         var outputA = result.A();
         var outputB = result.B();
 
         if (outputA == null || outputB == null) return;
+
+
+        index = 0;
+        for (Entity entity : livingEntities) {
+            ICustomData customBB = (ICustomData) entity;
+            float density = result.density().getAtIndex(ValueLayout.JAVA_FLOAT, index);
+            customBB.setDensity(density);
+
+            float currentDensity = density;
+            if (FoldConfig.debugDensity) {
+                Component debugName = Component.literal("Density: ")
+                        .withStyle(ChatFormatting.GREEN)
+                        .append(Component.literal(String.format("%.2f", currentDensity))
+                                .withStyle(ChatFormatting.YELLOW));
+
+                entity.setCustomName(debugName);
+                entity.setCustomNameVisible(true);
+            }
+//            else if (entity.hasCustomName() && entity.getCustomName().getString().startsWith("Density: ")) {
+//                entity.setCustomName(null);
+//                entity.setCustomNameVisible(false);
+//            }
+            index++;
+        }
+
 
 
         for (int i = 0; i < resultCounts[0]; i++) {
@@ -100,7 +128,7 @@ public class ParallelAABB {
 //        });
     }
 
-    public static NativeInterface.MemPair nativePush(double[] positions, double[] aabbs, int[] resultSizeOut) {
+    public static NativeInterface.PushResult nativePush(double[] positions, double[] aabbs, int[] resultSizeOut) {
         if(!isInitialized) {
             NativeInterface.initialize();
             isInitialized = true;
