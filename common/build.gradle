@@ -1,13 +1,39 @@
+
+plugins {
+    id 'java'
+    id 'dev.architectury.loom'
+    id 'architectury-plugin'
+}
+
+repositories {
+    maven {
+        name = 'ParchmentMC'
+        url = 'https://maven.parchmentmc.org'
+    }
+    maven {
+        name = 'Sponge'
+        url = 'https://repo.spongepowered.org/repository/maven-public/'
+    }
+}
+dependencies {
+    minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+    mappings loom.layered() {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${rootProject.parchment_minecraft_version}:${rootProject.parchment_mappings_version}@zip")
+    }
+    compileOnly "org.spongepowered:mixin:0.8.5"
+//    annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
+    compileOnly "io.github.llamalad7:mixinextras-common:0.4.1"
+//    annotationProcessor "io.github.llamalad7:mixinextras-common:0.4.1"
+
+
+}
+
 architectury {
     common rootProject.enabled_platforms.split(',')
 }
 
-dependencies {
-    // We depend on Fabric Loader here to use the Fabric @Environment annotations,
-    // which get remapped to the correct annotations on each platform.
-    // Do NOT use other classes from Fabric Loader.
-    modImplementation "net.fabricmc:fabric-loader:$rootProject.fabric_loader_version"
-
-    // Architectury API. This is optional, and you can comment it out if you don't need it.
-    // modImplementation "dev.architectury:architectury:$rootProject.architectury_api_version"
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs.add('--enable-preview')
+    options.release.set(21)
 }

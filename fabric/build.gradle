@@ -1,5 +1,7 @@
 plugins {
     id 'com.gradleup.shadow'
+    id 'dev.architectury.loom'
+    id 'architectury-plugin'
 }
 
 architectury {
@@ -23,16 +25,21 @@ configurations {
         canBeConsumed = false
     }
 }
-
+repositories {
+    maven {
+        name = 'ParchmentMC'
+        url = 'https://maven.parchmentmc.org'
+    }
+}
 dependencies {
+    minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+    mappings loom.layered() {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${rootProject.parchment_minecraft_version}:${rootProject.parchment_mappings_version}@zip")
+    }
     modImplementation "net.fabricmc:fabric-loader:$rootProject.fabric_loader_version"
-
-    // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation "net.fabricmc.fabric-api:fabric-api:$rootProject.fabric_api_version"
-
-    // Architectury API. This is optional, and you can comment it out if you don't need it.
     // modImplementation "dev.architectury:architectury-fabric:$rootProject.architectury_api_version"
-
     common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
     shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
 }
@@ -63,4 +70,8 @@ shadowJar {
 
 remapJar {
     inputFile.set shadowJar.archiveFile
+}
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs.add('--enable-preview')
+    options.release.set(21)
 }

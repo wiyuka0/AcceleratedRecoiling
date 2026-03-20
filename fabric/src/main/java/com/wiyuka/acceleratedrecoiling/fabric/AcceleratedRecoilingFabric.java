@@ -11,10 +11,10 @@ public final class AcceleratedRecoilingFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         // register commands
-        CommandRegistrationCallback.EVENT.register((dispatcher, _, _)
+        CommandRegistrationCallback.EVENT.register((dispatcher, cbc, cs)
                 -> AcceleratedRecoiling.init(dispatcher));
 
         // register server stop event
-        ServerLifecycleEvents.SERVER_STOPPED.register(_ -> NativeInterface.destroy());
+        ServerLifecycleEvents.SERVER_STOPPED.register(ms -> NativeInterface.destroy());
     }
 }

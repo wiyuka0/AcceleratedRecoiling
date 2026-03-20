@@ -1,5 +1,7 @@
 plugins {
     id 'com.gradleup.shadow'
+    id 'dev.architectury.loom'
+    id 'architectury-plugin'
 }
 
 architectury {
@@ -29,9 +31,19 @@ repositories {
         name = 'NeoForged'
         url = 'https://maven.neoforged.net/releases'
     }
+    maven {
+        name = 'ParchmentMC'
+        url = 'https://maven.parchmentmc.org'
+    }
 }
 
 dependencies {
+    minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+    mappings loom.layered() {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${rootProject.parchment_minecraft_version}:${rootProject.parchment_mappings_version}@zip")
+    }
+
     neoForge "net.neoforged:neoforge:$rootProject.neoforge_version"
 
     // Architectury API. This is optional, and you can comment it out if you don't need it.
@@ -40,7 +52,79 @@ dependencies {
     common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
     shadowBundle project(path: ':common', configuration: 'transformProductionNeoForge')
 }
+//neoForge {
+//    // Specify the version of NeoForge to use.
+//    version = project.neo_version
+//
+//    parchment {
+//        mappingsVersion = project.parchment_mappings_version
+//        minecraftVersion = project.parchment_minecraft_version
+//    }
+//
+//    loom {
+//        silentMojangMappingsLicense()
+//
+//        runs {
+//            client {
+//                property 'fabric.log.level', project.mod_log_level
+//                vmArgs '--enable-preview'
+//            }
+//
+//            server {
+//                property 'fabric.log.level', project.mod_log_level
+//                vmArgs '--enable-preview'
+//            }
+//        }
+//
+//        data {
+//            clientData()
+//
+//            // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
+//            // gameDirectory = project.file('run-data')
+//
+//            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
+//            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+//        }
+//
+//        // applies to all the run configs above
+//        configureEach {
+//            // Recommended logging data for a userdev environment
+//            // The markers can be added/remove as needed separated by commas.
+//            // "SCAN": For mods scan.
+//            // "REGISTRIES": For firing of registry events.
+//            // "REGISTRYDUMP": For getting the contents of all registries.
+//            systemProperty 'forge.logging.markers', 'REGISTRIES'
+//
+//            // Recommended logging level for the console
+//            // You can set various levels here.
+//            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
+//            logLevel = org.slf4j.event.Level.DEBUG
+//        }
+//    }
+//
+//    mods {
+//        // define mod <-> source bindings
+//        // these are used to tell the game which sources are for which mod
+//        // mostly optional in a single mod project
+//        // but multi mod projects should define one per mod
+//        "${mod_id}" {
+//            sourceSet(sourceSets.main)
+//        }
+//    }
+//}
 
+loom {
+    runs {
+        client {
+            property 'fabric.log.level', project.mod_log_level
+            vmArgs '--enable-preview'
+        }
+        server {
+            property 'fabric.log.level', project.mod_log_level
+            vmArgs '--enable-preview'
+        }
+    }
+}
 processResources {
     var replaceProperties = [minecraft_version      : minecraft_version,
                              minecraft_version_range: minecraft_version_range,
@@ -66,4 +150,8 @@ shadowJar {
 
 remapJar {
     inputFile.set shadowJar.archiveFile
+}
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs.add('--enable-preview')
+    options.release.set(21)
 }

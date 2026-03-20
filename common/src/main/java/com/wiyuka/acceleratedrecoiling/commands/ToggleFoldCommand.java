@@ -16,6 +16,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.permissions.Permissions;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -28,14 +29,12 @@ public class ToggleFoldCommand {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        for (String commandAlias : COMMAND_ALIAS) {
-            registerCommand(dispatcher, commandAlias);
-        }
+        for (String commandAlias : COMMAND_ALIAS) registerCommand(dispatcher, commandAlias);
     }
 
     private static void registerCommand(CommandDispatcher<CommandSourceStack> dispatcher, String name) {
         LiteralArgumentBuilder<CommandSourceStack> baseCommand = Commands.literal(name)
-                .requires(source -> source.hasPermission(2));
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER));
 
         baseCommand.then(Commands.literal("check").executes(ToggleFoldCommand::checkConfig));
         baseCommand.then(Commands.literal("save").executes(ToggleFoldCommand::save));
@@ -130,7 +129,7 @@ public class ToggleFoldCommand {
     private static int checkConfig(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
 
-        var message = Component.literal("Accelerated Recoiling")
+        var message = Component.literal("Accelerated Recoilings")
                 .withStyle(ChatFormatting.AQUA);
 
         message.append(Component.literal("\n--------------------\n")
@@ -175,7 +174,7 @@ public class ToggleFoldCommand {
                 else if (value instanceof Number number) jsonObject.addProperty(jsonKey, number);
                 else if (value instanceof String string) jsonObject.addProperty(jsonKey, string);
 
-            } catch (IllegalAccessException _) {
+            } catch (IllegalAccessException e) {
             }
         }
 

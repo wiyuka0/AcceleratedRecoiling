@@ -3,58 +3,142 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        // 引入 ASM 依赖，用于处理字节码
         classpath 'org.ow2.asm:asm:9.6'
     }
 }
-
 
 plugins {
     id 'java-library'
     id 'maven-publish'
     id 'idea'
-    id 'dev.architectury.loom' version '1.13-SNAPSHOT' apply false
+    // 既然在单目录下开发，直接启用 Loom，去掉 apply false
+    id 'dev.architectury.loom' version '1.13-SNAPSHOT'
     id 'architectury-plugin' version '3.4-SNAPSHOT'
-    id 'com.gradleup.shadow' version '8.3.6' apply false
+    id 'com.gradleup.shadow' version '8.3.6'
 }
 
 architectury {
     minecraft = project.minecraft_version
+    // 告诉 Architectury 当前是在做 Fabric 版本
+    fabric()
 }
+
+base {
+    archivesName = mod_id
+}
+version = mod_version
+group = maven_group
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs.add('--enable-preview')
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        name = 'ParchmentMC'
+        url = 'https://maven.parchmentmc.org'
+    }
+    maven {
+        name = 'Fabric Maven'
+        url = 'https://maven.fabricmc.net'
+    }
+}
 
-allprojects {
-    group = rootProject.maven_group
-    version = rootProject.mod_version
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
 
-    repositories {
-        maven {
-            name = 'ParchmentMC'
-            url = 'https://maven.parchmentmc.org'
+    mappings loom.layered() {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${parchment_minecraft_version}:${parchment_mappings_version}@zip")
+    }
+
+    // 引入 Fabric 加载器
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+}
+
+loom {
+    runs {
+        client {
+            vmArgs '--enable-preview'
         }
-        maven {
-            name = 'Fabric Maven'
-            url = 'https://maven.fabricmc.net'
+        server {
+            vmArgs '--enable-preview'
         }
     }
 }
 
+tasks.register("compileNativeLib", Exec) {
+    group = "build"
+    description = "Compiles the C++ Native Library using MSVC."
+    onlyIf { System.getProperty("os.name").toLowerCase().contains("windows") }
+    def cppSource = layout.projectDirectory.file("acceleratedRecoilingLib.cpp")
+    def dllOutput = layout.projectDirectory.file("build/acceleratedRecoilingLib.dll")
+
+    inputs.file(cppSource)
+    outputs.file(dllOutput)
+    workingDir = layout.projectDirectory.asFile
+    def vcvarsScript = "I:\\vs\\VC\\Auxiliary\\Build\\vcvars64.bat"
+    def compileCmd = """call "${vcvarsScript}" && cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /MD /Zi /W3 /I"E:\\qucistart\\acceleratedrecoilingnative" acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /LIBPATH:"I:\\vcpkg\\vcpkg\\installed\\x64-windows\\lib" /OPT:REF /OPT:ICF"""
+
+    commandLine 'cmd', '/c', compileCmd
+    doFirst {
+        File bDir = new File(getWorkingDir(), "build")
+        if (!bDir.exists()) bDir.mkdirs()
+    }
+}
+
+tasks.register("compileNativeLibLinux", Exec) {
+    group = "build"
+    description = "Compiles the C++ Native Library for Linux (.so) using WSL and g++."
+    onlyIf { System.getProperty("os.name").toLowerCase().contains("windows") }
+
+    def cppSource = layout.projectDirectory.file("acceleratedRecoilingLib.cpp")
+    def soOutput = layout.projectDirectory.file("build/libacceleratedRecoilingLib.so")
+    inputs.file(cppSource)
+    outputs.file(soOutput)
+    workingDir = layout.projectDirectory.asFile
+
+    def compileCmd = """g++ -std=c++20 -O3 -ffast-math -mavx2 -fopenmp -shared -fPIC \
+        acceleratedRecoilingLib.cpp \
+        -o build/libacceleratedRecoilingLib.so"""
+    commandLine 'wsl', 'bash', '-c', compileCmd
+
+    doFirst {
+        File bDir = new File(getWorkingDir(), "build")
+        if (!bDir.exists()) bDir.mkdirs()
+    }
+}
+
+processResources {
+    dependsOn 'compileNativeLib'
+    dependsOn 'compileNativeLibLinux'
+
+    from(layout.projectDirectory.file("build/acceleratedRecoilingLib.dll")) { into "" }
+    from(layout.projectDirectory.file("build/libacceleratedRecoilingLib.so")) { into "" }
+
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            fabric_loader_version  : fabric_loader_version,
+            mod_id                 : mod_id,
+            mod_version            : mod_version
+    ]
+    inputs.properties replaceProperties
+    filesMatching('fabric.mod.json') { expand replaceProperties }
+}
+
+
 import org.objectweb.asm.*
 import java.util.jar.*
+
 void removePreview(File jarFile) {
-
     println "正在移除预览版标记: ${jarFile}..."
-
-    // 创建一个临时文件
     File tempFile = new File(jarFile.parent, jarFile.name + ".temp")
 
-    // 这里的逻辑就是把你 Main.java 里的代码翻译成了 Groovy
-    try (JarFile jar = new JarFile(jarFile)
+    try (JarFile jar = new JarFile(jarFile);
          JarOutputStream jos = new JarOutputStream(new FileOutputStream(tempFile))) {
 
         Enumeration<JarEntry> entries = jar.entries()
@@ -68,35 +152,22 @@ void removePreview(File jarFile) {
                 continue
             }
 
-            // ASM 读取和修改
             ClassReader cr = new ClassReader(is)
             ClassWriter cw = new ClassWriter(0)
-
-            // 自定义 Visitor
             ClassVisitor cv = new ClassVisitor(Opcodes.ASM9, cw) {
                 @Override
                 void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-                    // 关键修复：移除版本号中的预览标记 (0xFFFF0000)
                     int newVersion = version & ~Opcodes.V_PREVIEW
-                    // 关键修复：移除 Access Flag 中的预览标记 (虽然 Version 才是导致报错的主因)
-                    // 0x10000 在某些版本指 ACC_RECORD，但也可能指预览。
-                    // 这里只修改 version 即可解决 UnsupportedClassVersionError，
-                    // 但为了和你之前的逻辑一致，如果不影响 Record 功能，可以不改 Access。
-                    // 这里我们只改 Version，这是最稳妥的。
-                    System.out.println(String.format("找到类：%s, 源版本：%d, 目标版本：%d", name, version, newVersion))
                     super.visit(newVersion, access, name, signature, superName, interfaces)
                 }
             }
 
             cr.accept(cv, 0)
-
-            JarEntry newEntry = new JarEntry(entry.getName())
-            jos.putNextEntry(newEntry)
+            jos.putNextEntry(new JarEntry(entry.getName()))
             jos.write(cw.toByteArray())
         }
     }
 
-    // 3. 用修复后的文件覆盖原文件
     if (jarFile.delete()) {
         if (!tempFile.renameTo(jarFile)) {
             throw new RuntimeException("无法重命名临时文件！")
@@ -107,231 +178,12 @@ void removePreview(File jarFile) {
     }
 }
 
-subprojects {
-    apply plugin: 'dev.architectury.loom'
-    apply plugin: 'architectury-plugin'
-    apply plugin: 'maven-publish'
-
-    base {
-        // Set up a suffixed format for the mod jar names, e.g. `example-fabric`.
-        archivesName = "$rootProject.archives_name-$project.name"
+tasks.named('remapJar') {
+    doLast {
+        removePreview archiveFile.get().asFile
     }
 }
 
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
-
-// 1. 创建编译原生 C++ 的任务
-tasks.register("compileNativeLib", Exec) {
-    group = "build"
-    description = "Compiles the C++ Native Library using MSVC."
-    onlyIf { System.getProperty("os.name").toLowerCase().contains("windows") }
-    def cppSource = layout.projectDirectory.file("acceleratedRecoilingLib.cpp")
-    def dllOutput = layout.projectDirectory.file("build/acceleratedRecoilingLib.dll")
-
-    inputs.file(cppSource)
-    outputs.file(dllOutput)
-    workingDir = layout.projectDirectory.asFile
-    // replace your vcvars64.bat
-    def vcvarsScript = "I:\\vs\\VC\\Auxiliary\\Build\\vcvars64.bat"
-    def compileCmd = """call "${vcvarsScript}" && cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /MD /Zi /W3 /I"E:\\qucistart\\acceleratedrecoilingnative" acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /LIBPATH:"I:\\vcpkg\\vcpkg\\installed\\x64-windows\\lib" /OPT:REF /OPT:ICF"""
-
-    commandLine 'cmd', '/c', compileCmd
-    doFirst {
-        // 3. 在执行阶段 (doFirst) 中，必须使用纯 Java API 创建文件夹，绝对不能用 mkdir()
-        File bDir = new File(getWorkingDir(), "build")
-        if (!bDir.exists()) {
-            bDir.mkdirs()
-        }
-        println "正在使用 MSVC 编译 acceleratedRecoilingLib.cpp ..."
-    }
-}
-
-tasks.register("compileNativeLibLinux", Exec) {
-    group = "build"
-    description = "Compiles the C++ Native Library for Linux (.so) using WSL and g++."
-    // 仅在 Windows 主机上运行时才触发这个基于 WSL 的交叉编译
-    onlyIf { System.getProperty("os.name").toLowerCase().contains("windows") }
-
-    def cppSource = layout.projectDirectory.file("acceleratedRecoilingLib.cpp")
-    // JNI 规范：Linux 下的动态库必须以 lib 开头
-    def soOutput = layout.projectDirectory.file("build/libacceleratedRecoilingLib.so")
-    inputs.file(cppSource)
-    outputs.file(soOutput)
-    workingDir = layout.projectDirectory.asFile
-
-    def compileCmd = """g++ -std=c++20 -O3 -ffast-math -mavx2 -fopenmp -shared -fPIC \
-        acceleratedRecoilingLib.cpp \
-        -o build/libacceleratedRecoilingLib.so"""
-    // 通过 wsl 运行 bash 执行编译命令
-    commandLine 'wsl', 'bash', '-c', compileCmd
-
-    doFirst {
-        File bDir = new File(getWorkingDir(), "build")
-        if (!bDir.exists()) {
-            bDir.mkdirs()
-        }
-        println "正在使用 WSL (g++) 编译 Linux 版本的 .so 动态库 ..."
-    }
-}
-tasks.named('processResources', ProcessResources) {
-    dependsOn 'compileNativeLib'
-    dependsOn 'compileNativeLibLinux' // 依赖 WSL 编译任务
-    from(layout.projectDirectory.file("build/acceleratedRecoilingLib.dll")) {
-        into ""
-    }
-    from(layout.projectDirectory.file("build/libacceleratedRecoilingLib.so")) {
-        into ""
-    }
-}
-base {
-    archivesName = mod_id
-}
-
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
-
-neoForge {
-    // Specify the version of NeoForge to use.
-    version = project.neo_version
-
-    parchment {
-        mappingsVersion = project.parchment_mappings_version
-        minecraftVersion = project.parchment_minecraft_version
-    }
-
-    loom {
-        silentMojangMappingsLicense()
-
-        runs {
-            client {
-                property 'fabric.log.level', project.mod_log_level
-                vmArgs '--enable-preview'
-            }
-
-            server {
-                property 'fabric.log.level', project.mod_log_level
-                vmArgs '--enable-preview'
-            }
-        }
-
-        data {
-            clientData()
-
-            // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
-            // gameDirectory = project.file('run-data')
-
-            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-        }
-
-        // applies to all the run configs above
-        configureEach {
-            // Recommended logging data for a userdev environment
-            // The markers can be added/remove as needed separated by commas.
-            // "SCAN": For mods scan.
-            // "REGISTRIES": For firing of registry events.
-            // "REGISTRYDUMP": For getting the contents of all registries.
-            systemProperty 'forge.logging.markers', 'REGISTRIES'
-
-            // Recommended logging level for the console
-            // You can set various levels here.
-            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
-            logLevel = org.slf4j.event.Level.DEBUG
-        }
-    }
-
-    mods {
-        // define mod <-> source bindings
-        // these are used to tell the game which sources are for which mod
-        // mostly optional in a single mod project
-        // but multi mod projects should define one per mod
-        "${mod_id}" {
-            sourceSet(sourceSets.main)
-        }
-    }
-}
-
-// Include resources generated by data generators.
-sourceSets.main.resources { srcDir 'src/generated/resources' }
-
-// 在 build.gradle 文件中找到或添加以下代码块
-tasks.named('createMinecraftArtifacts') {
-    dependsOn 'generateModMetadata'
-}
-
-    dependencies {
-        minecraft "net.minecraft:minecraft:$rootProject.minecraft_version"
-
-        mappings loom.layered() {
-            officialMojangMappings()
-            parchment("org.parchmentmc.data:parchment-${rootProject.parchment_minecraft_version}:${rootProject.parchment_mappings_version}@zip")
-        }
-    }
-
-    processResources {
-        var replaceProperties = [minecraft_version      : minecraft_version,
-                                 minecraft_version_range: minecraft_version_range,
-                                 neo_version            : neoforge_version,
-                                 neo_version_range      : neo_version_range,
-                                 loader_version_range   : loader_version_range,
-                                 fabric_loader_version  : fabric_loader_version,
-                                 mod_id                 : mod_id,
-                                 mod_name               : mod_name,
-                                 mod_license            : mod_license,
-                                 mod_version            : mod_version,
-                                 mod_authors            : mod_authors,
-                                 mod_description        : mod_description]
-        inputs.properties replaceProperties
-        filesMatching('META-INF/neoforge.mods.toml') {
-            expand replaceProperties
-        }
-        filesMatching('fabric.mod.json') {
-            expand replaceProperties
-        }
-    }
-
-    java {
-        // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-        // if it is present.
-        // If you remove this line, sources will not be generated.
-        withSourcesJar()
-
-//        sourceCompatibility = JavaVersion.VERSION_21
-//        targetCompatibility = JavaVersion.VERSION_21
-    }
-
-    tasks.withType(JavaCompile).configureEach {
-//        options.release = 21
-        options.compilerArgs.add('--enable-preview')
-    }
-
-    remapJar.doLast {
-        rootProject.removePreview archiveFile.get().asFile
-    }
-
-    // Configure Maven publishing.
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                artifactId = base.archivesName.get()
-                from components.java
-            }
-        }
-
-        // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-        repositories {
-            // Add repositories to publish to here.
-            // Notice: This block does NOT have the same function as the block in the top level.
-            // The repositories here will be used for publishing your artifact, not for
-            // retrieving dependencies.
-        }
-    }
-
-idea {
-    module {
-        downloadSources = true
-        downloadJavadoc = true
-    }
+java {
+    withSourcesJar()
 }
