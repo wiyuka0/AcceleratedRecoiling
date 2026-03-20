@@ -3,6 +3,7 @@ package com.wiyuka.acceleratedrecoiling.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.wiyuka.acceleratedrecoiling.api.ICustomData;
 import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
 import com.wiyuka.acceleratedrecoiling.natives.CollisionMapData;
 import net.minecraft.world.entity.Entity;
@@ -75,24 +76,27 @@ public class LivingEntityMixin {
             )
     )
     private List<Entity> replace(Level instance, Entity entity, AABB boundingBox, Operation<List<Entity>> original) {
-        if (FoldConfig.enableEntityCollision && !(entity instanceof Player) && !entity.level().isClientSide()) {
-
-            List<Entity> rawList = CollisionMapData.getCollisionList(entity, instance);
-
-            Predicate<? super Entity> pushablePredicate = EntitySelector.pushableBy(entity);
-
-            List<Entity> filteredList = new ArrayList<>();
-            for (Entity e : rawList) {
-                if (pushablePredicate.test(e)) {
-                    filteredList.add(e);
-                }
-            }
-
-            return filteredList;
-
-        } else {
+        if (!FoldConfig.enableEntityCollision || entity instanceof Player || entity.level().isClientSide()) {
             return original.call(instance, entity, boundingBox);
         }
+
+        ICustomData data = (ICustomData) entity;
+
+        if (data.getDensity() < FoldConfig.densityThreshold) return original.call(instance, entity, boundingBox);
+
+        List<Entity> rawList = CollisionMapData.getCollisionList(entity, instance);
+
+        Predicate<? super Entity> pushablePredicate = EntitySelector.pushableBy(entity);
+
+        List<Entity> filteredList = new ArrayList<>();
+        for (Entity e : rawList) {
+            if (pushablePredicate.test(e)) {
+                filteredList.add(e);
+            }
+        }
+
+        return filteredList;
+
     }
 
 //    @Inject(

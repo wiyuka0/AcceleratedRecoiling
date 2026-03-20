@@ -31,21 +31,22 @@ import static java.lang.foreign.ValueLayout.*;
 public class NativeInterface {
     private static Linker linker;
     private static Arena nativeArena;
-
     private static MethodHandle pushMethodHandle = null;
     private static MethodHandle createCtxMethodHandle = null;
     private static MethodHandle destroyCtxMethodHandle = null;
+    private static MethodHandle createCfgMethodHandle = null;
 
     private static final AtomicLong maxSizeTouched = new AtomicLong(-1);
 
-
-    public record MemPair(MemorySegment A, MemorySegment B) {}
+    public record PushResult(MemorySegment A, MemorySegment B, MemorySegment density) {}
 
     private static class ThreadState {
         Arena bufferArena = null;
         MemorySegment bufA;
         MemorySegment bufB;
+        MemorySegment densityBuf;
         MemorySegment context;
+        MemorySegment configPtr;
         int currentSize = -1;
 
         ThreadState() {
@@ -53,14 +54,22 @@ public class NativeInterface {
                 if (createCtxMethodHandle != null) {
                     context = (MemorySegment) createCtxMethodHandle.invokeExact();
                 }
+                if (createCfgMethodHandle != null) {
+                    configPtr = (MemorySegment) createCfgMethodHandle.invokeExact(
+                            FoldConfig.maxCollision,
+                            FoldConfig.gridSize,
+                            FoldConfig.densityWindow
+                    );
+                }
             } catch (Throwable e) {
                 throw new RuntimeException("Failed to create native context for thread", e);
             }
         }
 
-        MemPair reallocOutputBuf(int newSize) {
-            long newSizeTotal = Math.max(1024L, (long) (newSize * 1.2) * JAVA_INT.byteSize());
-
+        PushResult reallocOutputBuf(int newSize) {
+            int newCapacity = (int) (newSize * 1.2);
+            long newSizeTotal = Math.max(1024L, (long) newCapacity * JAVA_INT.byteSize());
+            long densitySizeTotal = Math.max(1024L, (long) newCapacity * JAVA_FLOAT.byteSize());
             if (newSizeTotal > currentSize) {
                 if (bufferArena != null) {
                     bufferArena.close();
@@ -68,9 +77,10 @@ public class NativeInterface {
                 bufferArena = Arena.ofConfined();
                 bufA = bufferArena.allocate(newSizeTotal);
                 bufB = bufferArena.allocate(newSizeTotal);
+                densityBuf = bufferArena.allocate(densitySizeTotal);
                 currentSize = (int) newSizeTotal;
             }
-            return new MemPair(bufA, bufB);
+            return new PushResult(bufA, bufB, densityBuf);
         }
 
         void destroy() {
@@ -120,7 +130,7 @@ public class NativeInterface {
         return SymbolLookup.libraryLookup(dllPath, arena);
     }
 
-    public static MemPair push(
+    public static PushResult push(
             double[] locations,
             double[] aabb,
             int[] resultSizeOut
@@ -140,18 +150,18 @@ public class NativeInterface {
             maxSizeTouched.updateAndGet(current -> Math.max(current, count));
 
             MemorySegment aabbMem = FFM.allocateArray(tempArena, aabb);
-            MemPair collisionPairs = state.reallocOutputBuf(resultSize);
+            PushResult collisionPairs = state.reallocOutputBuf(resultSize);
 
             int collisionSize = 0;
             try {
                 collisionSize = (int) pushMethodHandle.invokeExact(
-                        aabbMem,
-                        collisionPairs.A(),
-                        collisionPairs.B(),
-                        count,
-                        FoldConfig.maxCollision,
-                        0,
-                        state.context
+                        aabbMem,          // const double *aabbs
+                        collisionPairs.A,       // int *outputA
+                        collisionPairs.B,       // int *outputB
+                        count,            // int entityCount
+                        collisionPairs.density, // float* densityBuf
+                        state.context,    // void* memDataPtrOri
+                        state.configPtr   // void* configPtr
                 );
             } catch (Throwable e) {
                 throw new RuntimeException("Failed to invoke native push method", e);
@@ -193,7 +203,10 @@ public class NativeInterface {
                 {
                     "enableEntityCollision": true,
                     "enableEntityGetterOptimization": true,
-                    "maxCollision": 32
+                    "maxCollision": 32,
+                    "gridSize": 1,
+                    "densityWindow": 4,
+                    "densitythreshold"
                 }
                 """;
         File foldConfig = new File("acceleratedRecoiling.json");
@@ -233,9 +246,9 @@ public class NativeInterface {
                         ADDRESS,    // int* outputA
                         ADDRESS,    // int* outputB
                         JAVA_INT,   // int count
-                        JAVA_INT,   // int K
-                        JAVA_INT,   // int gridSize
-                        ADDRESS     // Context
+                        ADDRESS,    // float* densityBuf
+                        ADDRESS,    // void* memDataPtrOri (Context)
+                        ADDRESS     // void* configPtr
                 )
         );
 
@@ -243,7 +256,10 @@ public class NativeInterface {
                 lib.find("createCtx").orElseThrow(() -> new RuntimeException("Cannot find symbol 'createCtx'")),
                 FunctionDescriptor.of(ADDRESS)
         );
-
+        createCfgMethodHandle = linker.downcallHandle(
+                lib.find("createCfg").orElseThrow(() -> new RuntimeException("Cannot find symbol 'createCfg'")),
+                FunctionDescriptor.of(ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT)
+        );
         try {
             destroyCtxMethodHandle = linker.downcallHandle(
                     lib.find("destroyCtx").orElseThrow(),
@@ -259,6 +275,10 @@ public class NativeInterface {
         FoldConfig.enableEntityCollision = configJson.get("enableEntityCollision").getAsBoolean();
         FoldConfig.enableEntityGetterOptimization = configJson.get("enableEntityGetterOptimization").getAsBoolean();
         FoldConfig.maxCollision = configJson.get("maxCollision").getAsInt();
+
+        FoldConfig.gridSize = configJson.has("gridSize") ? configJson.get("gridSize").getAsInt() : 1;
+        FoldConfig.densityWindow = configJson.has("densityWindow") ? configJson.get("densityWindow").getAsInt() : 4;
+        FoldConfig.densityThreshold = configJson.has("densityThreshold") ? configJson.get("densityThreshold").getAsInt() : 16;
     }
 
     private static void createConfigFile(File foldConfig, String config) {
