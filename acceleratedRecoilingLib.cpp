@@ -298,7 +298,10 @@ extern "C" EXPORT void destroyCtx(void* context_ptr) {
     }
 }
 
-extern "C" EXPORT void* createCfg(int maxCollision, int gridSize, int densityWindow) {
+extern "C" EXPORT void* createCfg(int maxCollision, int gridSize, int densityWindow, int maxThreads) {
+    if(maxThreads > 0) {
+        omp_set_num_threads(maxThreads);
+    }
     return new Config {
         maxCollision, gridSize, densityWindow,
     };
@@ -440,6 +443,7 @@ extern "C" EXPORT int push(const double *aabbs, int *outputA, int *outputB, int 
         float* pDensity = densityBuf;
 
         const int WINDOW = 4;
+
         const float EPSILON_DISTANCE = 0.1f;
         #pragma omp parallel for schedule(static)
         for (int grid = 0; grid < (int)runStarts.size() - 1; grid++)
