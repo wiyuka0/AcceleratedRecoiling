@@ -20,7 +20,6 @@ AcceleratedRecoiling is a Minecraft optimization mod that improves server perfor
 ## 游戏崩溃了！
 如果游戏无法正常启动……
 
-* 你的客户端是 Forge 1.20.1，尝试在 JVM 启动参数中添加 `--enable-preview`。
 * 你的客户端是 NeoForge 1.21.1/1.21.8，请使用 Java 22+ 启动游戏。
 * 你的环境是 Leaves，请确保服务器的启动参数中包含 `-Dleavesclip.enable.mixin=true`。
 * 如果这些方法都不起作用，请更新此模组，并删除文件 `.minecraft/acceleratedRecoilingLib.dll`，然后重启客户端。（文件位于 `.minecraft/` 或你的客户端根目录下）
@@ -33,14 +32,22 @@ AcceleratedRecoiling is a Minecraft optimization mod that improves server perfor
 **默认配置：**
 ```json
 {
-    "enableEntityCollision": true,
-    "enableEntityGetterOptimization": true,
-    "maxCollision": 32
+   "enableEntityCollision": true,
+   "enableEntityGetterOptimization": true,
+   "maxCollision": 32,
+   "gridSize": 1,
+   "densityWindow": 4,
+   "densityThreshold": 16
 }
 ```
 * enableEntityCollision: 是否启用实体挤压优化
 * enableEntityGetterOptimization: 是否启用EntityGetter接口优化 (暂时无效)
 * maxCollision: 每个实体最多与其周围几个实体相互碰撞
+* gridSize: 算法网格大小
+* densityWindow: 密度平滑窗口
+* densityThreshold: 当实体周围的密度达到多少时，对于这个实体启用加速碰撞
+
+*如果出现开启加速碰撞后性能反而下降的情况，请尝试调低densityThreshold。*
   
 ## 基准测试
 #### 测试环境
