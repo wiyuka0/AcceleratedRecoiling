@@ -12,6 +12,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
+import com.wiyuka.acceleratedrecoiling.natives.NativeInterface;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -21,6 +22,7 @@ import net.minecraft.server.permissions.Permissions;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.annotation.Native;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
@@ -38,6 +40,7 @@ public class ToggleFoldCommand {
 
         baseCommand.then(Commands.literal("check").executes(ToggleFoldCommand::checkConfig));
         baseCommand.then(Commands.literal("save").executes(ToggleFoldCommand::save));
+        baseCommand.then(Commands.literal("updateConfig").executes(ToggleFoldCommand::updateConfig));
 
         for (Field field : FoldConfig.class.getDeclaredFields()) {
             int modifiers = field.getModifiers();
@@ -79,10 +82,18 @@ public class ToggleFoldCommand {
         dispatcher.register(baseCommand);
     }
 
+    private static int updateConfig(CommandContext<CommandSourceStack> context) {
+//        CommandSourceStack source = context.getSource();
+
+        NativeInterface.applyConfig();
+        return 0;
+    }
+
     private static int setFieldValue(CommandContext<CommandSourceStack> context, Field field, Object newValue) {
         try {
             field.set(null, newValue); // 静态字段对象传 null
             sendSuccessMessage(context.getSource(), field.getName(), newValue);
+            NativeInterface.applyConfig();
             return 1;
         } catch (IllegalAccessException e) {
             context.getSource().sendFailure(Component.literal("Failed to modify config: " + e.getMessage()));
