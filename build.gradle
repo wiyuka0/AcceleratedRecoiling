@@ -11,7 +11,7 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'idea'
-    // 既然在单目录下开发，直接启用 Loom，去掉 apply false
+
     id 'dev.architectury.loom' version '1.13-SNAPSHOT'
     id 'architectury-plugin' version '3.4-SNAPSHOT'
     id 'com.gradleup.shadow' version '8.3.6'
@@ -129,7 +129,6 @@ processResources {
     inputs.properties replaceProperties
     filesMatching('fabric.mod.json') { expand replaceProperties }
 }
-
 
 import org.objectweb.asm.*
 import java.util.jar.*

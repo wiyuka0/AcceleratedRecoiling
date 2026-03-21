@@ -35,7 +35,6 @@ public class TempID {
     }
 
     private static void resize() {
-        // 扩容 1.5 倍
         int newSize = frameSnapshot.length + (frameSnapshot.length >> 1);
         frameSnapshot = Arrays.copyOf(frameSnapshot, newSize);
     }

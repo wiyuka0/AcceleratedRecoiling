@@ -292,6 +292,7 @@ extern "C" EXPORT void* createCtx() {
     return new EntityData();
 }
 
+
 extern "C" EXPORT void destroyCtx(void* context_ptr) {
     if(context_ptr) {
         delete static_cast<EntityData*>(context_ptr);

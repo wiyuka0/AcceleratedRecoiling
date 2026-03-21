@@ -8,7 +8,9 @@ architectury {
     platformSetupLoomIde()
     neoForge()
 }
-
+base {
+    archivesName = "${mod_id}-${mod_version}-neoforge"
+}
 configurations {
     common {
         canBeResolved = true
@@ -36,7 +38,10 @@ repositories {
         url = 'https://maven.parchmentmc.org'
     }
 }
-
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs.add('--enable-preview')
+    options.release.set(21)
+}
 dependencies {
     minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
     mappings loom.layered() {
@@ -52,66 +57,6 @@ dependencies {
     common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
     shadowBundle project(path: ':common', configuration: 'transformProductionNeoForge')
 }
-//neoForge {
-//    // Specify the version of NeoForge to use.
-//    version = project.neo_version
-//
-//    parchment {
-//        mappingsVersion = project.parchment_mappings_version
-//        minecraftVersion = project.parchment_minecraft_version
-//    }
-//
-//    loom {
-//        silentMojangMappingsLicense()
-//
-//        runs {
-//            client {
-//                property 'fabric.log.level', project.mod_log_level
-//                vmArgs '--enable-preview'
-//            }
-//
-//            server {
-//                property 'fabric.log.level', project.mod_log_level
-//                vmArgs '--enable-preview'
-//            }
-//        }
-//
-//        data {
-//            clientData()
-//
-//            // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
-//            // gameDirectory = project.file('run-data')
-//
-//            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
-//            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-//        }
-//
-//        // applies to all the run configs above
-//        configureEach {
-//            // Recommended logging data for a userdev environment
-//            // The markers can be added/remove as needed separated by commas.
-//            // "SCAN": For mods scan.
-//            // "REGISTRIES": For firing of registry events.
-//            // "REGISTRYDUMP": For getting the contents of all registries.
-//            systemProperty 'forge.logging.markers', 'REGISTRIES'
-//
-//            // Recommended logging level for the console
-//            // You can set various levels here.
-//            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
-//            logLevel = org.slf4j.event.Level.DEBUG
-//        }
-//    }
-//
-//    mods {
-//        // define mod <-> source bindings
-//        // these are used to tell the game which sources are for which mod
-//        // mostly optional in a single mod project
-//        // but multi mod projects should define one per mod
-//        "${mod_id}" {
-//            sourceSet(sourceSets.main)
-//        }
-//    }
-//}
 
 loom {
     runs {
@@ -148,10 +93,107 @@ shadowJar {
     archiveClassifier = 'dev-shadow'
 }
 
+import org.objectweb.asm.*
+import java.util.jar.*
+
+void removePreview(File jarFile) {
+    println "正在移除预览版标记: ${jarFile}..."
+    File tempFile = new File(jarFile.parent, jarFile.name + ".temp")
+
+    try (JarFile jar = new JarFile(jarFile);
+         JarOutputStream jos = new JarOutputStream(new FileOutputStream(tempFile))) {
+
+        Enumeration<JarEntry> entries = jar.entries()
+        while (entries.hasMoreElements()) {
+            JarEntry entry = entries.nextElement()
+            InputStream is = jar.getInputStream(entry)
+
+            if (!entry.getName().endsWith(".class")) {
+                jos.putNextEntry(new JarEntry(entry.getName()))
+                is.transferTo(jos)
+                continue
+            }
+
+            ClassReader cr = new ClassReader(is)
+            ClassWriter cw = new ClassWriter(0)
+            ClassVisitor cv = new ClassVisitor(Opcodes.ASM9, cw) {
+                @Override
+                void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+                    int newVersion = version & ~Opcodes.V_PREVIEW
+                    super.visit(newVersion, access, name, signature, superName, interfaces)
+                }
+            }
+
+            cr.accept(cv, 0)
+            jos.putNextEntry(new JarEntry(entry.getName()))
+            jos.write(cw.toByteArray())
+        }
+    }
+
+    if (jarFile.delete()) {
+        if (!tempFile.renameTo(jarFile)) {
+            throw new RuntimeException("无法重命名临时文件！")
+        }
+        println "预览版标记移除成功！"
+    } else {
+        throw new RuntimeException("无法删除原始 Jar 文件！")
+    }
+}
+
 remapJar {
     inputFile.set shadowJar.archiveFile
+    doLast {
+        removePreview archiveFile.get().asFile
+    }
 }
-tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs.add('--enable-preview')
-    options.release.set(21)
+
+
+tasks.register("compileNativeLib", Exec) {
+    group = "build"
+    description = "Compiles the C++ Native Library using MSVC."
+    onlyIf { System.getProperty("os.name").toLowerCase().contains("windows") }
+    def cppSource = layout.projectDirectory.file("../acceleratedRecoilingLib.cpp")
+    def dllOutput = layout.projectDirectory.file("native-build/acceleratedRecoilingLib.dll")
+
+    inputs.file(cppSource)
+    outputs.file(dllOutput)
+    workingDir = layout.projectDirectory.asFile
+    def vcvarsScript = "I:\\vs\\VC\\Auxiliary\\Build\\vcvars64.bat"
+    def compileCmd = """call "${vcvarsScript}" && cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /MD /Zi /W3 ../acceleratedRecoilingLib.cpp /Fe"native-build\\acceleratedRecoilingLib.dll" /Fd"native-build\\acceleratedRecoilingLib.pdb" /link /LIBPATH:"I:\\vcpkg\\vcpkg\\installed\\x64-windows\\lib" /OPT:REF /OPT:ICF"""
+
+    commandLine 'cmd', '/c', compileCmd
+    doFirst {
+        File bDir = new File(getWorkingDir(), "native-build")
+        if (!bDir.exists()) bDir.mkdirs()
+    }
+}
+
+tasks.register("compileNativeLibLinux", Exec) {
+    group = "build"
+    description = "Compiles the C++ Native Library for Linux (.so) using WSL and g++."
+    onlyIf { System.getProperty("os.name").toLowerCase().contains("windows") }
+
+    def cppSource = layout.projectDirectory.file("../acceleratedRecoilingLib.cpp")
+    def soOutput = layout.projectDirectory.file("native-build/libacceleratedRecoilingLib.so")
+    inputs.file(cppSource)
+    outputs.file(soOutput)
+    workingDir = layout.projectDirectory.asFile
+
+    def compileCmd = """g++ -std=c++20 -O3 -ffast-math -mavx2 -fopenmp -shared -fPIC \
+        ../acceleratedRecoilingLib.cpp \
+        -o native-build/libacceleratedRecoilingLib.so"""
+    commandLine 'wsl', 'bash', '-c', compileCmd
+
+    doFirst {
+        File bDir = new File(getWorkingDir(), "native-build")
+        if (!bDir.exists()) bDir.mkdirs()
+    }
+}
+
+processResources {
+    dependsOn 'compileNativeLib'
+    dependsOn 'compileNativeLibLinux'
+
+    from(layout.projectDirectory.file("native-build/acceleratedRecoilingLib.dll")) { into "" }
+    from(layout.projectDirectory.file("native-build/libacceleratedRecoilingLib.so")) { into "" }
 }
