@@ -10,4 +10,5 @@ public class FoldConfig {
 
     public final static boolean debugDensity = false;
     public static int densityThreshold = 16;
+    public static int maxThreads = Runtime.getRuntime().availableProcessors() /2;
 }
