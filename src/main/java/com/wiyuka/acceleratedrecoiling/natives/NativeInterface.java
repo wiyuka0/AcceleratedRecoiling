@@ -38,6 +38,9 @@ public class NativeInterface {
     private static MethodHandle destroyCtxMethodHandle = null;
     private static MethodHandle createCfgMethodHandle = null;
 
+    private static MethodHandle updateCfgMethodHandle = null;
+    private static MethodHandle destroyCfgMethodHandle = null;
+
     private static final AtomicLong maxSizeTouched = new AtomicLong(-1);
 
     public record PushResult(MemorySegment A, MemorySegment B, MemorySegment density) {}
@@ -95,6 +98,35 @@ public class NativeInterface {
                     destroyCtxMethodHandle.invokeExact(context);
                 } catch (Throwable e) {
                     AcceleratedRecoiling.LOGGER.error("Failed to destroy native context", e);
+                }
+            }
+
+            if (configPtr != null && destroyCfgMethodHandle != null) {
+                try {
+                    destroyCfgMethodHandle.invokeExact(configPtr);
+                } catch (Throwable e) {
+                    AcceleratedRecoiling.LOGGER.error("Failed to destroy native config", e);
+                }
+            }
+        }
+    }
+
+    public static void applyConfig() {
+        if (!ParallelAABB.isInitialized || updateCfgMethodHandle == null) {
+            return;
+        }
+        for (ThreadState state : ALL_THREAD_STATES) {
+            if (state.configPtr != null) {
+                try {
+                    updateCfgMethodHandle.invokeExact(
+                            state.configPtr,
+                            FoldConfig.maxCollision,
+                            FoldConfig.gridSize,
+                            FoldConfig.densityWindow,
+                            FoldConfig.maxThreads
+                    );
+                } catch (Throwable e) {
+                    AcceleratedRecoiling.LOGGER.error("Failed to update native config for thread", e);
                 }
             }
         }
@@ -275,6 +307,23 @@ public class NativeInterface {
                 lib.find("createCfg").orElseThrow(() -> new RuntimeException("Cannot find symbol 'createCfg'")),
                 FunctionDescriptor.of(ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT)
         );
+
+        try {
+            updateCfgMethodHandle = linker.downcallHandle(
+                    lib.find("updateCfg").orElseThrow(),
+                    FunctionDescriptor.ofVoid(ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT)
+            );
+        } catch (Exception e) {
+            logger.warn("Cannot find symbol 'updateCfg'");
+        }
+        try {
+            destroyCfgMethodHandle = linker.downcallHandle(
+                    lib.find("destroyCfg").orElseThrow(),
+                    FunctionDescriptor.ofVoid(ADDRESS)
+            );
+        } catch (Exception e) {
+            logger.warn("Cannot find symbol 'destroyCfg'");
+        }
         try {
             destroyCtxMethodHandle = linker.downcallHandle(
                     lib.find("destroyCtx").orElseThrow(),

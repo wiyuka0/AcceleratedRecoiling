@@ -307,6 +307,23 @@ extern "C" EXPORT void* createCfg(int maxCollision, int gridSize, int densityWin
     };
 }
 
+extern "C" EXPORT void updateCfg(void* configPtr, int maxCollision, int gridSize, int densityWindow, int maxThreads) {
+    if (configPtr) {
+        Config* cfg = static_cast<Config*>(configPtr);
+        cfg->maxColision = maxCollision;
+        cfg->gridSize = gridSize;
+        cfg->densityWindow = densityWindow;
+    }
+    if (maxThreads > 0) {
+        omp_set_num_threads(maxThreads);
+    }
+}
+extern "C" EXPORT void destroyCfg(void* configPtr) {
+    if (configPtr) {
+        delete static_cast<Config*>(configPtr);
+    }
+}
+
 extern "C" EXPORT int push(const double *aabbs, int *outputA, int *outputB, int entityCount, float* densityBuf, void* memDataPtrOri, void* configPtr)
 {
 
