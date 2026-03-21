@@ -60,7 +60,8 @@ public class NativeInterface {
                     configPtr = (MemorySegment) createCfgMethodHandle.invokeExact(
                             FoldConfig.maxCollision,
                             FoldConfig.gridSize,
-                            FoldConfig.densityWindow
+                            FoldConfig.densityWindow,
+                            FoldConfig.maxThreads
                     );
                 }
             } catch (Throwable e) {
