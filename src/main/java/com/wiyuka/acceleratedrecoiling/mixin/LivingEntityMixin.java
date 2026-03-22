@@ -50,6 +50,7 @@ public class LivingEntityMixin {
         if(instance.getBoundingBox().intersects(entity.getBoundingBox())) original.call(instance, entity);
     }
 
+    //    public List<Entity> getEntities(@Nullable Entity entity, AABB boundingBox, Predicate<? super Entity> predicate) {
     @WrapOperation(
             method = "pushEntities",
             at = @At(
@@ -57,7 +58,7 @@ public class LivingEntityMixin {
                     target = "Lnet/minecraft/world/level/Level;getEntities(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;"
             )
     )
-    private List<Entity> replace(Level instance, Entity entity, AABB boundingBox, Predicate<? super Entity> predicate, Operation<List<Entity>> original) {
+    private List<Entity> replace(Level instance, Entity entity, AABB aabb, Predicate<? super Entity> predicate, Operation<List<Entity>> original) {
         if (!FoldConfig.enableEntityCollision || entity instanceof Player || entity.level().isClientSide())
             return original.call(instance, entity, aabb, predicate);
         ICustomData data = (ICustomData) entity;
