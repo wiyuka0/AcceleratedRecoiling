@@ -12,6 +12,7 @@
 *   **64位操作系统**：本机库 (`.dll` / `.so`) 仅支持 64 位环境。
 *   **Windows 平台**：需安装 [Microsoft Visual C++ 运行库](https://aka.ms/vs/17/release/vc_redist.x64.exe)（如启动失败请优先安装）。
 *   **Leaves 端**：启动参数中必须包含 `-Dleavesclip.enable.mixin=true`。
+*   **Linux/Docker**: 需确保系统中已安装 `libgomp1` 依赖。
 
 ## 安装与配置
 
@@ -47,6 +48,13 @@
 
 **Q: 为什么开启模组后，服务器性能反而下降了？**
 **A:** 可能是周围实体密度未达到触发优化的条件，因此同时走了原版和加速碰撞的两条路径。请尝试打开配置文件，适当调低 `densityThreshold` 的数值。或尝试调低`maxThreads`。
+
+**Q: 在 Docker 中运行服务端时，报错提示找不到 `libgomp.so` 怎么办？**
+**A:** Docker 中使用的 Ubuntu 镜像不包含 `libgomp.so`，因此只需在构建镜像的 Dockerfile 中添加以下命令并重新构建镜像即可：
+```dockerfile
+RUN apt-get update && \
+    apt-get install -y libgomp1
+```
 
 
 
@@ -101,3 +109,4 @@ gradlew build
 *   **[Argon4W](https://github.com/Argon4W)**: 原始构思与核心思路。
 *   **[fireboy637](https://github.com/fireboy637)**: Architectury API 移植方案的核心代码。
 *   **[hydropuse](https://github.com/hydropuse)**: JDK 22 兼容方案的核心代码。
+*   **[wellcoming](https://github.com/wellcoming)**: Docker Ubuntu镜像解决方案。
