@@ -54,14 +54,8 @@ jar.doLast {
             ClassVisitor cv = new ClassVisitor(Opcodes.ASM9, cw) {
                 @Override
                 void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-                    // 关键修复：移除版本号中的预览标记 (0xFFFF0000)
-                    int newVersion = version & ~Opcodes.V_PREVIEW
-                    // 关键修复：移除 Access Flag 中的预览标记 (虽然 Version 才是导致报错的主因)
-                    // 0x10000 在某些版本指 ACC_RECORD，但也可能指预览。
-                    // 这里只修改 version 即可解决 UnsupportedClassVersionError，
-                    // 但为了和你之前的逻辑一致，如果不影响 Record 功能，可以不改 Access。
-                    // 这里我们只改 Version，这是最稳妥的。
-                    super.visit(newVersion, access, name, signature, superName, interfaces)
+//                    int newVersion = version & ~Opcodes.V_PREVIEW
+                    super.visit(Opcodes.V17, access, name, signature, superName, interfaces)
                 }
             }
 
@@ -72,8 +66,6 @@ jar.doLast {
             jos.write(cw.toByteArray())
         }
     }
-
-    // 3. 用修复后的文件覆盖原文件
     if (jarFile.delete()) {
         if (!tempFile.renameTo(jarFile)) {
             throw new RuntimeException("无法重命名临时文件！")
@@ -105,7 +97,7 @@ tasks.register("compileNativeLib", Exec) {
     workingDir = layout.projectDirectory.asFile
     // replace your vcvars64.bat
     def vcvarsScript = "I:\\vs\\VC\\Auxiliary\\Build\\vcvars64.bat"
-    def compileCmd = """call "${vcvarsScript}" && cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /MD /Zi /W3 /I"E:\\qucistart\\acceleratedrecoilingnative" acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /LIBPATH:"I:\\vcpkg\\vcpkg\\installed\\x64-windows\\lib" /OPT:REF /OPT:ICF"""
+    def compileCmd = """call "${vcvarsScript}" && cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /I.\\jdk\\corretto-21.0.10\\include /I.\\jdk\\corretto-21.0.10\\include\\win32 /MD /Zi /W3 /I"E:\\qucistart\\acceleratedrecoilingnative" acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /LIBPATH:"I:\\vcpkg\\vcpkg\\installed\\x64-windows\\lib" /OPT:REF /OPT:ICF"""
 
     commandLine 'cmd', '/c', compileCmd
     doFirst {
@@ -131,7 +123,7 @@ tasks.register("compileNativeLibLinux", Exec) {
     outputs.file(soOutput)
     workingDir = layout.projectDirectory.asFile
 
-    def compileCmd = """g++ -std=c++20 -O3 -ffast-math -mavx2 -fopenmp -shared -fPIC \
+    def compileCmd = """g++ -std=c++20 -O3 -ffast-math -I./jdk/corretto-21.0.10/include -I./jdk/corretto-21.0.10/include/linux -mavx2 -fopenmp -shared -fPIC \
         acceleratedRecoilingLib.cpp \
         -o build/libacceleratedRecoilingLib.so"""
     // 通过 wsl 运行 bash 执行编译命令
