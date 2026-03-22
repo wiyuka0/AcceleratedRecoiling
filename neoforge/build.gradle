@@ -156,20 +156,20 @@ tasks.register("compileNativeLib", Exec) {
     group = "build"
     onlyIf { isWindows }
 
-    def cppSource = layout.projectDirectory.file("acceleratedRecoilingLib.cpp")
-    def dllOutput = layout.projectDirectory.file("build/acceleratedRecoilingLib.dll")
+    def cppSource = layout.projectDirectory.file("../acceleratedRecoilingLib.cpp")
+    def dllOutput = layout.projectDirectory.file("build-native/acceleratedRecoilingLib.dll")
     inputs.file(cppSource)
     outputs.file(dllOutput)
     workingDir = layout.projectDirectory.asFile
     doFirst {
-        File bDir = new File(getWorkingDir(), "build")
+        File bDir = new File(getWorkingDir(), "build-native")
         if (!bDir.exists()) bDir.mkdirs()
         if (isGitHubActions) {
             def javaHome = System.getenv("JAVA_HOME")
-            commandLine 'cmd', '/c', """cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /DAR_ENABLE_JNI /I"${javaHome}\\include" /I"${javaHome}\\include\\win32" /MD /Zi /W3 acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /OPT:REF /OPT:ICF"""
+            commandLine 'cmd', '/c', """cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD  /MD /Zi /W3 ../acceleratedRecoilingLib.cpp /Fe"build-native\\acceleratedRecoilingLib.dll" /Fd"build-native\\acceleratedRecoilingLib.pdb" /link /OPT:REF /OPT:ICF"""
         } else {
             def vcvarsScript = "I:\\vs\\VC\\Auxiliary\\Build\\vcvars64.bat"
-            commandLine 'cmd', '/c', """call "${vcvarsScript}" && cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /DAR_ENABLE_JNI /I.\\jdk\\corretto-21.0.10\\include /I.\\jdk\\corretto-21.0.10\\include\\win32 /MD /Zi /W3 /I"E:\\qucistart\\acceleratedrecoilingnative" acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /OPT:REF /OPT:ICF"""
+            commandLine 'cmd', '/c', """call "${vcvarsScript}" && cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /MD /Zi /W3 /I"E:\\qucistart\\acceleratedrecoilingnative" ../acceleratedRecoilingLib.cpp /Fe"build-native\\acceleratedRecoilingLib.dll" /Fd"build-native\\acceleratedRecoilingLib.pdb" /link /OPT:REF /OPT:ICF"""
         }
         println "正在编译 acceleratedRecoilingLib.dll ..."
     }
@@ -178,19 +178,19 @@ tasks.register("compileNativeLib", Exec) {
 tasks.register("compileNativeLibLinux", Exec) {
     group = "build"
     onlyIf { isWindows || isLinux }
-    def cppSource = layout.projectDirectory.file("acceleratedRecoilingLib.cpp")
-    def soOutput = layout.projectDirectory.file("build/libacceleratedRecoilingLib.so")
+    def cppSource = layout.projectDirectory.file("../acceleratedRecoilingLib.cpp")
+    def soOutput = layout.projectDirectory.file("build-native/libacceleratedRecoilingLib.so")
     inputs.file(cppSource)
     outputs.file(soOutput)
     workingDir = layout.projectDirectory.asFile
     doFirst {
-        File bDir = new File(getWorkingDir(), "build")
+        File bDir = new File(getWorkingDir(), "build-native")
         if (!bDir.exists()) bDir.mkdirs()
         if (isGitHubActions && isLinux) {
             def javaHome = System.getenv("JAVA_HOME")
-            commandLine 'bash', '-c', """g++ -std=c++20 -O3 -ffast-math -DAR_ENABLE_JNI -I"${javaHome}/include" -I"${javaHome}/include/linux" -mavx2 -fopenmp -shared -fPIC acceleratedRecoilingLib.cpp -o build/libacceleratedRecoilingLib.so"""
+            commandLine 'bash', '-c', """g++ -std=c++20 -O3 -ffast-math -mavx2 -fopenmp -shared -fPIC ../acceleratedRecoilingLib.cpp -o build-native/libacceleratedRecoilingLib.so"""
         } else {
-            commandLine 'wsl', 'bash', '-c', """g++ -std=c++20 -O3 -ffast-math -DAR_ENABLE_JNI -I./jdk/corretto-21.0.10/include -I./jdk/corretto-21.0.10/include/linux -mavx2 -fopenmp -shared -fPIC acceleratedRecoilingLib.cpp -o build/libacceleratedRecoilingLib.so"""
+            commandLine 'wsl', 'bash', '-c', """g++ -std=c++20 -O3 -ffast-math -mavx2 -fopenmp -shared -fPIC ../acceleratedRecoilingLib.cpp -o build-native/libacceleratedRecoilingLib.so"""
         }
         println "正在编译 libacceleratedRecoilingLib.so ..."
     }
@@ -198,10 +198,10 @@ tasks.register("compileNativeLibLinux", Exec) {
 tasks.named('processResources', ProcessResources) {
     dependsOn 'compileNativeLib'
     dependsOn 'compileNativeLibLinux'
-    from(layout.projectDirectory.file("build/acceleratedRecoilingLib.dll")) {
+    from(layout.projectDirectory.file("build-native/acceleratedRecoilingLib.dll")) {
         into ""
     }
-    from(layout.projectDirectory.file("build/libacceleratedRecoilingLib.so")) {
+    from(layout.projectDirectory.file("build-native/libacceleratedRecoilingLib.so")) {
         into ""
     }
 }
