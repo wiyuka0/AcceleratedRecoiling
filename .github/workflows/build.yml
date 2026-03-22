@@ -2,7 +2,7 @@ name: Build 1.21.11
 
 on:
   push:
-    branches: [ "1.21.11"]
+    branches: [ "1.21.11*"]
 
 jobs:
   build-windows-native:
