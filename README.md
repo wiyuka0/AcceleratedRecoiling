@@ -1,6 +1,6 @@
 # 加速碰撞 (Accelerated Recoiling)
 
-加速碰撞是一个专注于优化服务端实体碰撞逻辑的模组。它利用 Java 21+ 的 FFM (Foreign Function & Memory) API 接管实体 AABB 碰撞检测，将高密集计算压力转移至 C++ 原生库，从而显著提升服务器性能。
+加速碰撞是一个专注于优化服务端实体碰撞逻辑的模组。它利用 FFM (Foreign Function & Memory) API/JNI 接管实体 AABB 碰撞检测，将高密集计算压力转移至 C++ 原生库，从而显著提升服务器性能。
 
 **本模组目前为实验性质，实体挤压表现与原版不完全一致。请务必在做好存档备份的前提下谨慎使用。**
 
@@ -8,7 +8,7 @@
 
 ## 环境要求与前置
 
-*   **Java 21 或以上**：必须使用 Java 21 或 Java 21+ 启动游戏/服务端（FFM API 为 Java 21 预览功能）。
+*   **Java 17 或以上**：必须使用 Java 17 或 Java 17+ 启动游戏/服务端。
 *   **64位操作系统**：本机库 (`.dll` / `.so`) 仅支持 64 位环境。
 *   **Windows 平台**：需安装 [Microsoft Visual C++ 运行库](https://aka.ms/vs/17/release/vc_redist.x64.exe)（如启动失败请优先安装）。
 *   **Leaves 端**：启动参数中必须包含 `-Dleavesclip.enable.mixin=true`。
@@ -33,30 +33,31 @@
 
 ## 常见问题 (Q&A)
 
-**Q: 为什么游戏崩溃或无法启动？**
+**Q: 为什么游戏崩溃或无法启动？** <br>
 **A:** 请按以下步骤排查：
-1. 确认已正确安装 Java 21+ 和 MSVC 运行库。
-2. 若客户端为 **NeoForge 1.21.1/1.21.8**，请尝试使用 **Java 22+** 启动游戏。
+1. 确认已正确安装 Java 17+
 3. 若使用 **Leaves** 服务端，确保启动参数包含 `-Dleavesclip.enable.mixin=true`。
 4. 如果更新过模组，尝试删除根目录或 `.minecraft` 下的 `acceleratedRecoilingLib.dll`与`acceleratedRecoiling.json`，然后重启游戏让其重新生成。
 
-**Q: 开启后实体挤压表现和原版一样吗？**
+**Q: 开启后实体挤压表现和原版一样吗？** <br>
 **A:** 不完全一致。本模组目前为实验性质，改变了底层计算逻辑，因此挤压表现会与原版有差异。**请务必在使用前做好存档备份。**
 
-**Q: 会影响生电特性吗？**
+**Q: 会影响生电特性吗？** <br>
 **A:** 目前不清楚，可能会影响与实体挤压有关的红石机器，**请务必在使用前做好存档备份。**
 
-**Q: 为什么开启模组后，服务器性能反而下降了？**
+**Q: 为什么开启模组后，服务器性能反而下降了？** <br>
 **A:** 可能是周围实体密度未达到触发优化的条件，因此同时走了原版和加速碰撞的两条路径。请尝试打开配置文件，适当调低 `densityThreshold` 的数值。或尝试调低`maxThreads`。
 
-**Q: 在 Docker 中运行服务端时，报错提示找不到 `libgomp.so` 怎么办？**
+**Q: 在 Docker 中运行服务端时，报错提示找不到 `libgomp.so` 怎么办？** <br>
 **A:** Docker 中使用的 Ubuntu 镜像不包含 `libgomp.so`，因此只需在构建镜像的 Dockerfile 中添加以下命令并重新构建镜像即可：
 ```dockerfile
 RUN apt-get update && \
     apt-get install -y libgomp1
 ```
 
-
+**Q: FFM 是Java 21的预览功能，我是否应该使用Java 21+启动游戏？** <br>
+**A:** 如果你的游戏版本是*1.21.1*以上，那么是的，但这是**1.21.1**版本本身需要**Java 21**来运行。 <br>
+如果你的游戏是*1.20.1*，那么不需要，加速碰撞*v0.10.0-alpha-1.20.1*以上的版本**同时支持Java 21/17**之间的任意JDK版本。
 
 ## 性能基准测试
 
@@ -87,7 +88,7 @@ RUN apt-get update && \
 项目通过 Gradle 调用 MSVC 和 WSL 进行双端跨平台编译 (生成 `.dll` 和 `.so`)，建议在装有 WSL 的 Windows 10/11 环境下操作。
 
 **1. 环境准备**
-*   安装 JDK 21。
+*   安装 JDK 21。(必须)
 *   安装 Visual Studio 2022，勾选“使用 C++ 的桌面开发”。
 *   在 WSL 中安装编译工具：`sudo apt update && sudo apt install build-essential libgomp1 -y`
 
