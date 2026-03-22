@@ -19,7 +19,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-@Mixin(LivingEntity.class)
+@Mixin(value = LivingEntity.class, priority = 1100)
 public class LivingEntityMixin {
 //    @Inject(
 //            method = "pushEntities",
