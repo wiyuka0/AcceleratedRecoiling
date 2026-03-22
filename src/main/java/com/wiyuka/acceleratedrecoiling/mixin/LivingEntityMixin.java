@@ -3,6 +3,8 @@ package com.wiyuka.acceleratedrecoiling.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.wiyuka.acceleratedrecoiling.api.ICustomData;
+import com.wiyuka.acceleratedrecoiling.api.ICustomData;
 import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
 import com.wiyuka.acceleratedrecoiling.natives.CollisionMapData;
 import net.minecraft.world.entity.Entity;
@@ -13,8 +15,9 @@ import net.minecraft.world.phys.AABB;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Mixin(LivingEntity.class)
 public class LivingEntityMixin {
@@ -55,19 +58,19 @@ public class LivingEntityMixin {
             )
     )
     private List<Entity> replace(Level instance, Entity entity, AABB boundingBox, Predicate<? super Entity> predicate, Operation<List<Entity>> original) {
-//        Set<UUID> entities = CollisionMapTemp.get(entity.getUUID());
-//        if(entities == null) return Collections.emptyList();
-//        List<Entity> result = new ArrayList<>();
-//        for (UUID uuid : entities) {
-//            Entity entity1 = instance.getEntity(uuid);
-//            if (entity1 == null) continue;
-//            result.add(entity1);
-//        }
-//        return result;
-        if(FoldConfig.enableEntityCollision && !(entity instanceof Player) && !entity.level().isClientSide)
-            return CollisionMapData.getCollisionList(entity, instance);
-        else
-            return original.call(instance, entity, boundingBox, predicate);
+        if (!FoldConfig.enableEntityCollision || entity instanceof Player || entity.level().isClientSide())
+            return original.call(instance, entity, aabb, predicate);
+        ICustomData data = (ICustomData) entity;
+        if (data.getDensity() < FoldConfig.densityThreshold) return original.call(instance, entity, aabb, predicate);
+
+        List<Entity> rawList = CollisionMapData.getCollisionList(entity, instance);
+        List<Entity> filteredList = new ArrayList<>();
+        for (Entity e : rawList) {
+            if (e != entity && predicate.test(e)) {
+                filteredList.add(e);
+            }
+        }
+        return filteredList;
     }
 
 //    @Inject(

@@ -23,7 +23,6 @@ public class CollisionMapData {
         IntArrayList list = collisionMap.get(source);
         if (list == null) {
             list = new IntArrayList();
-//            collisionMap[source] = list;
             collisionMap.put(source, list);
         }
         list.add(target);
@@ -35,7 +34,6 @@ public class CollisionMapData {
 
     public static List<Entity> getCollisionList(Entity source, Level level) {
         IntArrayList ids = collisionMap.get(TempID.getId(source));
-//        IntArrayList ids = collisionMap.get(source.getId());
         if (ids == null || ids.isEmpty()) return Collections.emptyList();
         return new EntityListView(ids, level, source);
     }

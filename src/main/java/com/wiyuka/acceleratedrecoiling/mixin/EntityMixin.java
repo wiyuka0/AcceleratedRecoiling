@@ -1,6 +1,7 @@
 package com.wiyuka.acceleratedrecoiling.mixin;
 
-import com.wiyuka.acceleratedrecoiling.api.ICustomBB;
+import com.wiyuka.acceleratedrecoiling.api.ICustomData;
+import com.wiyuka.acceleratedrecoiling.api.ICustomData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -13,13 +14,14 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Entity.class)
-public abstract class EntityMixin implements ICustomBB {
+public abstract class EntityMixin implements ICustomData {
     private double bbMinX = 0.0;
     private double bbMinY = 0.0;
     private double bbMinZ = 0.0;
     private double bbMaxX = 0.0;
     private double bbMaxY = 0.0;
     private double bbMaxZ = 0.0;
+    private float density = 0.0f;
 
     @Unique
     private int nativeId = -1;
@@ -34,6 +36,15 @@ public abstract class EntityMixin implements ICustomBB {
         this.nativeId = nativeId;
     }
 
+    @Override
+    public void setDensity(float density) {
+        this.density = density;
+    }
+
+    @Override
+    public float getDensity() {
+        return density;
+    }
 
     @Override
     public final void extractionBoundingBox(double[] doubleArray, int offset, double inflate) {

@@ -60,6 +60,7 @@ public abstract class ServerLevelMixin {
         }
     }
 
+
 //    @Redirect(
 //            method = "tick(Ljava/util/function/BooleanSupplier;)V", // 目标方法
 //            at = @At(

@@ -1,8 +1,7 @@
 package com.wiyuka.acceleratedrecoiling.natives;
 
-import com.wiyuka.acceleratedrecoiling.api.ICustomBB;
+import com.wiyuka.acceleratedrecoiling.api.ICustomData;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.entity.EntityTickList;
 
 import java.util.Arrays;
 
@@ -24,7 +23,7 @@ public class TempID {
         }
         int tempId = currentIndex++;
         frameSnapshot[tempId] = e;
-         ((ICustomBB)e).setNativeId(tempId);
+        ((ICustomData)e).setNativeId(tempId);
     }
 
     public static Entity getEntity(int id) {
@@ -32,7 +31,7 @@ public class TempID {
         return frameSnapshot[id];
     }
     public static int getId(Entity e) {
-        return ((ICustomBB)e).getNativeId();
+        return ((ICustomData)e).getNativeId();
     }
 
     private static void resize() {
