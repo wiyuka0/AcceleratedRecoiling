@@ -92,62 +92,56 @@ repositories {
     mavenCentral()
 }
 
-// 1. 创建编译原生 C++ 的任务
+def isGitHubActions = System.getenv("GITHUB_ACTIONS") == "true"
+def isWindows = System.getProperty("os.name").toLowerCase().contains("windows")
+def isLinux = System.getProperty("os.name").toLowerCase().contains("linux")
+
 tasks.register("compileNativeLib", Exec) {
     group = "build"
-    description = "Compiles the C++ Native Library using MSVC."
-    onlyIf { System.getProperty("os.name").toLowerCase().contains("windows") }
+    onlyIf { isWindows }
+
     def cppSource = layout.projectDirectory.file("acceleratedRecoilingLib.cpp")
     def dllOutput = layout.projectDirectory.file("build/acceleratedRecoilingLib.dll")
-
     inputs.file(cppSource)
     outputs.file(dllOutput)
     workingDir = layout.projectDirectory.asFile
-    // replace your vcvars64.bat
-    def vcvarsScript = "I:\\vs\\VC\\Auxiliary\\Build\\vcvars64.bat"
-    def compileCmd = """call "${vcvarsScript}" && cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /MD /Zi /W3 /I"E:\\qucistart\\acceleratedrecoilingnative" acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /LIBPATH:"I:\\vcpkg\\vcpkg\\installed\\x64-windows\\lib" /OPT:REF /OPT:ICF"""
-
-    commandLine 'cmd', '/c', compileCmd
     doFirst {
-        // 3. 在执行阶段 (doFirst) 中，必须使用纯 Java API 创建文件夹，绝对不能用 mkdir()
         File bDir = new File(getWorkingDir(), "build")
-        if (!bDir.exists()) {
-            bDir.mkdirs()
+        if (!bDir.exists()) bDir.mkdirs()
+        if (isGitHubActions) {
+            def javaHome = System.getenv("JAVA_HOME")
+            commandLine 'cmd', '/c', """cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /DAR_ENABLE_JNI /I"${javaHome}\\include" /I"${javaHome}\\include\\win32" /MD /Zi /W3 acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /OPT:REF /OPT:ICF"""
+        } else {
+            def vcvarsScript = "I:\\vs\\VC\\Auxiliary\\Build\\vcvars64.bat"
+            commandLine 'cmd', '/c', """call "${vcvarsScript}" && cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /DAR_ENABLE_JNI /I.\\jdk\\corretto-21.0.10\\include /I.\\jdk\\corretto-21.0.10\\include\\win32 /MD /Zi /W3 /I"E:\\qucistart\\acceleratedrecoilingnative" acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /OPT:REF /OPT:ICF"""
         }
-        println "正在使用 MSVC 编译 acceleratedRecoilingLib.cpp ..."
+        println "正在编译 acceleratedRecoilingLib.dll ..."
     }
 }
-
+// 2. 编译 Linux 的 .so
 tasks.register("compileNativeLibLinux", Exec) {
     group = "build"
-    description = "Compiles the C++ Native Library for Linux (.so) using WSL and g++."
-    // 仅在 Windows 主机上运行时才触发这个基于 WSL 的交叉编译
-    onlyIf { System.getProperty("os.name").toLowerCase().contains("windows") }
-
+    onlyIf { isWindows || isLinux }
     def cppSource = layout.projectDirectory.file("acceleratedRecoilingLib.cpp")
-    // JNI 规范：Linux 下的动态库必须以 lib 开头
     def soOutput = layout.projectDirectory.file("build/libacceleratedRecoilingLib.so")
     inputs.file(cppSource)
     outputs.file(soOutput)
     workingDir = layout.projectDirectory.asFile
-
-    def compileCmd = """g++ -std=c++20 -O3 -ffast-math -mavx2 -fopenmp -shared -fPIC \
-        acceleratedRecoilingLib.cpp \
-        -o build/libacceleratedRecoilingLib.so"""
-    // 通过 wsl 运行 bash 执行编译命令
-    commandLine 'wsl', 'bash', '-c', compileCmd
-
     doFirst {
         File bDir = new File(getWorkingDir(), "build")
-        if (!bDir.exists()) {
-            bDir.mkdirs()
+        if (!bDir.exists()) bDir.mkdirs()
+        if (isGitHubActions && isLinux) {
+            def javaHome = System.getenv("JAVA_HOME")
+            commandLine 'bash', '-c', """g++ -std=c++20 -O3 -ffast-math -DAR_ENABLE_JNI -I"${javaHome}/include" -I"${javaHome}/include/linux" -mavx2 -fopenmp -shared -fPIC acceleratedRecoilingLib.cpp -o build/libacceleratedRecoilingLib.so"""
+        } else {
+            commandLine 'wsl', 'bash', '-c', """g++ -std=c++20 -O3 -ffast-math -DAR_ENABLE_JNI -I./jdk/corretto-21.0.10/include -I./jdk/corretto-21.0.10/include/linux -mavx2 -fopenmp -shared -fPIC acceleratedRecoilingLib.cpp -o build/libacceleratedRecoilingLib.so"""
         }
-        println "正在使用 WSL (g++) 编译 Linux 版本的 .so 动态库 ..."
+        println "正在编译 libacceleratedRecoilingLib.so ..."
     }
 }
 tasks.named('processResources', ProcessResources) {
     dependsOn 'compileNativeLib'
-    dependsOn 'compileNativeLibLinux' // 依赖 WSL 编译任务
+    dependsOn 'compileNativeLibLinux'
     from(layout.projectDirectory.file("build/acceleratedRecoilingLib.dll")) {
         into ""
     }
