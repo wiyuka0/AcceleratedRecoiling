@@ -1,139 +1,103 @@
-# 加速碰撞（Accelerated Recoiling）
-加速碰撞是一个作用于服务器的实体碰撞逻辑优化模组，旨在显著降低实体的碰撞计算开销
-通过 Java 21+ 的 Foreign Function & Memory (FFM) API来接管实体AABB碰撞检测，将计算压力从Java转移。
+# 加速碰撞 (Accelerated Recoiling)
 
-AcceleratedRecoiling is a Minecraft optimization mod that improves server performance by optimizing AABB collision detection algorithms.
+加速碰撞是一个专注于优化服务端实体碰撞逻辑的模组。它利用 Java 21+ 的 FFM (Foreign Function & Memory) API 接管实体 AABB 碰撞检测，将高密集计算压力转移至 C++ 原生库，从而显著提升服务器性能。
 
-*本模组目前为实验性质，目前来说本模组的 **实体挤压表现与原版不完全一致**。请在使用前做好存档备份，并谨慎使用。*
+**本模组目前为实验性质，实体挤压表现与原版不完全一致。请务必在做好存档备份的前提下谨慎使用。**
 
 官方交流群：1023713677
 
----
+## 环境要求与前置
 
-## 前置要求
+*   **Java 21 或以上**：必须使用 Java 21 或 Java 21+ 启动游戏/服务端（FFM API 为 Java 21 预览功能）。
+*   **64位操作系统**：本机库 (`.dll` / `.so`) 仅支持 64 位环境。
+*   **Windows 平台**：需安装 [Microsoft Visual C++ 运行库](https://aka.ms/vs/17/release/vc_redist.x64.exe)（如启动失败请优先安装）。
+*   **Leaves 端**：启动参数中必须包含 `-Dleavesclip.enable.mixin=true`。
 
-* **Java 21 或更高版本**：FFM API 是 Java 21 的预览功能。**你必须使用 Java 21+ 来启动你的服务器/客户端。**
-* **64位操作系统**：本机库（`.dll` / `.so`）需要64位环境。
-* **Windows 平台** [**Microsoft Visual C++ 运行库**](https://aka.ms/vs/17/release/vc_redist.x64.exe)：如果启动失败，请首先安装此运行库。
-* **Leaves** 如果你用的是加速碰撞的Leaves移植版，请确保服务器的启动参数中包含 `-Dleavesclip.enable.mixin=true`
+## 安装与配置
 
-## 游戏崩溃了！
-如果游戏无法正常启动……
+首次启动时，模组会自动在根目录释放本机库文件，并生成 `acceleratedRecoiling.json` 配置文件。
 
-* 你的客户端是 NeoForge 1.21.1/1.21.8，请使用 Java 22+ 启动游戏。
-* 你的环境是 Leaves，请确保服务器的启动参数中包含 `-Dleavesclip.enable.mixin=true`。
-* 如果这些方法都不起作用，请更新此模组，并删除文件 `.minecraft/acceleratedRecoilingLib.dll`，然后重启客户端。（文件位于 `.minecraft/` 或你的客户端根目录下）
-
-## 安装
-模组在首次启动时，会自动在服务器/客户端**根目录**下解压 `acceleratedRecoilingLib.dll`（或 `.so`）文件，并创建一个 `acceleratedRecoiling.json` 配置文件。
-
-你可以在服务器/客户端**根目录**（与 `mods文件夹` 同级）找到 `acceleratedRecoiling.json` 文件。
-
-**默认配置：**
+**默认配置及说明：**
 ```json
 {
-   "enableEntityCollision": true,
-   "enableEntityGetterOptimization": true,
-   "maxCollision": 32,
-   "gridSize": 1,
-   "densityWindow": 4,
-   "densityThreshold": 16
+   "enableEntityCollision": true,      // 是否启用实体挤压优化
+   "enableEntityGetterOptimization": true, // 启用EntityGetter接口优化(暂时无效)
+   "maxCollision": 32,                 // 单个实体最大碰撞交互数
+   "gridSize": 1,                      // 算法网格大小
+   "densityWindow": 4,                 // 密度平滑窗口
+   "densityThreshold": 16              // 触发加速碰撞的周围实体密度阈值
 }
 ```
-* enableEntityCollision: 是否启用实体挤压优化
-* enableEntityGetterOptimization: 是否启用EntityGetter接口优化 (暂时无效)
-* maxCollision: 每个实体最多与其周围几个实体相互碰撞
-* gridSize: 算法网格大小
-* densityWindow: 密度平滑窗口
-* densityThreshold: 当实体周围的密度达到多少时，对于这个实体启用加速碰撞
+*注：若开启后性能不升反降，请尝试调低 `densityThreshold`。*
 
-*如果出现开启加速碰撞后性能反而下降的情况，请尝试调低densityThreshold。*
-  
-## 基准测试
-#### 测试环境
-* **CPU**: Intel Core i5-12600KF
-* **内存**: 32GB (分配堆内存 24GB)
-* **显卡**: NVIDIA RTX 3060 Ti
-* **服务端**: `Leaves 1.21.8-138-master@9331167 (2025-10-18T16:10:30Z)`
-* **Java**: GraalVM JDK 21
-* **启动参数**: `-Dleavesclip.enable.mixin=true -Xmx24G -Xms24G`
-* **模组版本**: `AcceleratedRecoilingLeaves-0.7.3-alpha-leaves-all.jar`
-* **使用配置**: 默认
+## 常见问题 (Q&A)
 
-#### 测试方法
-在同一个区块内的 2x2 空间内生成指定数量的猪，记录服务器 TPS 变化
+**Q: 为什么游戏崩溃或无法启动？**
+**A:** 请按以下步骤排查：
+1. 确认已正确安装 Java 21+ 和 MSVC 运行库。
+2. 若客户端为 **NeoForge 1.21.1/1.21.8**，请尝试使用 **Java 22+** 启动游戏。
+3. 若使用 **Leaves** 服务端，确保启动参数包含 `-Dleavesclip.enable.mixin=true`。
+4. 如果更新过模组，尝试删除根目录或 `.minecraft` 下的 `acceleratedRecoilingLib.dll`与`acceleratedRecoiling.json`，然后重启游戏让其重新生成。
 
-#### 测试结果
+**Q: 开启后实体挤压表现和原版一样吗？**
+**A:** 不完全一致。本模组目前为实验性质，改变了底层计算逻辑，因此挤压表现会与原版有差异。**请务必在使用前做好存档备份。**
 
-| 实体数量 | Leaves + 加速碰撞 (TPS) | Leaves (TPS) | 提升倍率 |
+**Q: 会影响生电特性吗？**
+**A:** 目前不清楚，可能会影响与实体挤压有关的红石机器，**请务必在使用前做好存档备份。**
+
+**Q: 为什么开启模组后，服务器性能反而下降了？**
+**A:** 可能是周围实体密度未达到触发优化的条件，因此同时走了原版和加速碰撞的两条路径。请尝试打开配置文件，适当调低 `densityThreshold` 的数值。
+
+
+
+## 性能基准测试
+
+**测试环境:** i5-12600KF | 32GB RAM | RTX 3060 Ti | Leaves 1.21.8 | GraalVM JDK 21
+
+**测试一：TPS 变化 (同一区块 2x2 空间内生成实体)**
+| 实体数量 | Leaves + 加速碰撞 | 原版 Leaves | 提升倍率 |
 | :--- | :--- | :--- | :--- |
-| **2,048** | **20.0** (16 MSPT) | 3.0 | 20.8x  |
-| **4,096** | **20.0** (27 MSPT) | 0.5 | 74x |
-| **8,192** | **19.7** (51 MSPT) | - | - |
-| **16,384** | **8.6** (115 MSPT) | - | - |
-| **32,768** | **4.3** (230 MSPT) | - | - |
+| **2,048** | **20.0 TPS** (16 MSPT) | 3.0 TPS | 20.8x |
+| **4,096** | **20.0 TPS** (27 MSPT) | 0.5 TPS | 74x |
+| **16,384** | **8.6 TPS** (115 MSPT) | - | - |
+| **32,768** | **4.3 TPS** (230 MSPT) | - | - |
 
-## TODO
-- [ ] 兼容1.21.11
-- [ ] 兼容MAC(?)
-- [ ] Luminol 支持
-
-## 如何编译 (How to Compile)
-
-本项目包含通过 Java FFM 调用的原生 C++ 核心库。目前的 Gradle 构建脚本配置为 **在 Windows 主机下利用 WSL 自动化交叉编译双端动态库**（同时生成 `.dll` 和 `.so`）。
-
-因此，如果你想从源码编译本项目，**建议在装有 WSL 的 Windows 10/11 系统下进行**。
-
-### 1. 环境准备
-* **Java**: 安装 JDK 21。
-* **Windows (MSVC)**: 安装 [Visual Studio 2022](https://visualstudio.microsoft.com/zh-hans/)，并在安装程序中勾选 **“使用 C++ 的桌面开发”**。
-* **Linux (WSL)**: 确保你安装了 WSL。打开 WSL 终端，安装 GCC 工具链和 OpenMP 运行时：
-  ```bash
-  sudo apt update
-  sudo apt install build-essential libgomp1 -y
-  ```
-
-### 2. 修改编译脚本路径
-由于每台电脑的 Visual Studio 安装路径不同，在编译前，你**必须**修改 `build.gradle.kts` 中的 MSVC 环境脚本路径。
-
-打开 `build.gradle.kts`，找到 `compileNativeLib` 任务中的这一行：
-```kotlin
-val vcvarsScript = "I:\\vs\\VC\\Auxiliary\\Build\\vcvars64.bat"
-```
-将其替换为你本机实际的 `vcvars64.bat` 路径。通常默认路径类似于：
-`C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat`
-
-### 3. 开始构建
-在项目根目录下，打开命令行（PowerShell 或 CMD），运行以下命令：
-```powershell
-# Windows
-gradlew build
-# shadowJar
-gradlew shadowJar
-```
-Gradle 将自动调用 MSVC 编译 `.dll`，并通过 WSL 调用 `g++` 编译 `.so`，最后将其一起打包进 Jar 中。编译产物将位于 `build/libs/` 目录下。
-
----
-
-
-## 贡献与致谢
-
-非常感谢以下开发者和所有为本项目提交issues与pr的人的帮助与支持！！
-*   **[**Argon4W**](https://github.com/Argon4W)**: 提供了该项目的原始构思与核心思路。
-*   **[**fireboy637**](https://github.com/fireboy637)**: 提供了该项目的ArchitecturyAPI移植方案的核心代码。
-*   **[**hydropuse**](https://github.com/hydropuse)**: 提供了该项目的JDK 22兼容方案的核心代码。
-
-## 开源协议
-该项目使用 MIT 开源协议开源。
-
-（其实我想新开一个仓库用来放这个的但是我懒 TwT
-汇报一下战绩：
-| 实体数量 | MS/Frame(每帧耗时，仅BroadPhase) | MSPF |
+**测试二：BroadPhase 耗时 (纯 C++ 端处理性能)**
+| 实体数量 | MS / Frame (每帧耗时) | 等效 FPS |
 | :--- | :--- | :--- |
-| 10000 | 0.2 | 5000 FPS |
-| 50000 | 1.1 | 909 FPS |
-| 100000 | 2.5 | 400 FPS |
-| 200000 | 6.7 | 149 FPS |
-| 400000 | 21.3 | 46 FPS |
-）
+| 10,000 | 0.2 ms | 5000 |
+| 50,000 | 1.1 ms | 909 |
+| 100,000 | 2.5 ms | 400 |
+| 400,000 | 21.3 ms | 46 |
 
+## 开发计划 (TODO)
+*   兼容 MacOS 
+*   Luminol 支持
+
+## 源码编译
+
+项目通过 Gradle 调用 MSVC 和 WSL 进行双端跨平台编译 (生成 `.dll` 和 `.so`)，建议在装有 WSL 的 Windows 10/11 环境下操作。
+
+**1. 环境准备**
+*   安装 JDK 21。
+*   安装 Visual Studio 2022，勾选“使用 C++ 的桌面开发”。
+*   在 WSL 中安装编译工具：`sudo apt update && sudo apt install build-essential libgomp1 -y`
+
+**2. 修改脚本路径**
+打开 `build.gradle.kts`，找到 `compileNativeLib` 任务，将 `vcvarsScript` 变量的值替换为你本机实际的 `vcvars64.bat` 路径。
+
+**3. 构建**
+在项目根目录运行以下命令：
+```bash
+gradlew jar
+gradlew build
+```
+编译产物 (包含双端动态库的 Jar) 将生成在 `build/libs/` 目录下。
+
+## 鸣谢与开源协议
+
+本项目基于 **MIT 协议** 开源。
+特别感谢以下开发者对本项目的核心思路与代码移植提供的巨大帮助：
+*   **[Argon4W](https://github.com/Argon4W)**: 原始构思与核心思路。
+*   **[fireboy637](https://github.com/fireboy637)**: Architectury API 移植方案的核心代码。
+*   **[hydropuse](https://github.com/hydropuse)**: JDK 22 兼容方案的核心代码。
