@@ -648,6 +648,8 @@ extern "C" EXPORT int push(const double *aabbs, int *outputA, int *outputB, int 
     return collisionCount;
 }
 
+#ifdef AR_ENABLE_JNI
+
 #include "./jdk/corretto-21.0.10/include/jni.h"
 
 extern "C" {
@@ -719,3 +721,6 @@ Java_com_wiyuka_acceleratedrecoiling_natives_NativeInterfaceJNI_push(JNIEnv *env
     return collisionCount;
 }
 }
+
+
+#endif // ENABLE_JNI
