@@ -110,10 +110,10 @@ tasks.register("compileNativeLib", Exec) {
         if (!bDir.exists()) bDir.mkdirs()
         if (isGitHubActions) {
             def javaHome = System.getenv("JAVA_HOME")
-            commandLine 'cmd', '/c', """cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /DAR_ENABLE_JNI /I"${javaHome}\\include" /I"${javaHome}\\include\\win32" /MD /Zi /W3 acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /OPT:REF /OPT:ICF"""
+            commandLine 'cmd', '/c', """cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /MD /Zi /W3 acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /OPT:REF /OPT:ICF"""
         } else {
             def vcvarsScript = "I:\\vs\\VC\\Auxiliary\\Build\\vcvars64.bat"
-            commandLine 'cmd', '/c', """call "${vcvarsScript}" && cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /DAR_ENABLE_JNI /I.\\jdk\\corretto-21.0.10\\include /I.\\jdk\\corretto-21.0.10\\include\\win32 /MD /Zi /W3 /I"E:\\qucistart\\acceleratedrecoilingnative" acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /OPT:REF /OPT:ICF"""
+            commandLine 'cmd', '/c', """call "${vcvarsScript}" && cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /MD /Zi /W3 acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /OPT:REF /OPT:ICF"""
         }
         println "正在编译 acceleratedRecoilingLib.dll ..."
     }
@@ -132,9 +132,9 @@ tasks.register("compileNativeLibLinux", Exec) {
         if (!bDir.exists()) bDir.mkdirs()
         if (isGitHubActions && isLinux) {
             def javaHome = System.getenv("JAVA_HOME")
-            commandLine 'bash', '-c', """g++ -std=c++20 -O3 -ffast-math -DAR_ENABLE_JNI -I"${javaHome}/include" -I"${javaHome}/include/linux" -mavx2 -fopenmp -shared -fPIC acceleratedRecoilingLib.cpp -o build/libacceleratedRecoilingLib.so"""
+            commandLine 'bash', '-c', """g++ -std=c++20 -O3 -ffast-math -mavx2 -fopenmp -shared -fPIC acceleratedRecoilingLib.cpp -o build/libacceleratedRecoilingLib.so"""
         } else {
-            commandLine 'wsl', 'bash', '-c', """g++ -std=c++20 -O3 -ffast-math -DAR_ENABLE_JNI -I./jdk/corretto-21.0.10/include -I./jdk/corretto-21.0.10/include/linux -mavx2 -fopenmp -shared -fPIC acceleratedRecoilingLib.cpp -o build/libacceleratedRecoilingLib.so"""
+            commandLine 'wsl', 'bash', '-c', """g++ -std=c++20 -O3 -ffast-math -mavx2 -fopenmp -shared -fPIC acceleratedRecoilingLib.cpp -o build/libacceleratedRecoilingLib.so"""
         }
         println "正在编译 libacceleratedRecoilingLib.so ..."
     }
