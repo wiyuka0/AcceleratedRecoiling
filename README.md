@@ -8,16 +8,10 @@
 
 ## 环境要求与前置
 
-*   **Java 21 或以上**：必须使用 Java 21+ 启动游戏/服务端（FFM API 为 Java 21 预览功能）。
+*   **Java 21 或以上**：必须使用 Java 21 或 Java 21+ 启动游戏/服务端（FFM API 为 Java 21 预览功能）。
 *   **64位操作系统**：本机库 (`.dll` / `.so`) 仅支持 64 位环境。
 *   **Windows 平台**：需安装 [Microsoft Visual C++ 运行库](https://aka.ms/vs/17/release/vc_redist.x64.exe)（如启动失败请优先安装）。
 *   **Leaves 端**：启动参数中必须包含 `-Dleavesclip.enable.mixin=true`。
-
-## 故障排查 (游戏崩溃)
-
-*   **NeoForge 1.21.1/1.21.8**：请使用 Java 22+ 启动客户端。
-*   **Leaves 环境**：检查是否遗漏了上述的 `enable.mixin` 启动参数。
-*   **其他问题**：尝试更新模组，并删除根目录或 `.minecraft` 目录下的 `acceleratedRecoilingLib.dll`，然后重启游戏。
 
 ## 安装与配置
 
@@ -35,6 +29,23 @@
 }
 ```
 *注：若开启后性能不升反降，请尝试调低 `densityThreshold`。*
+
+## 常见问题 (Q&A)
+
+**Q: 为什么游戏崩溃或无法启动？**
+**A:** 请按以下步骤排查：
+1. 确认已正确安装 Java 21+ 和 MSVC 运行库。
+2. 若客户端为 **NeoForge 1.21.1/1.21.8**，请尝试使用 **Java 22+** 启动游戏。
+3. 若使用 **Leaves** 服务端，确保启动参数包含 `-Dleavesclip.enable.mixin=true`。
+4. 如果更新过模组，尝试删除根目录或 `.minecraft` 下的 `acceleratedRecoilingLib.dll`与`acceleratedRecoiling.json`，然后重启游戏让其重新生成。
+
+**Q: 开启后实体挤压表现和原版一样吗？**
+**A:** 不完全一致。本模组目前为实验性质，改变了底层计算逻辑，因此挤压表现会与原版有差异。**请务必在使用前做好存档备份。**
+
+**Q: 为什么开启模组后，服务器性能反而下降了？**
+**A:** 可能是周围实体密度未达到触发最佳优化的条件。请尝试打开配置文件，适当调低 `densityThreshold` 的数值。
+
+
 
 ## 性能基准测试
 
@@ -75,7 +86,8 @@
 **3. 构建**
 在项目根目录运行以下命令：
 ```bash
-gradlew shadowJar
+gradlew jar
+gradlew build
 ```
 编译产物 (包含双端动态库的 Jar) 将生成在 `build/libs/` 目录下。
 
