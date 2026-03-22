@@ -148,52 +148,60 @@ remapJar {
 }
 
 
+def isGitHubActions = System.getenv("GITHUB_ACTIONS") == "true"
+def isWindows = System.getProperty("os.name").toLowerCase().contains("windows")
+def isLinux = System.getProperty("os.name").toLowerCase().contains("linux")
+
 tasks.register("compileNativeLib", Exec) {
     group = "build"
-    description = "Compiles the C++ Native Library using MSVC."
-    onlyIf { System.getProperty("os.name").toLowerCase().contains("windows") }
-    def cppSource = layout.projectDirectory.file("../acceleratedRecoilingLib.cpp")
-    def dllOutput = layout.projectDirectory.file("native-build/acceleratedRecoilingLib.dll")
+    onlyIf { isWindows }
 
+    def cppSource = layout.projectDirectory.file("acceleratedRecoilingLib.cpp")
+    def dllOutput = layout.projectDirectory.file("build/acceleratedRecoilingLib.dll")
     inputs.file(cppSource)
     outputs.file(dllOutput)
     workingDir = layout.projectDirectory.asFile
-    def vcvarsScript = "I:\\vs\\VC\\Auxiliary\\Build\\vcvars64.bat"
-    def compileCmd = """call "${vcvarsScript}" && cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /MD /Zi /W3 ../acceleratedRecoilingLib.cpp /Fe"native-build\\acceleratedRecoilingLib.dll" /Fd"native-build\\acceleratedRecoilingLib.pdb" /link /LIBPATH:"I:\\vcpkg\\vcpkg\\installed\\x64-windows\\lib" /OPT:REF /OPT:ICF"""
-
-    commandLine 'cmd', '/c', compileCmd
     doFirst {
-        File bDir = new File(getWorkingDir(), "native-build")
+        File bDir = new File(getWorkingDir(), "build")
         if (!bDir.exists()) bDir.mkdirs()
+        if (isGitHubActions) {
+            def javaHome = System.getenv("JAVA_HOME")
+            commandLine 'cmd', '/c', """cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /DAR_ENABLE_JNI /I"${javaHome}\\include" /I"${javaHome}\\include\\win32" /MD /Zi /W3 acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /OPT:REF /OPT:ICF"""
+        } else {
+            def vcvarsScript = "I:\\vs\\VC\\Auxiliary\\Build\\vcvars64.bat"
+            commandLine 'cmd', '/c', """call "${vcvarsScript}" && cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /DAR_ENABLE_JNI /I.\\jdk\\corretto-21.0.10\\include /I.\\jdk\\corretto-21.0.10\\include\\win32 /MD /Zi /W3 /I"E:\\qucistart\\acceleratedrecoilingnative" acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /OPT:REF /OPT:ICF"""
+        }
+        println "正在编译 acceleratedRecoilingLib.dll ..."
     }
 }
-
+// 2. 编译 Linux 的 .so
 tasks.register("compileNativeLibLinux", Exec) {
     group = "build"
-    description = "Compiles the C++ Native Library for Linux (.so) using WSL and g++."
-    onlyIf { System.getProperty("os.name").toLowerCase().contains("windows") }
-
-    def cppSource = layout.projectDirectory.file("../acceleratedRecoilingLib.cpp")
-    def soOutput = layout.projectDirectory.file("native-build/libacceleratedRecoilingLib.so")
+    onlyIf { isWindows || isLinux }
+    def cppSource = layout.projectDirectory.file("acceleratedRecoilingLib.cpp")
+    def soOutput = layout.projectDirectory.file("build/libacceleratedRecoilingLib.so")
     inputs.file(cppSource)
     outputs.file(soOutput)
     workingDir = layout.projectDirectory.asFile
-
-    def compileCmd = """g++ -std=c++20 -O3 -ffast-math -mavx2 -fopenmp -shared -fPIC \
-        ../acceleratedRecoilingLib.cpp \
-        -o native-build/libacceleratedRecoilingLib.so"""
-    commandLine 'wsl', 'bash', '-c', compileCmd
-
     doFirst {
-        File bDir = new File(getWorkingDir(), "native-build")
+        File bDir = new File(getWorkingDir(), "build")
         if (!bDir.exists()) bDir.mkdirs()
+        if (isGitHubActions && isLinux) {
+            def javaHome = System.getenv("JAVA_HOME")
+            commandLine 'bash', '-c', """g++ -std=c++20 -O3 -ffast-math -DAR_ENABLE_JNI -I"${javaHome}/include" -I"${javaHome}/include/linux" -mavx2 -fopenmp -shared -fPIC acceleratedRecoilingLib.cpp -o build/libacceleratedRecoilingLib.so"""
+        } else {
+            commandLine 'wsl', 'bash', '-c', """g++ -std=c++20 -O3 -ffast-math -DAR_ENABLE_JNI -I./jdk/corretto-21.0.10/include -I./jdk/corretto-21.0.10/include/linux -mavx2 -fopenmp -shared -fPIC acceleratedRecoilingLib.cpp -o build/libacceleratedRecoilingLib.so"""
+        }
+        println "正在编译 libacceleratedRecoilingLib.so ..."
     }
 }
-
-processResources {
+tasks.named('processResources', ProcessResources) {
     dependsOn 'compileNativeLib'
     dependsOn 'compileNativeLibLinux'
-
-    from(layout.projectDirectory.file("native-build/acceleratedRecoilingLib.dll")) { into "" }
-    from(layout.projectDirectory.file("native-build/libacceleratedRecoilingLib.so")) { into "" }
+    from(layout.projectDirectory.file("build/acceleratedRecoilingLib.dll")) {
+        into ""
+    }
+    from(layout.projectDirectory.file("build/libacceleratedRecoilingLib.so")) {
+        into ""
+    }
 }

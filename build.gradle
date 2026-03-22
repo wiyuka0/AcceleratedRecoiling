@@ -71,51 +71,161 @@ loom {
     }
 }
 
+def isGitHubActions = System.getenv("GITHUB_ACTIONS") == "true"
+def isWindows = System.getProperty("os.name").toLowerCase().contains("windows")
+def isLinux = System.getProperty("os.name").toLowerCase().contains("linux")
+
 tasks.register("compileNativeLib", Exec) {
     group = "build"
-    description = "Compiles the C++ Native Library using MSVC."
-    onlyIf { System.getProperty("os.name").toLowerCase().contains("windows") }
+    onlyIf { isWindows }
+
     def cppSource = layout.projectDirectory.file("acceleratedRecoilingLib.cpp")
     def dllOutput = layout.projectDirectory.file("build/acceleratedRecoilingLib.dll")
-
     inputs.file(cppSource)
     outputs.file(dllOutput)
     workingDir = layout.projectDirectory.asFile
-    def vcvarsScript = "I:\\vs\\VC\\Auxiliary\\Build\\vcvars64.bat"
-    def compileCmd = """call "${vcvarsScript}" && cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /MD /Zi /W3 /I"E:\\qucistart\\acceleratedrecoilingnative" acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /LIBPATH:"I:\\vcpkg\\vcpkg\\installed\\x64-windows\\lib" /OPT:REF /OPT:ICF"""
-
-    commandLine 'cmd', '/c', compileCmd
     doFirst {
         File bDir = new File(getWorkingDir(), "build")
         if (!bDir.exists()) bDir.mkdirs()
+        if (isGitHubActions) {
+            def javaHome = System.getenv("JAVA_HOME")
+            commandLine 'cmd', '/c', """cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /DAR_ENABLE_JNI /I"${javaHome}\\include" /I"${javaHome}\\include\\win32" /MD /Zi /W3 acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /OPT:REF /OPT:ICF"""
+        } else {
+            def vcvarsScript = "I:\\vs\\VC\\Auxiliary\\Build\\vcvars64.bat"
+            commandLine 'cmd', '/c', """call "${vcvarsScript}" && cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /DAR_ENABLE_JNI /I.\\jdk\\corretto-21.0.10\\include /I.\\jdk\\corretto-21.0.10\\include\\win32 /MD /Zi /W3 /I"E:\\qucistart\\acceleratedrecoilingnative" acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /OPT:REF /OPT:ICF"""
+        }
+        println "正在编译 acceleratedRecoilingLib.dll ..."
     }
 }
-
+// 2. 编译 Linux 的 .so
 tasks.register("compileNativeLibLinux", Exec) {
     group = "build"
-    description = "Compiles the C++ Native Library for Linux (.so) using WSL and g++."
-    onlyIf { System.getProperty("os.name").toLowerCase().contains("windows") }
-
+    onlyIf { isWindows || isLinux }
     def cppSource = layout.projectDirectory.file("acceleratedRecoilingLib.cpp")
     def soOutput = layout.projectDirectory.file("build/libacceleratedRecoilingLib.so")
     inputs.file(cppSource)
     outputs.file(soOutput)
     workingDir = layout.projectDirectory.asFile
-
-    def compileCmd = """g++ -std=c++20 -O3 -ffast-math -mavx2 -fopenmp -shared -fPIC \
-        acceleratedRecoilingLib.cpp \
-        -o build/libacceleratedRecoilingLib.so"""
-    commandLine 'wsl', 'bash', '-c', compileCmd
-
     doFirst {
         File bDir = new File(getWorkingDir(), "build")
         if (!bDir.exists()) bDir.mkdirs()
+        if (isGitHubActions && isLinux) {
+            def javaHome = System.getenv("JAVA_HOME")
+            commandLine 'bash', '-c', """g++ -std=c++20 -O3 -ffast-math -DAR_ENABLE_JNI -I"${javaHome}/include" -I"${javaHome}/include/linux" -mavx2 -fopenmp -shared -fPIC acceleratedRecoilingLib.cpp -o build/libacceleratedRecoilingLib.so"""
+        } else {
+            commandLine 'wsl', 'bash', '-c', """g++ -std=c++20 -O3 -ffast-math -DAR_ENABLE_JNI -I./jdk/corretto-21.0.10/include -I./jdk/corretto-21.0.10/include/linux -mavx2 -fopenmp -shared -fPIC acceleratedRecoilingLib.cpp -o build/libacceleratedRecoilingLib.so"""
+        }
+        println "正在编译 libacceleratedRecoilingLib.so ..."
+    }
+}
+tasks.named('processResources', ProcessResources) {
+    dependsOn 'compileNativeLib'
+    dependsOn 'compileNativeLibLinux'
+    from(layout.projectDirectory.file("build/acceleratedRecoilingLib.dll")) {
+        into ""
+    }
+    from(layout.projectDirectory.file("build/libacceleratedRecoilingLib.so")) {
+        into ""
+    }
+}
+base {
+    archivesName = mod_id
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    // Specify the version of NeoForge to use.
+    version = project.neo_version
+
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+
+    runs {
+        client {
+            client()
+            // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
+            jvmArgument("--enable-preview")
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        server {
+            server()
+            programArgument '--nogui'
+            jvmArgument("--enable-preview")
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        // This run config launches GameTestServer and runs all registered gametests, then exits.
+        // By default, the server will crash when no gametests are provided.
+        // The gametest system is also enabled by default for other run configs under the /test command.
+        gameTestServer {
+            type = "gameTestServer"
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+//        data {
+//            clientData()
+//
+//            // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
+//            // gameDirectory = project.file('run-data')
+//
+//            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
+//            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+//        }
+
+        // applies to all the run configs above
+        configureEach {
+            // Recommended logging data for a userdev environment
+            // The markers can be added/remove as needed separated by commas.
+            // "SCAN": For mods scan.
+            // "REGISTRIES": For firing of registry events.
+            // "REGISTRYDUMP": For getting the contents of all registries.
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+
+            // Recommended logging level for the console
+            // You can set various levels here.
+            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        // define mod <-> source bindings
+        // these are used to tell the game which sources are for which mod
+        // mostly optional in a single mod project
+        // but multi mod projects should define one per mod
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
     }
 }
 
-processResources {
-    dependsOn 'compileNativeLib'
-    dependsOn 'compileNativeLibLinux'
+// Include resources generated by data generators.
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+// 在 build.gradle 文件中找到或添加以下代码块
+tasks.named('createMinecraftArtifacts') {
+    dependsOn 'generateModMetadata'
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    // Example mod dependency with JEI
+    // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
+    // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
+    // compileOnly "mezz.jei:jei-${mc_version}-forge-api:${jei_version}"
+    // runtimeOnly "mezz.jei:jei-${mc_version}-forge:${jei_version}"
+
+    // Example mod dependency using a mod jar from ./libs with a flat dir repository
+    // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
+    // The group id is ignored when searching -- in this case, it is "blank"
+    // implementation "blank:coolmod-${mc_version}:${coolmod_version}"
+
+    // Example mod dependency using a file as dependency
+    // implementation files("libs/coolmod-${mc_version}-${coolmod_version}.jar")
 
     from(layout.projectDirectory.file("build/acceleratedRecoilingLib.dll")) { into "" }
     from(layout.projectDirectory.file("build/libacceleratedRecoilingLib.so")) { into "" }
