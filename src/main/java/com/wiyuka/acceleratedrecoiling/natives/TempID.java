@@ -23,7 +23,7 @@ public class TempID {
         }
         int tempId = currentIndex++;
         frameSnapshot[tempId] = e;
-        ((ICustomData)e).setNativeId(tempId);
+         ((ICustomData)e).setNativeId(tempId);
     }
 
     public static Entity getEntity(int id) {

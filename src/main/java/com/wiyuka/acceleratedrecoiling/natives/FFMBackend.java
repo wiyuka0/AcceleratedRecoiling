@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static java.lang.foreign.ValueLayout.*;
 
-public class NativeInterfaceFFM implements INativeBackend {
+public class FFMBackend implements INativeBackend {
     private static Linker linker;
     private static Arena nativeArena;
     private static MethodHandle pushMethodHandle = null;
@@ -42,6 +42,11 @@ public class NativeInterfaceFFM implements INativeBackend {
     private static MethodHandle destroyCfgMethodHandle = null;
 
     private static final AtomicLong maxSizeTouched = new AtomicLong(-1);
+
+    @Override
+    public String getName() {
+        return "FFM";
+    }
 
     static class PushResultFFM implements com.wiyuka.acceleratedrecoiling.natives.PushResult {
         private MemorySegment segmentA;
