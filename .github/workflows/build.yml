@@ -1,8 +1,14 @@
-name: 自动构建
+name: 自动构建与发布
 
 on:
   push:
     branches: [ "**" ]
+    # 增加对 Tag 的监听：只要你推了以 v 开头的 Tag（比如 v21.8.2-alpha），就会触发
+    tags: [ "v*" ]
+
+# 必须增加写入权限，否则 Actions 没法帮你创建 Release
+permissions:
+  contents: write
 
 jobs:
   build-windows-dll:
@@ -63,3 +69,23 @@ jobs:
         with:
           name: 构建完成-${{ github.ref_name }}
           path: build/libs/*.jar
+
+  # ====== 新增：自动发布 Release ======
+  release:
+    needs: build-linux-and-jar # 必须等前面的编译全成功了才发布
+    runs-on: ubuntu-latest
+    # 核心魔法：只有当触发这次 Actions 的是一个 Tag 时，才会运行这个任务
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: 下载刚才编译好的 Mod Jar 包
+        uses: actions/download-artifact@v4
+        with:
+          name: 构建完成-${{ github.ref_name }}
+          path: output-jars/ # 下载到一个临时目录
+
+      - name: 创建 GitHub Release 并上传文件
+        uses: softprops/action-gh-release@v2
+        with:
+          files: output-jars/*.jar # 把临时目录里的 Jar 包挂载到 Release 上
+          generate_release_notes: true # 自动把你的 Commit 记录变成更新日志！
+#          prerelease: contains(github.ref, 'alpha') || contains(github.ref, 'beta') # 如果名字里带有 alpha，自动标记为“预发布版本”
