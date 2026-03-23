@@ -1,5 +1,7 @@
 package com.wiyuka.acceleratedrecoiling.natives;
 
+import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
+
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
@@ -9,9 +11,9 @@ public class JavaBackend implements INativeBackend {
     private static final int BITS_X = 36;
     private static final long MASK_X = (1L << BITS_X) - 1L;
 
-    private int maxCollision = 32;
-    private int gridSize = 1;
-    private int densityWindow = 4;
+    private int maxCollision = FoldConfig.maxCollision;
+    private int gridSize = FoldConfig.gridSize;
+    private int densityWindow = FoldConfig.densityWindow;
 
     private EntityData mem;
     private int[] outputA;
