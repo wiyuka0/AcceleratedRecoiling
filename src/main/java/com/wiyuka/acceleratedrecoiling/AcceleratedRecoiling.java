@@ -2,6 +2,7 @@ package com.wiyuka.acceleratedrecoiling;
 
 import com.mojang.logging.LogUtils;
 import com.wiyuka.acceleratedrecoiling.commands.ToggleFoldCommand;
+import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -15,6 +16,7 @@ public class AcceleratedRecoiling {
     public static final String MODID = "acceleratedrecoiling";
     public static final Logger LOGGER = LogUtils.getLogger();
     public AcceleratedRecoiling(IEventBus modEventBus, ModContainer modContainer) {
+        FoldConfig.loadConfig();
         NeoForge.EVENT_BUS.register(this);
     }
 
