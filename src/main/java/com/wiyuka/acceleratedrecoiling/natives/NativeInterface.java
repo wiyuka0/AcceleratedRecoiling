@@ -16,6 +16,11 @@ public class NativeInterface {
         backend = backend1;
     }
 
+    public static String getBackendName() {
+        if(backend == null) return "None";
+        return backend.getName();
+    }
+
     private static INativeBackend getBackend() {
         int javaVersion = Runtime.version().feature();
         AcceleratedRecoiling.LOGGER.info("Detected Java Version: {}", javaVersion);
