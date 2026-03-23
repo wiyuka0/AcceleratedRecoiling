@@ -9,6 +9,7 @@ import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
 
+
 public class CollisionMapData {
     private static final Int2ObjectOpenHashMap<IntArrayList> collisionMap = new Int2ObjectOpenHashMap<>(10000);
 
@@ -29,6 +30,9 @@ public class CollisionMapData {
     }
 
     public static void clear() {
+        collisionMap.clear();
+    }
+    public static void clear1() {
         collisionMap.clear();
     }
 
