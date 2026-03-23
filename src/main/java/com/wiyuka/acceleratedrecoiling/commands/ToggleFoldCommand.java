@@ -147,14 +147,14 @@ public class ToggleFoldCommand {
                 .withStyle(ChatFormatting.DARK_GRAY));
 
         try {
-            var backend = NativeInterface.getBackendName();
-            String backendName = (backend != null) ? backend : "None";
+//            var backend = NativeInterface.getBackendName();
+//            String backendName = (backend != null) ? backend : "None";
 
             // 使用自定义颜色突出显示 Backend，或者直接复用 buildConfigLine
             message.append(Component.literal("  Backend: ")
                             .withStyle(ChatFormatting.GRAY))
-                    .append(Component.literal(backendName)
-                            .withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD))
+//                    .append(Component.literal(backendName)
+//                            .withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD))
                     .append("\n\n"); // 加两个换行，和下面的具体配置项区分开
         } catch (Exception e) {
             message.append(Component.literal("  Backend: Error\n\n").withStyle(ChatFormatting.RED));
