@@ -12,7 +12,7 @@ public class AcceleratedRecoiling {
 
     public static void init(CommandDispatcher<CommandSourceStack> dispatcher) {
         // 调用你的指令类的注册方法
-
+        FoldConfig.loadConfig();
         ToggleFoldCommand.register(dispatcher);
     }
 }

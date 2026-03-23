@@ -281,53 +281,6 @@ public class FFMBackend implements INativeBackend {
             throw new RuntimeException("Native library load failed: " + e.getMessage(), e);
         }
 
-//        String defaultConfig = """
-//                {
-//                    "enableEntityCollision": true,
-//                    "enableEntityGetterOptimization": true,
-//                    "maxCollision": 32,
-//                    "gridSize": 1,
-//                    "densityWindow": 4,
-//                    "densityThreshold": 16,
-//                    "maxThreads": %%
-//                }
-//                """;
-
-        JsonObject defaultConfigJson =  new JsonObject();
-        defaultConfigJson.addProperty("enableEntityCollision", true);
-        defaultConfigJson.addProperty("enableEntityGetterOptimization", true);
-        defaultConfigJson.addProperty("maxCollision", 32);
-        defaultConfigJson.addProperty("gridSize", 1);
-        defaultConfigJson.addProperty("densityWindow", 4);
-        defaultConfigJson.addProperty("densityThreshold", 16);
-        defaultConfigJson.addProperty("maxThreads", Runtime.getRuntime().availableProcessors() / 2);
-        File foldConfig = new File("acceleratedRecoiling.json");
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        String defaultConfig = gson.toJson(defaultConfigJson);
-        createConfigFile(foldConfig, defaultConfig);
-
-        String configFile;
-        try {
-            configFile = Files.readString(foldConfig.toPath(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            logger.warn("Failed to read acceleratedRecoiling.json, reason: {}. Using default config.", e.getMessage());
-            foldConfig.deleteOnExit();
-            configFile = defaultConfig;
-        }
-
-        try {
-            JsonObject configJson = JsonParser.parseString(configFile).getAsJsonObject();
-            initConfig(configJson);
-        } catch (Exception e) {
-            logger.warn("Config file is broken, reason: {}. Overwriting with default config.", e.getMessage());
-            foldConfig.deleteOnExit();
-            createConfigFile(foldConfig, defaultConfig);
-            initConfig(JsonParser.parseString(defaultConfig).getAsJsonObject());
-        }
-
-        logger.info("acceleratedRecoiling initialized.");
-        logger.info("Use max collisions: {}", FoldConfig.maxCollision);
-
         linker = Linker.nativeLinker();
         nativeArena = Arena.global();
         SymbolLookup lib = findFoldLib(nativeArena, dllPath);
@@ -378,32 +331,6 @@ public class FFMBackend implements INativeBackend {
             );
         } catch (Exception e) {
             logger.warn("Cannot find symbol 'destroyCtx'");
-        }
-
-    }
-
-    private static void initConfig(JsonObject configJson) {
-        FoldConfig.enableEntityCollision = configJson.get("enableEntityCollision").getAsBoolean();
-        FoldConfig.enableEntityGetterOptimization = configJson.get("enableEntityGetterOptimization").getAsBoolean();
-        FoldConfig.maxCollision = configJson.get("maxCollision").getAsInt();
-
-        FoldConfig.gridSize = configJson.has("gridSize") ? configJson.get("gridSize").getAsInt() : 1;
-        FoldConfig.densityWindow = configJson.has("densityWindow") ? configJson.get("densityWindow").getAsInt() : 4;
-        FoldConfig.densityThreshold = configJson.has("densityThreshold") ? configJson.get("densityThreshold").getAsInt() : 16;
-
-        int safeThreads = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
-        FoldConfig.maxThreads = configJson.has("maxThreads") ? configJson.get("maxThreads").getAsInt() : safeThreads;
-    }
-
-    private static void createConfigFile(File foldConfig, String config) {
-        if (!foldConfig.exists()) {
-            try {
-                if (foldConfig.createNewFile()) {
-                    Files.writeString(foldConfig.toPath(), config);
-                }
-            } catch (IOException e) {
-                throw new RuntimeException("Cannot create config file", e);
-            }
         }
     }
 }
