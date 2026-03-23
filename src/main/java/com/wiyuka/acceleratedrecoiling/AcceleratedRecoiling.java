@@ -3,6 +3,7 @@ package com.wiyuka.acceleratedrecoiling;
 import com.mojang.logging.LogUtils;
 import com.wiyuka.acceleratedrecoiling.commands.ToggleFoldCommand;
 
+import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -19,6 +20,7 @@ public class AcceleratedRecoiling {
     // Directly reference a slf4j logger
     public static final Logger LOGGER = LogUtils.getLogger();
     public AcceleratedRecoiling() {
+        FoldConfig.loadConfig();
     }
 
     @SubscribeEvent

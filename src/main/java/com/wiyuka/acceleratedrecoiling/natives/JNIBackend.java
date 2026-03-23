@@ -190,7 +190,6 @@ public class JNIBackend implements INativeBackend {
     }
 
     @Override
-
     public void initialize() {
         Logger logger = AcceleratedRecoiling.LOGGER;
         String dllPath = "";
@@ -218,63 +217,7 @@ public class JNIBackend implements INativeBackend {
         } catch (UnsatisfiedLinkError e) {
             throw new RuntimeException("Failed to load JNI library", e);
         }
-
-        JsonObject defaultConfigJson = new JsonObject();
-        defaultConfigJson.addProperty("enableEntityCollision", true);
-        defaultConfigJson.addProperty("enableEntityGetterOptimization", true);
-        defaultConfigJson.addProperty("maxCollision", 32);
-        defaultConfigJson.addProperty("gridSize", 1);
-        defaultConfigJson.addProperty("densityWindow", 4);
-        defaultConfigJson.addProperty("densityThreshold", 16);
-        defaultConfigJson.addProperty("maxThreads", Runtime.getRuntime().availableProcessors() / 2);
-
-        File foldConfig = new File("acceleratedRecoiling.jso n");
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        String defaultConfig = gson.toJson(defaultConfigJson);
-        createConfigFile(foldConfig, defaultConfig);
-
-        String configFile;
-        try {
-            configFile = Files.readString(foldConfig.toPath(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            logger.warn("Failed to read config, reason: {}. Using default.", e.getMessage());
-            foldConfig.deleteOnExit();
-            configFile = defaultConfig;
-        }
-
-        try {
-            JsonObject configJson = JsonParser.parseString(configFile).getAsJsonObject();
-            initConfig(configJson);
-        } catch (Exception e) {
-            logger.warn("Config broken: {}. Overwriting.", e.getMessage());
-            foldConfig.deleteOnExit();
-            createConfigFile(foldConfig, defaultConfig);
-            initConfig(JsonParser.parseString(defaultConfig).getAsJsonObject());
-        }
-
         logger.info("JNI acceleratedRecoiling initialized.");
     }
 
-    private static void initConfig(JsonObject configJson) {
-        FoldConfig.enableEntityCollision = configJson.get("enableEntityCollision").getAsBoolean();
-        FoldConfig.enableEntityGetterOptimization = configJson.get("enableEntityGetterOptimization").getAsBoolean();
-        FoldConfig.maxCollision = configJson.get("maxCollision").getAsInt();
-        FoldConfig.gridSize = configJson.has("gridSize") ? configJson.get("gridSize").getAsInt() : 1;
-        FoldConfig.densityWindow = configJson.has("densityWindow") ? configJson.get("densityWindow").getAsInt() : 4;
-        FoldConfig.densityThreshold = configJson.has("densityThreshold") ? configJson.get("densityThreshold").getAsInt() : 16;
-        int safeThreads = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
-        FoldConfig.maxThreads = configJson.has("maxThreads") ? configJson.get("maxThreads").getAsInt() : safeThreads;
-    }
-
-    private static void createConfigFile(File foldConfig, String config) {
-        if (!foldConfig.exists()) {
-            try {
-                if (foldConfig.createNewFile()) {
-                    Files.writeString(foldConfig.toPath(), config);
-                }
-            } catch (IOException e) {
-                throw new RuntimeException("Cannot create config file", e);
-            }
-        }
-    }
 }
