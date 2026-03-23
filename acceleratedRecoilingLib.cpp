@@ -654,23 +654,23 @@ extern "C" EXPORT int push(const double *aabbs, int *outputA, int *outputB, int 
 
 extern "C" {
 JNIEXPORT jlong JNICALL
-Java_com_wiyuka_acceleratedrecoiling_natives_NativeInterfaceJNI_createCtx(JNIEnv *env, jclass clazz) {
+Java_com_wiyuka_acceleratedrecoiling_natives_JNIBackend_createCtx(JNIEnv *env, jclass clazz) {
     return reinterpret_cast<jlong>(createCtx());
 }
 JNIEXPORT void JNICALL
-Java_com_wiyuka_acceleratedrecoiling_natives_NativeInterfaceJNI_destroyCtx(JNIEnv *env, jclass clazz, jlong ctxPtr) {
+Java_com_wiyuka_acceleratedrecoiling_natives_JNIBackend_destroyCtx(JNIEnv *env, jclass clazz, jlong ctxPtr) {
     if (ctxPtr != 0) {
         destroyCtx(reinterpret_cast<void*>(ctxPtr));
     }
 }
 JNIEXPORT jlong JNICALL
-Java_com_wiyuka_acceleratedrecoiling_natives_NativeInterfaceJNI_createCfg(JNIEnv *env, jclass clazz,
+Java_com_wiyuka_acceleratedrecoiling_natives_JNIBackend_createCfg(JNIEnv *env, jclass clazz,
                                                        jint maxCollision, jint gridSize,
                                                        jint densityWindow, jint maxThreads) {
     return reinterpret_cast<jlong>(createCfg(maxCollision, gridSize, densityWindow, maxThreads));
 }
 JNIEXPORT void JNICALL
-Java_com_wiyuka_acceleratedrecoiling_natives_NativeInterfaceJNI_updateCfg(JNIEnv *env, jclass clazz, jlong cfgPtr,
+Java_com_wiyuka_acceleratedrecoiling_natives_JNIBackend_updateCfg(JNIEnv *env, jclass clazz, jlong cfgPtr,
                                                        jint maxCollision, jint gridSize,
                                                        jint densityWindow, jint maxThreads) {
     if (cfgPtr != 0) {
@@ -678,13 +678,13 @@ Java_com_wiyuka_acceleratedrecoiling_natives_NativeInterfaceJNI_updateCfg(JNIEnv
     }
 }
 JNIEXPORT void JNICALL
-Java_com_wiyuka_acceleratedrecoiling_natives_NativeInterfaceJNI_destroyCfg(JNIEnv *env, jclass clazz, jlong cfgPtr) {
+Java_com_wiyuka_acceleratedrecoiling_natives_JNIBackend_destroyCfg(JNIEnv *env, jclass clazz, jlong cfgPtr) {
     if (cfgPtr != 0) {
         destroyCfg(reinterpret_cast<void*>(cfgPtr));
     }
 }
 JNIEXPORT jint JNICALL
-Java_com_wiyuka_acceleratedrecoiling_natives_NativeInterfaceJNI_push(JNIEnv *env, jclass clazz,
+Java_com_wiyuka_acceleratedrecoiling_natives_JNIBackend_push(JNIEnv *env, jclass clazz,
                                                   jdoubleArray aabbs_arr,
                                                   jintArray outputA_arr,
                                                   jintArray outputB_arr,
