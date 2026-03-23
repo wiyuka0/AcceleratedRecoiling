@@ -1,0 +1,82 @@
+name: Build and Publish
+
+on:
+  push:
+    branches: [ "**" ]
+    tags: [ "v*" ]
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-native:
+    name: Build Windows Native Libs
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Compile Windows native library
+        run: ./gradlew compileNativeLib
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-native-libs
+          path: build/acceleratedRecoilingLib.dll
+          retention-days: 1
+
+  build-and-package:
+    name: Build Linux Native Libs & Package Mod
+    needs: build-windows-native
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Install C++ toolchain
+        run: sudo apt-get update && sudo apt-get install -y g++ build-essential
+
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-native-libs
+          path: build/
+
+      - name: Build project
+        run: ./gradlew build --stacktrace
+
+      - name: Upload Mod artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: AcceleratedRecoiling-${{ github.ref_name }}-build-${{ github.run_number }}
+          path: build/libs/*.jar
+
+      - name: Publish to GitHub Releases
+        # 魔法开关：只有打了以 v 开头的 Tag，才会执行发版！
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/libs/*.jar
+          generate_release_notes: true

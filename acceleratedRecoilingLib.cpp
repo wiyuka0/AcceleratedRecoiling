@@ -47,7 +47,7 @@ inline int TrailingZeroCount(int mask) {
     _BitScanForward(&index, (unsigned long)mask);
     return (int)index;
 #else
-    // GCC / Clang
+    // TODO replace to #include <bit>
     return __builtin_ctz(mask);
 #endif
 }
@@ -298,10 +298,30 @@ extern "C" EXPORT void destroyCtx(void* context_ptr) {
     }
 }
 
-extern "C" EXPORT void* createCfg(int maxCollision, int gridSize, int densityWindow) {
+extern "C" EXPORT void* createCfg(int maxCollision, int gridSize, int densityWindow, int maxThreads) {
+    if(maxThreads > 0) {
+        omp_set_num_threads(maxThreads);
+    }
     return new Config {
         maxCollision, gridSize, densityWindow,
     };
+}
+
+extern "C" EXPORT void updateCfg(void* configPtr, int maxCollision, int gridSize, int densityWindow, int maxThreads) {
+    if (configPtr) {
+        Config* cfg = static_cast<Config*>(configPtr);
+        cfg->maxColision = maxCollision;
+        cfg->gridSize = gridSize;
+        cfg->densityWindow = densityWindow;
+    }
+    if (maxThreads > 0) {
+        omp_set_num_threads(maxThreads);
+    }
+}
+extern "C" EXPORT void destroyCfg(void* configPtr) {
+    if (configPtr) {
+        delete static_cast<Config*>(configPtr);
+    }
 }
 
 extern "C" EXPORT int push(const double *aabbs, int *outputA, int *outputB, int entityCount, float* densityBuf, void* memDataPtrOri, void* configPtr)
@@ -440,6 +460,7 @@ extern "C" EXPORT int push(const double *aabbs, int *outputA, int *outputB, int 
         float* pDensity = densityBuf;
 
         const int WINDOW = 4;
+
         const float EPSILON_DISTANCE = 0.1f;
         #pragma omp parallel for schedule(static)
         for (int grid = 0; grid < (int)runStarts.size() - 1; grid++)
@@ -545,7 +566,7 @@ extern "C" EXPORT int push(const double *aabbs, int *outputA, int *outputB, int 
                 if (laneMask != 0)
                 {
                     uint8_t mask8 = (uint8_t)laneMask;
-
+                    // TODO std::popcount
                     #ifdef _WIN32
                         int cnt = __popcnt((unsigned int) mask8);//__builtin_popcount((unsigned int)mask8);
                     #else
@@ -626,3 +647,80 @@ extern "C" EXPORT int push(const double *aabbs, int *outputA, int *outputB, int 
     logTime("Compaction");
     return collisionCount;
 }
+
+#ifdef AR_ENABLE_JNI
+
+#include "jni.h"
+
+extern "C" {
+JNIEXPORT jlong JNICALL
+Java_com_wiyuka_acceleratedrecoiling_natives_NativeInterfaceJNI_createCtx(JNIEnv *env, jclass clazz) {
+    return reinterpret_cast<jlong>(createCtx());
+}
+JNIEXPORT void JNICALL
+Java_com_wiyuka_acceleratedrecoiling_natives_NativeInterfaceJNI_destroyCtx(JNIEnv *env, jclass clazz, jlong ctxPtr) {
+    if (ctxPtr != 0) {
+        destroyCtx(reinterpret_cast<void*>(ctxPtr));
+    }
+}
+JNIEXPORT jlong JNICALL
+Java_com_wiyuka_acceleratedrecoiling_natives_NativeInterfaceJNI_createCfg(JNIEnv *env, jclass clazz,
+                                                       jint maxCollision, jint gridSize,
+                                                       jint densityWindow, jint maxThreads) {
+    return reinterpret_cast<jlong>(createCfg(maxCollision, gridSize, densityWindow, maxThreads));
+}
+JNIEXPORT void JNICALL
+Java_com_wiyuka_acceleratedrecoiling_natives_NativeInterfaceJNI_updateCfg(JNIEnv *env, jclass clazz, jlong cfgPtr,
+                                                       jint maxCollision, jint gridSize,
+                                                       jint densityWindow, jint maxThreads) {
+    if (cfgPtr != 0) {
+        updateCfg(reinterpret_cast<void*>(cfgPtr), maxCollision, gridSize, densityWindow, maxThreads);
+    }
+}
+JNIEXPORT void JNICALL
+Java_com_wiyuka_acceleratedrecoiling_natives_NativeInterfaceJNI_destroyCfg(JNIEnv *env, jclass clazz, jlong cfgPtr) {
+    if (cfgPtr != 0) {
+        destroyCfg(reinterpret_cast<void*>(cfgPtr));
+    }
+}
+JNIEXPORT jint JNICALL
+Java_com_wiyuka_acceleratedrecoiling_natives_NativeInterfaceJNI_push(JNIEnv *env, jclass clazz,
+                                                  jdoubleArray aabbs_arr,
+                                                  jintArray outputA_arr,
+                                                  jintArray outputB_arr,
+                                                  jint entityCount,
+                                                  jfloatArray densityBuf_arr,
+                                                  jlong ctxPtr,
+                                                  jlong cfgPtr) {
+    void* ctx = reinterpret_cast<void*>(ctxPtr);
+    void* cfg = reinterpret_cast<void*>(cfgPtr);
+
+    if (!ctx || !cfg || !aabbs_arr || !outputA_arr || !outputB_arr) {
+        return 0;
+    }
+
+    jboolean isCopy;
+    double* aabbs = (double*) env->GetPrimitiveArrayCritical(aabbs_arr, &isCopy);
+    int* outputA  = (int*) env->GetPrimitiveArrayCritical(outputA_arr, &isCopy);
+    int* outputB  = (int*) env->GetPrimitiveArrayCritical(outputB_arr, &isCopy);
+    float* densityBuf = nullptr;
+    if (densityBuf_arr != nullptr) {
+        densityBuf = (float*) env->GetPrimitiveArrayCritical(densityBuf_arr, &isCopy);
+    }
+
+    int collisionCount = push(aabbs, outputA, outputB, entityCount, densityBuf, ctx, cfg);
+
+    if (densityBuf != nullptr) {
+        env->ReleasePrimitiveArrayCritical(densityBuf_arr, densityBuf, 0); // 0: 同步修改到 Java
+    }
+    env->ReleasePrimitiveArrayCritical(outputB_arr, outputB, 0);
+    env->ReleasePrimitiveArrayCritical(outputA_arr, outputA, 0);
+
+    env->ReleasePrimitiveArrayCritical(aabbs_arr, aabbs, JNI_ABORT);
+
+    return collisionCount;
+}
+}
+
+
+#endif // ENABLE_JNI

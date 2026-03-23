@@ -1,5 +1,7 @@
 package com.wiyuka.acceleratedrecoiling.natives;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.wiyuka.acceleratedrecoiling.AcceleratedRecoiling;
@@ -36,6 +38,9 @@ public class NativeInterface {
     private static MethodHandle destroyCtxMethodHandle = null;
     private static MethodHandle createCfgMethodHandle = null;
 
+    private static MethodHandle updateCfgMethodHandle = null;
+    private static MethodHandle destroyCfgMethodHandle = null;
+
     private static final AtomicLong maxSizeTouched = new AtomicLong(-1);
 
     public record PushResult(MemorySegment A, MemorySegment B, MemorySegment density) {}
@@ -58,7 +63,8 @@ public class NativeInterface {
                     configPtr = (MemorySegment) createCfgMethodHandle.invokeExact(
                             FoldConfig.maxCollision,
                             FoldConfig.gridSize,
-                            FoldConfig.densityWindow
+                            FoldConfig.densityWindow,
+                            FoldConfig.maxThreads
                     );
                 }
             } catch (Throwable e) {
@@ -92,6 +98,35 @@ public class NativeInterface {
                     destroyCtxMethodHandle.invokeExact(context);
                 } catch (Throwable e) {
                     AcceleratedRecoiling.LOGGER.error("Failed to destroy native context", e);
+                }
+            }
+
+            if (configPtr != null && destroyCfgMethodHandle != null) {
+                try {
+                    destroyCfgMethodHandle.invokeExact(configPtr);
+                } catch (Throwable e) {
+                    AcceleratedRecoiling.LOGGER.error("Failed to destroy native config", e);
+                }
+            }
+        }
+    }
+
+    public static void applyConfig() {
+        if (!ParallelAABB.isInitialized || updateCfgMethodHandle == null) {
+            return;
+        }
+        for (ThreadState state : ALL_THREAD_STATES) {
+            if (state.configPtr != null) {
+                try {
+                    updateCfgMethodHandle.invokeExact(
+                            state.configPtr,
+                            FoldConfig.maxCollision,
+                            FoldConfig.gridSize,
+                            FoldConfig.densityWindow,
+                            FoldConfig.maxThreads
+                    );
+                } catch (Throwable e) {
+                    AcceleratedRecoiling.LOGGER.error("Failed to update native config for thread", e);
                 }
             }
         }
@@ -199,17 +234,29 @@ public class NativeInterface {
             throw new RuntimeException("Native library load failed: " + e.getMessage(), e);
         }
 
-        String defaultConfig = """
-                {
-                    "enableEntityCollision": true,
-                    "enableEntityGetterOptimization": true,
-                    "maxCollision": 32,
-                    "gridSize": 1,
-                    "densityWindow": 4,
-                    "densityThreshold": 16
-                }
-                """;
+//        String defaultConfig = """
+//                {
+//                    "enableEntityCollision": true,
+//                    "enableEntityGetterOptimization": true,
+//                    "maxCollision": 32,
+//                    "gridSize": 1,
+//                    "densityWindow": 4,
+//                    "densityThreshold": 16,
+//                    "maxThreads": %%
+//                }
+//                """;
+
+        JsonObject defaultConfigJson =  new JsonObject();
+        defaultConfigJson.addProperty("enableEntityCollision", true);
+        defaultConfigJson.addProperty("enableEntityGetterOptimization", true);
+        defaultConfigJson.addProperty("maxCollision", 32);
+        defaultConfigJson.addProperty("gridSize", 1);
+        defaultConfigJson.addProperty("densityWindow", 4);
+        defaultConfigJson.addProperty("densityThreshold", 16);
+        defaultConfigJson.addProperty("maxThreads", Runtime.getRuntime().availableProcessors() / 2);
         File foldConfig = new File("acceleratedRecoiling.json");
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String defaultConfig = gson.toJson(defaultConfigJson);
         createConfigFile(foldConfig, defaultConfig);
 
         String configFile;
@@ -258,8 +305,25 @@ public class NativeInterface {
         );
         createCfgMethodHandle = linker.downcallHandle(
                 lib.find("createCfg").orElseThrow(() -> new RuntimeException("Cannot find symbol 'createCfg'")),
-                FunctionDescriptor.of(ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT)
+                FunctionDescriptor.of(ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT)
         );
+
+        try {
+            updateCfgMethodHandle = linker.downcallHandle(
+                    lib.find("updateCfg").orElseThrow(),
+                    FunctionDescriptor.ofVoid(ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT)
+            );
+        } catch (Exception e) {
+            logger.warn("Cannot find symbol 'updateCfg'");
+        }
+        try {
+            destroyCfgMethodHandle = linker.downcallHandle(
+                    lib.find("destroyCfg").orElseThrow(),
+                    FunctionDescriptor.ofVoid(ADDRESS)
+            );
+        } catch (Exception e) {
+            logger.warn("Cannot find symbol 'destroyCfg'");
+        }
         try {
             destroyCtxMethodHandle = linker.downcallHandle(
                     lib.find("destroyCtx").orElseThrow(),
@@ -279,6 +343,9 @@ public class NativeInterface {
         FoldConfig.gridSize = configJson.has("gridSize") ? configJson.get("gridSize").getAsInt() : 1;
         FoldConfig.densityWindow = configJson.has("densityWindow") ? configJson.get("densityWindow").getAsInt() : 4;
         FoldConfig.densityThreshold = configJson.has("densityThreshold") ? configJson.get("densityThreshold").getAsInt() : 16;
+
+        int safeThreads = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
+        FoldConfig.maxThreads = configJson.has("maxThreads") ? configJson.get("maxThreads").getAsInt() : safeThreads;
     }
 
     private static void createConfigFile(File foldConfig, String config) {
