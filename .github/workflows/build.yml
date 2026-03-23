@@ -75,13 +75,6 @@ jobs:
           path: |
             fabric/build/libs/*-fabric.jar
             neoforge/build/libs/*-neoforge.jar
-      - name: Upload Mod artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: AcceleratedRecoiling-${{ github.ref_name }}-build-${{ github.run_number }}
-          path: |
-            fabric/build/libs/*-fabric.jar
-            neoforge/build/libs/*-neoforge.jar
       - name: Publish to GitHub Releases
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
