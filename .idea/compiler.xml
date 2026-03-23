@@ -11,6 +11,7 @@
       <module name="AcceleratedRecoiling.main" options="--enable-preview" />
       <module name="AcceleratedRecoiling.main~2" options="--enable-preview" />
       <module name="AcceleratedRecoiling.test" options="--enable-preview" />
+      <module name="acceleratedrecoiling.AcceleratedRecoiling.test" options="--enable-preview" />
     </option>
   </component>
 </project>
