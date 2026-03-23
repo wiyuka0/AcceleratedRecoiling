@@ -4,53 +4,101 @@ import com.wiyuka.acceleratedrecoiling.AcceleratedRecoiling;
 
 public class NativeInterface {
 
+    public enum BackendType {
+        AUTO,   // 自动选择后端
+        FFM,    // 强制尝试 FFM (Java 21+)
+        JNI,    // 强制尝试 JNI
+        JAVA    // 强制使用 Java
+    }
+
     private static INativeBackend backend;
     private static boolean isInitialized = false;
 
     public static void initialize() {
-        if (isInitialized) return;
-        INativeBackend backend1 = getBackend();
-//        INativeBackend backend1 = new JavaBackend();
-//        backend1.initialize();
-        AcceleratedRecoiling.LOGGER.info("Selected backend: " + backend1.getName());
-        backend = backend1;
+        initialize(BackendType.AUTO);
     }
 
-    private static INativeBackend getBackend() {
-        int javaVersion = Runtime.version().feature();
-        AcceleratedRecoiling.LOGGER.info("Detected Java Version: {}", javaVersion);
-        // 1. 尝试 FFM
-        if (javaVersion >= 21) {
-            try {
-                AcceleratedRecoiling.LOGGER.info("Attempting to load FFM backend...");
-                Class<?> ffmClass = Class.forName("com.wiyuka.acceleratedrecoiling.natives.FFMBackend");
-                INativeBackend ffmInstance = (INativeBackend) ffmClass.getDeclaredConstructor().newInstance();
+    public static void initialize(BackendType preferredType) {
+        if (isInitialized) return;
 
-                ffmInstance.initialize();
-                return ffmInstance;
-            } catch (Throwable t) {
-                AcceleratedRecoiling.LOGGER.warn("FFM backend failed to load. Reason: {}", t.getMessage());
-            }
+        AcceleratedRecoiling.LOGGER.info("Initializing NativeInterface with preferred backend: {}", preferredType);
+
+        backend = getBackend(preferredType);
+
+        if (backend != null) {
+            AcceleratedRecoiling.LOGGER.info("Successfully selected and initialized backend: " + backend.getName());
+            isInitialized = true;
+        } else {
+            throw new IllegalStateException("CRITICAL: Failed to initialize ANY backend!");
+        }
+    }
+
+    private static INativeBackend getBackend(BackendType preferredType) {
+        INativeBackend instance = null;
+        if (preferredType == BackendType.FFM) {
+            instance = tryLoadFFM();
+            if (instance != null) return instance;
+            AcceleratedRecoiling.LOGGER.warn("Preferred FFM backend failed. Falling back to AUTO...");
+        } else if (preferredType == BackendType.JNI) {
+            instance = tryLoadJNI();
+            if (instance != null) return instance;
+            AcceleratedRecoiling.LOGGER.warn("Preferred JNI backend failed. Falling back to AUTO...");
+        } else if (preferredType == BackendType.JAVA) {
+            return tryLoadJava();
         }
 
+        int javaVersion = Runtime.version().feature();
+        AcceleratedRecoiling.LOGGER.info("Detected Java Version: {}", javaVersion);
+
+        // 尝试 FFM
+        if (javaVersion >= 21) {
+            instance = tryLoadFFM();
+            if (instance != null) return instance;
+        }
+
+        // 尝试 JNI
+        instance = tryLoadJNI();
+        if (instance != null) return instance;
+
+        // 最终回退到纯 Java
+        AcceleratedRecoiling.LOGGER.info("Falling back to Pure Java backend...");
+        return tryLoadJava();
+    }
+
+    private static INativeBackend tryLoadFFM() {
+        try {
+            AcceleratedRecoiling.LOGGER.info("Attempting to load FFM backend...");
+            Class<?> ffmClass = Class.forName("com.wiyuka.acceleratedrecoiling.natives.FFMBackend");
+            INativeBackend ffmInstance = (INativeBackend) ffmClass.getDeclaredConstructor().newInstance();
+            ffmInstance.initialize();
+            return ffmInstance;
+        } catch (Throwable t) {
+            AcceleratedRecoiling.LOGGER.warn("FFM backend failed to load. Reason: {}", t.getMessage());
+            return null;
+        }
+    }
+
+    private static INativeBackend tryLoadJNI() {
         try {
             AcceleratedRecoiling.LOGGER.info("Attempting to load JNI backend...");
             INativeBackend jniInstance = new JNIBackend();
-
             jniInstance.initialize();
             return jniInstance;
         } catch (Throwable t) {
             AcceleratedRecoiling.LOGGER.warn("JNI backend failed to load. Reason: {}", t.getMessage());
+            return null;
         }
-        try {
-            AcceleratedRecoiling.LOGGER.info("Falling back to Pure Java backend...");
-            INativeBackend javaInstance = new JavaBackend();
+    }
 
+    private static INativeBackend tryLoadJava() {
+        try {
+            AcceleratedRecoiling.LOGGER.info("Attempting to load Java backend...");
+            INativeBackend javaInstance = new JavaBackend();
             javaInstance.initialize();
             return javaInstance;
         } catch (Throwable t) {
-            AcceleratedRecoiling.LOGGER.error("CRITICAL: All backends failed to load!", t);
-            throw new IllegalStateException("Failed to initialize any AcceleratedRecoiling backend", t);
+            AcceleratedRecoiling.LOGGER.error("CRITICAL: Java backend failed to load!", t);
+            return null;
         }
     }
 
