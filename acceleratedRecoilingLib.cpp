@@ -47,7 +47,7 @@ inline int TrailingZeroCount(int mask) {
     _BitScanForward(&index, (unsigned long)mask);
     return (int)index;
 #else
-    // TODO replace to #include <bit>
+    // GCC / Clang
     return __builtin_ctz(mask);
 #endif
 }
@@ -566,7 +566,7 @@ extern "C" EXPORT int push(const double *aabbs, int *outputA, int *outputB, int 
                 if (laneMask != 0)
                 {
                     uint8_t mask8 = (uint8_t)laneMask;
-                    // TODO std::popcount
+
                     #ifdef _WIN32
                         int cnt = __popcnt((unsigned int) mask8);//__builtin_popcount((unsigned int)mask8);
                     #else

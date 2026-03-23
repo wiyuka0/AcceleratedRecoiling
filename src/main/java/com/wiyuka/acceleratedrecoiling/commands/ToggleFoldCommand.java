@@ -21,7 +21,6 @@ import net.minecraft.network.chat.Component;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.annotation.Native;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 

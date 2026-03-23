@@ -74,7 +74,6 @@ jobs:
           path: build/libs/*.jar
 
       - name: Publish to GitHub Releases
-        # 魔法开关：只有打了以 v 开头的 Tag，才会执行发版！
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
