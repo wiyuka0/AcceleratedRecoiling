@@ -42,10 +42,9 @@ public class ParallelAABB {
         for (Entity entity : livingEntities) {
             ICustomData customBB = (ICustomData) entity;
 
-            float density = result.getDensity(index);
-            customBB.setDensity(density);
+            float currentDensity = result.getDensity(index);
+            customBB.setDensity(currentDensity);
 
-            float currentDensity = density;
             if (FoldConfig.debugDensity) {
                 Component debugName = Component.literal("Density: ")
                         .withStyle(ChatFormatting.GREEN)

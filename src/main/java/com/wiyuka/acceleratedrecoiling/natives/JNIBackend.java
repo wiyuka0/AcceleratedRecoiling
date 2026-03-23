@@ -22,7 +22,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class NativeInterfaceJNI implements INativeBackend {
+public class JNIBackend implements INativeBackend {
 
     private static final AtomicLong maxSizeTouched = new AtomicLong(-1);
 
@@ -32,6 +32,11 @@ public class NativeInterfaceJNI implements INativeBackend {
     private static native void updateCfg(long cfgPtr, int maxCollision, int gridSize, int densityWindow, int maxThreads);
     private static native void destroyCfg(long cfgPtr);
     private static native int push(double[] aabbs, int[] outputA, int[] outputB, int count, float[] densityBuf, long ctxPtr, long cfgPtr);
+
+    @Override
+    public String getName() {
+        return "JNI";
+    }
 
     static class PushResultJNI implements PushResult {
         private int[] arrayA;
@@ -223,7 +228,7 @@ public class NativeInterfaceJNI implements INativeBackend {
         defaultConfigJson.addProperty("densityThreshold", 16);
         defaultConfigJson.addProperty("maxThreads", Runtime.getRuntime().availableProcessors() / 2);
 
-        File foldConfig = new File("acceleratedRecoiling.json");
+        File foldConfig = new File("acceleratedRecoiling.jso n");
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String defaultConfig = gson.toJson(defaultConfigJson);
         createConfigFile(foldConfig, defaultConfig);
