@@ -8,30 +8,16 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.LivingEntity;
 
-import java.lang.foreign.ValueLayout;
 import java.util.List;
+
 
 public class ParallelAABB {
 
     static boolean isInitialized = false;
 
-    static class EntityData {
-        LivingEntity entity;
-        int count;
-        EntityData(LivingEntity entity, int count) {
-            this.entity = entity;
-            this.count = count;
-        }
-
-        void setCount(int count) {
-            this.count = count;
-        }
-    }
-
     public static void handleEntityPush(final List<Entity> livingEntities, double inflate) {
 
         CollisionMapData.clear();
-
 
         double[] aabb = new double[livingEntities.size() * 6];
         double[] locations = new double[livingEntities.size() * 3];
@@ -48,21 +34,17 @@ public class ParallelAABB {
 
         int[] resultCounts = new int[1];
 
-        NativeInterface.PushResult result = nativePush(locations, aabb, resultCounts);
+        PushResult result = nativePush(locations, aabb, resultCounts);
 
-        var outputA = result.A();
-        var outputB = result.B();
-
-        if (outputA == null || outputB == null) return;
-
+        if (result == null) return;
 
         index = 0;
         for (Entity entity : livingEntities) {
             ICustomData customBB = (ICustomData) entity;
-            float density = result.density().getAtIndex(ValueLayout.JAVA_FLOAT, index);
-            customBB.setDensity(density);
 
-            float currentDensity = density;
+            float currentDensity = result.getDensity(index);
+            customBB.setDensity(currentDensity);
+
             if (FoldConfig.debugDensity) {
                 Component debugName = Component.literal("Density: ")
                         .withStyle(ChatFormatting.GREEN)
@@ -79,15 +61,10 @@ public class ParallelAABB {
             index++;
         }
 
-
-
         for (int i = 0; i < resultCounts[0]; i++) {
-//            int e1Index = result[i * 2];
-//            int e2Index = result[i * 2 + 1];
-//            int e1Index = result.getAtIndex(ValueLayout.JAVA_INT, i * 2);
-//            int e2Index = result.getAtIndex(ValueLayout.JAVA_INT, i * 2 + 1);
-            int e1Index = outputA.getAtIndex(ValueLayout.JAVA_INT, i);
-            int e2Index = outputB.getAtIndex(ValueLayout.JAVA_INT, i);
+            int e1Index = result.getA(i);
+            int e2Index = result.getB(i);
+
             if (e1Index >= livingEntities.size() || e2Index >= livingEntities.size()) continue;
 
             Entity e1 = livingEntities.get(e1Index);
@@ -128,12 +105,12 @@ public class ParallelAABB {
 //        });
     }
 
-    public static NativeInterface.PushResult nativePush(double[] positions, double[] aabbs, int[] resultSizeOut) {
+    public static PushResult nativePush(double[] positions, double[] aabbs, int[] resultSizeOut) {
         if(!isInitialized) {
             NativeInterface.initialize();
             isInitialized = true;
         }
+
         return NativeInterface.push(positions, aabbs, resultSizeOut);
     }
 }
-

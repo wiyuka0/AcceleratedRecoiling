@@ -2,6 +2,7 @@ package com.wiyuka.acceleratedrecoiling.natives;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import net.minecraft.client.renderer.chunk.SectionCompiler;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 
