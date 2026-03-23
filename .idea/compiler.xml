@@ -16,7 +16,7 @@
           <entry name="E:/gra/caches/modules-2/files-2.1/io.github.llamalad7/mixinextras-common/0.5.0/286da96036621082491d971dfc62bee8fc37d161/mixinextras-common-0.5.0.jar" />
           <entry name="E:/gra/caches/modules-2/files-2.1/org.spongepowered/mixin/0.8.7/3d051c66329d162a52fc062f7da912c37904a6a0/mixin-0.8.7-processor.jar" />
         </processorPath>
-        <module name="AcceleratedRecoiling.main~1" />
+        <module name="AcceleratedRecoiling.main~2" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="21">
@@ -30,6 +30,7 @@
       <module name="AcceleratedRecoiling" options="--enable-preview" />
       <module name="AcceleratedRecoiling.main" options="--enable-preview" />
       <module name="AcceleratedRecoiling.main~1" options="--enable-preview" />
+      <module name="AcceleratedRecoiling.main~2" options="--enable-preview" />
       <module name="AcceleratedRecoiling.test" options="--enable-preview" />
       <module name="com.wiyuka.AcceleratedRecoiling.test" options="--enable-preview" />
     </option>
