@@ -378,4 +378,6 @@ tasks.named('jar', Jar).configure {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
     options.compilerArgs += "--enable-preview"
+    options.compilerArgs += "--add-modules"
+    options.compilerArgs += "jdk.incubator.vector"
 }
