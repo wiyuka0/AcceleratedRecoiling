@@ -23,7 +23,7 @@
 | **Java SIMD** | 使用加速碰撞的 Java VectorAPI 算法 | 无特殊硬件限制<br>*(注：MacOS 系统将被 fallback 到此)* | 高 | 可用 |
 | **Java** | 使用加速碰撞的 Java 原生算法 | 无 | 良好 | 可用 |
 | **GPU** | 使用 GPU 算法加速碰撞 | 需图形硬件支持 | 最高 | *Work In Progress* |
-| **Java Vanilla** | 在原版的实体遍历下直接修改实体碰撞筛选逻辑（原版特性还原程度最高） | 无 | 偏差 | *Work In Progress* |
+| **Java Vanilla** | 在原版的实体遍历下直接修改实体碰撞筛选逻辑（原版特性还原程度最高） | 无 | 偏差 | feature/java-vanilla分支可用 |
 | **Vanilla** | 原版的碰撞逻辑 | 无 | 最差 | - |
 ## 环境要求与前置
 
