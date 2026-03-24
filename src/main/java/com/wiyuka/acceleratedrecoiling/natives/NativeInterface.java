@@ -15,7 +15,12 @@ public class NativeInterface {
     private static boolean isInitialized = false;
 
     public static void initialize() {
-        initialize(BackendType.AUTO);
+        try {
+            if (AVX2.hasAVX2()) initialize(BackendType.AUTO);
+            else                initialize(BackendType.JAVA);
+        } catch (Throwable e) {
+                                initialize(BackendType.JAVA);
+        }
     }
 
     public static void initialize(BackendType preferredType) {
