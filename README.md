@@ -74,6 +74,16 @@ RUN apt-get update && \
     apt-get install -y libgomp1
 ```
 
+**Q: 会不会和某些模组不兼容？** <br>
+**A:** 完全不会，根据我们目前的测试，加速碰撞与 ATM9 整合包完全兼容
+同时兼容
+* [Lithium](https://github.com/CaffeineMC/lithium)
+* [FlatCollision](https://github.com/PooSmacker/FlatCollision)
+* [RuOK](https://github.com/MCTeamPotato/RuOK)
+* [Create](https://github.com/Creators-of-Create/Create)
+* [Valkyrien-Skies-2](https://github.com/ValkyrienSkies/Valkyrien-Skies-2)
+等多个大型模组。如果发现有不兼容的模组，请在本仓库提交Issue。
+
 **Q: FFM 是Java 21的预览功能，我是否应该使用Java 21+启动游戏？** <br>
 **A:** 如果你的游戏版本是*1.21.1*以上，那么是的，但这是**1.21.1**版本本身需要**Java 21**来运行。 <br>
 如果你的游戏是*1.20.1*，那么不需要，加速碰撞*v0.10.0-alpha-1.20.1*以上的版本**同时支持最新版JDK到Java 17**之间的任意JDK版本。 <br> （* 注: 1.20.1 的最低可运行 Java 即为 Java 17 *）
