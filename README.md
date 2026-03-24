@@ -98,10 +98,6 @@ RUN apt-get update && \
 | 100,000 | 2.5 ms | 400 |
 | 400,000 | 21.3 ms | 46 |
 
-## 开发计划 (TODO)
-*   兼容 MacOS 
-*   Luminol 支持
-
 ## 源码编译
 
 项目通过 Gradle 调用 MSVC 和 WSL 进行双端跨平台编译 (生成 `.dll` 和 `.so`)，建议在装有 WSL 的 Windows 10/11 环境下操作。
