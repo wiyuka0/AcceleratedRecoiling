@@ -117,6 +117,9 @@ gradlew build
 ```
 编译产物 (包含双端动态库的 Jar) 将生成在 `build/libs/` 目录下。
 
+## 支持与赞助
+如果你喜欢 **加速碰撞 (Accelerated Recoiling)**，欢迎来 **[这里](https://github.com/wiyuka0/AcceleratedRecoiling/blob/master/3ae91be2c6a1e7447635b7b1b7454ffc.jpeg)** 请砂糖吃一顿带鱼哦 owo
+
 ## 鸣谢与开源协议
 
 本项目基于 **MIT 协议** 开源。
