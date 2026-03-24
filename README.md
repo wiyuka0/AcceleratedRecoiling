@@ -15,8 +15,8 @@
 *   **双端原生支持**：内建 Windows (`.dll`) 与 Linux (`.so`) 的动态链接库，面板服、VPS 还是 Docker 容器，都能一键部署。
 *   **动态后端选择机制**：
 *   * 同时包含多个后端并自动选择当前可以应用且效率最高的后端，如
-    * * FFM  （使用FFM API与C++层进行通信）
-      * JNI  （使用JNI与C++层进行通信）
+    * * FFM  （使用FFM API与C++层进行通信 **该后端需要CPU支持AVX2指令集**）
+      * JNI  （使用JNI与C++层进行通信 **该后端需要CPU支持AVX2指令集**）
       * Java （使用加速碰撞的Java原生算法 **注：MacOS系统将被fallback到此后端**）
       * GPU  （使用GPU算法加速碰撞 *Work In Progress*）
 
