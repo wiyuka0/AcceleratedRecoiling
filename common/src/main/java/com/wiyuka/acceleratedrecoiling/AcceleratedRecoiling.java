@@ -3,6 +3,7 @@ package com.wiyuka.acceleratedrecoiling;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.logging.LogUtils;
 import com.wiyuka.acceleratedrecoiling.commands.ToggleFoldCommand;
+import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
 import net.minecraft.commands.CommandSourceStack;
 import org.slf4j.Logger;
 
