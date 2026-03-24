@@ -6,6 +6,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.wiyuka.acceleratedrecoiling.api.ICustomData;
 import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
 import com.wiyuka.acceleratedrecoiling.natives.CollisionMapData;
+import com.wiyuka.acceleratedrecoiling.natives.JavaVanillaBackend;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.LivingEntity;
@@ -79,6 +80,8 @@ public class LivingEntityMixin {
         if (!FoldConfig.enableEntityCollision || entity instanceof Player || entity.level().isClientSide()) {
             return original.call(instance, entity, boundingBox);
         }
+
+        if(JavaVanillaBackend.isSelected()) return JavaVanillaBackend.getPushableEntities(entity,  boundingBox);
 
         ICustomData data = (ICustomData) entity;
 

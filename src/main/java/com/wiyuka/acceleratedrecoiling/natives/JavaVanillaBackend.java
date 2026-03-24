@@ -1,9 +1,12 @@
 package com.wiyuka.acceleratedrecoiling.natives;
 
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.level.entity.EntityTickList;
+import net.minecraft.world.phys.AABB;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public class JavaVanillaBackend implements INativeBackend {
     private static boolean isSelected = false;
@@ -37,19 +40,20 @@ public class JavaVanillaBackend implements INativeBackend {
         sapContext = null;
     }
 
-    public static List<Entity> getPushableEntities(Entity targetEntity) {
+    public static List<Entity> getPushableEntities(Entity targetEntity, AABB boundingBox) {
         List<Entity> result = new ArrayList<>();
 
         if (sapContext == null || sapContext.indicesMap == null) return result;
-        int targetId = TempID.getId(targetEntity);
-        Integer index = sapContext.indicesMap.get(targetId);
+
+        Integer index = sapContext.indicesMap.get(TempID.getId(targetEntity));
         if (index == null) return result;
+
         List<Entity> list = sapContext.sortedEntities;
 
-        var targetBox = targetEntity.getBoundingBox();
+        double targetMinX = boundingBox.minX;
+        double targetMaxX = boundingBox.maxX;
 
-        double targetMinX = targetBox.minX;
-        double targetMaxX = targetBox.maxX;
+        Predicate<Entity> pushPredicate = EntitySelector.pushableBy(targetEntity);
 
         for (int i = index + 1; i < list.size(); i++) {
             Entity other = list.get(i);
@@ -59,14 +63,35 @@ public class JavaVanillaBackend implements INativeBackend {
                 break;
             }
 
-            if (targetBox.intersects(otherBox)) result.add(other);
+            if (other != targetEntity && boundingBox.intersects(otherBox) && pushPredicate.test(other)) {
+                result.add(other);
+            }
         }
+
         for (int i = index - 1; i >= 0; i--) {
             Entity other = list.get(i);
             var otherBox = other.getBoundingBox();
+
             if (otherBox.maxX < targetMinX) break;
-            if (targetBox.intersects(otherBox)) result.add(other);
+
+            if (other != targetEntity && boundingBox.intersects(otherBox) && pushPredicate.test(other)) {
+                result.add(other);
+            }
         }
+
+        // may useless
+        /*
+        for(EnderDragonPart enderDragonPart : this.dragonParts()) {
+            if (enderDragonPart != targetEntity
+                && enderDragonPart.parentMob != targetEntity
+                && pushPredicate.test(enderDragonPart)
+                && boundingBox.intersects(enderDragonPart.getBoundingBox())) {
+
+                result.add(enderDragonPart);
+            }
+        }
+        */
+
         return result;
     }
 
