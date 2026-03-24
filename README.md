@@ -81,7 +81,7 @@ RUN apt-get update && \
 * [FlatCollision](https://github.com/PooSmacker/FlatCollision)
 * [RuOK](https://github.com/MCTeamPotato/RuOK)
 * [Create](https://github.com/Creators-of-Create/Create)
-* [Valkyrien-Skies-2](https://github.com/ValkyrienSkies/Valkyrien-Skies-2)
+* [Valkyrien-Skies-2](https://github.com/ValkyrienSkies/Valkyrien-Skies-2) <br>
 等多个大型模组。如果发现有不兼容的模组，请在本仓库提交Issue。
 
 **Q: FFM 是Java 21的预览功能，我是否应该使用Java 21+启动游戏？** <br>
