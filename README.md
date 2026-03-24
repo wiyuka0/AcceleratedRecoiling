@@ -17,7 +17,8 @@
 *   * 同时包含多个后端并自动选择当前可以应用且效率最高的后端，如
     * * FFM  （使用FFM API与C++层进行通信 **该后端需要CPU支持AVX2指令集**）
       * JNI  （使用JNI与C++层进行通信 **该后端需要CPU支持AVX2指令集**）
-      * Java （使用加速碰撞的Java原生算法 **注：MacOS系统将被fallback到此后端**）
+      * Java SIMD （使用加速碰撞的Java VectorAPI算法 **注：MacOS系统将被fallback到此后端**）
+      * JAVA （使用加速碰撞的 Java 原生算法）
       * GPU  （使用GPU算法加速碰撞 *Work In Progress*）
 
 ## 环境要求与前置
