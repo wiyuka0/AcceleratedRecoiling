@@ -40,6 +40,8 @@ repositories {
 }
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs.add('--enable-preview')
+    options.compilerArgs += "--add-modules"
+    options.compilerArgs += "jdk.incubator.vector"
     options.release.set(21)
 }
 dependencies {

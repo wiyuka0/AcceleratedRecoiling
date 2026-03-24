@@ -33,6 +33,8 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs.add('--enable-preview')
+    options.compilerArgs += "--add-modules"
+    options.compilerArgs += "jdk.incubator.vector"
 }
 
 repositories {
