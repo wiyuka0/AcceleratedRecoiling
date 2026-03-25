@@ -26,7 +26,7 @@ public class NativeInterface {
 
     public static void initialize() {
 
-        initialize(BackendType.JAVA_VANILLA);
+//        initialize(BackendType.JAVA_VANILLA);
         try {
             if (AVX2.hasAVX2()) initialize(BackendType.AUTO);
             else {
