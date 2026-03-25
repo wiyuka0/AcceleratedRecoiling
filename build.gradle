@@ -29,7 +29,7 @@ base {
 version = mod_version
 group = maven_group
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs.add('--enable-preview')
