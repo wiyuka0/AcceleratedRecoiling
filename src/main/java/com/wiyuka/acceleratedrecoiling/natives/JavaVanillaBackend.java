@@ -9,46 +9,54 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class JavaVanillaBackend implements INativeBackend {
-    private static boolean isSelected = false;
+    private static volatile boolean isSelected = false;
 
     static class SAPContext {
         List<Entity> sortedEntities = new ArrayList<>();
         Map<Integer, Integer> indicesMap = new HashMap<>();
+
+        void clear() {
+            sortedEntities.clear();
+            indicesMap.clear();
+        }
     }
-    static SAPContext sapContext;
+
+    private static final ThreadLocal<SAPContext> sapContextThreadLocal = ThreadLocal.withInitial(SAPContext::new);
 
     public static void tick(EntityTickList entities) {
-        if(isSelected) return;
-        sapContext = new SAPContext();
+        if (!isSelected) return;
+        SAPContext context = sapContextThreadLocal.get();
+        context.clear();
 
         entities.forEach(entity -> {
-            sapContext.sortedEntities.add(entity);
+            context.sortedEntities.add(entity);
         });
 
-        sapContext.sortedEntities.sort(Comparator.comparing(Entity::getX));
+        context.sortedEntities.sort(Comparator.comparing(Entity::getX));
 
-        Map<Integer, Integer> tempIdToIndexMap = new HashMap<>();
-        for (int i = 0; i < sapContext.sortedEntities.size(); i++) {
-            Entity entity = sapContext.sortedEntities.get(i);
+        for (int i = 0; i < context.sortedEntities.size(); i++) {
+            Entity entity = context.sortedEntities.get(i);
             int tempId = TempID.getId(entity);
-            tempIdToIndexMap.put(tempId, i);
+            context.indicesMap.put(tempId, i);
         }
-
-        sapContext.indicesMap = tempIdToIndexMap;
     }
+
     public static void clear() {
-        sapContext = null;
+        sapContextThreadLocal.remove();
     }
 
     public static List<Entity> getPushableEntities(Entity targetEntity, AABB boundingBox) {
         List<Entity> result = new ArrayList<>();
 
-        if (sapContext == null || sapContext.indicesMap == null) return result;
+        if (!isSelected) return result;
 
-        Integer index = sapContext.indicesMap.get(TempID.getId(targetEntity));
+        SAPContext context = sapContextThreadLocal.get();
+        if (context.sortedEntities.isEmpty() || context.indicesMap.isEmpty()) return result;
+
+        Integer index = context.indicesMap.get(TempID.getId(targetEntity));
         if (index == null) return result;
 
-        List<Entity> list = sapContext.sortedEntities;
+        List<Entity> list = context.sortedEntities;
 
         double targetMinX = boundingBox.minX;
         double targetMaxX = boundingBox.maxX;
@@ -78,19 +86,6 @@ public class JavaVanillaBackend implements INativeBackend {
                 result.add(other);
             }
         }
-
-        // may useless
-        /*
-        for(EnderDragonPart enderDragonPart : this.dragonParts()) {
-            if (enderDragonPart != targetEntity
-                && enderDragonPart.parentMob != targetEntity
-                && pushPredicate.test(enderDragonPart)
-                && boundingBox.intersects(enderDragonPart.getBoundingBox())) {
-
-                result.add(enderDragonPart);
-            }
-        }
-        */
 
         return result;
     }
