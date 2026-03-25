@@ -139,3 +139,4 @@ gradlew build
 *   **[fireboy637](https://github.com/fireboy637)**: Architectury API 移植方案的核心代码。
 *   **[hydropuse](https://github.com/hydropuse)**: JDK 22 兼容方案的核心代码。
 *   **[wellcoming](https://github.com/wellcoming)**: Docker Ubuntu镜像解决方案。
+*   **[grayawa](https://github.com/grayawa)**: Linux 上的构建问题修复
