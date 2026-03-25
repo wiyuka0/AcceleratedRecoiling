@@ -49,6 +49,7 @@
 }
 ```
 *注：若开启后性能不升反降，请尝试调低 `densityThreshold`。*
+*如果CPU占用过高，请调低maxThreads*
 
 ## 常见问题 (Q&A)
 
