@@ -13,13 +13,18 @@
 *   **算法优化**：引入效率更高的碰撞算法，避免了原版 <math>O(N^2)</math> 复杂度的实体遍历，降低 CPU 负担。
 *   **阈值触发**：只有当局部实体密度达到设定阈值时才会使用 C++ 加速算法，保证常规游戏场景下的稳定与原版体验。
 *   **双端原生支持**：内建 Windows (`.dll`) 与 Linux (`.so`) 的动态链接库，面板服、VPS 还是 Docker 容器，都能一键部署。
-*   **动态后端选择机制**：
-*   * 同时包含多个后端并自动选择当前可以应用且效率最高的后端，如
-    * * FFM  （使用FFM API与C++层进行通信 **该后端需要CPU支持AVX2指令集**）
-      * JNI  （使用JNI与C++层进行通信 **该后端需要CPU支持AVX2指令集**）
-      * Java （使用加速碰撞的Java原生算法 **注：MacOS系统将被fallback到此后端**）
-      * GPU  （使用GPU算法加速碰撞 *Work In Progress*）
+*   **动态后端选择机制**: 同时包含多个后端并自动选择当前可以应用且效率最高的后端
 
+
+| 后端 | 实现说明 | 要求 | 性能 (预期) | 状态 |
+| :--- | :--- | :--- | :--- | :--- |
+| **FFM** | 使用 FFM API 与 C++ 层进行通信 | CPU 需支持 **AVX2** 指令集 | 非常高 | 可用 |
+| **JNI** | 使用 JNI 与 C++ 层进行通信 | CPU 需支持 **AVX2** 指令集 | 非常高 | 可用 |
+| **Java SIMD** | 使用加速碰撞的 Java VectorAPI 算法 | 无特殊硬件限制<br>*(注：MacOS 系统将被 fallback 到此)* | 高 | 可用 |
+| **Java** | 使用加速碰撞的 Java 原生算法 | 无 | 良好 | 可用 |
+| **GPU** | 使用 GPU 算法加速碰撞 | 需图形硬件支持 | 最高 | *Work In Progress* |
+| **Java Vanilla** | 在原版的实体遍历下直接修改实体碰撞筛选逻辑（原版特性还原程度最高） | 无 | 偏差 | feature/java-vanilla分支可用 |
+| **Vanilla** | 原版的碰撞逻辑 | 无 | 最差 | - |
 ## 环境要求与前置
 
 *   **Java 17 或以上**：必须使用 Java 17 或 Java 17+ 启动游戏/服务端。
@@ -69,6 +74,16 @@ RUN apt-get update && \
     apt-get install -y libgomp1
 ```
 
+**Q: 会不会和某些模组不兼容？** <br>
+**A:** 完全不会，根据我们目前的测试，加速碰撞与 ATM9 整合包完全兼容
+同时兼容
+* [Lithium](https://github.com/CaffeineMC/lithium)
+* [FlatCollision](https://github.com/PooSmacker/FlatCollision)
+* [RuOK](https://github.com/MCTeamPotato/RuOK)
+* [Create](https://github.com/Creators-of-Create/Create)
+* [Valkyrien-Skies-2](https://github.com/ValkyrienSkies/Valkyrien-Skies-2) <br>
+等多个大型模组。如果发现有不兼容的模组，请在本仓库提交Issue。
+
 **Q: FFM 是Java 21的预览功能，我是否应该使用Java 21+启动游戏？** <br>
 **A:** 如果你的游戏版本是*1.21.1*以上，那么是的，但这是**1.21.1**版本本身需要**Java 21**来运行。 <br>
 如果你的游戏是*1.20.1*，那么不需要，加速碰撞*v0.10.0-alpha-1.20.1*以上的版本**同时支持最新版JDK到Java 17**之间的任意JDK版本。 <br> （* 注: 1.20.1 的最低可运行 Java 即为 Java 17 *）
@@ -92,10 +107,6 @@ RUN apt-get update && \
 | 50,000 | 1.1 ms | 909 |
 | 100,000 | 2.5 ms | 400 |
 | 400,000 | 21.3 ms | 46 |
-
-## 开发计划 (TODO)
-*   兼容 MacOS 
-*   Luminol 支持
 
 ## 源码编译
 
