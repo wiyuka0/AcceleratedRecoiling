@@ -1,6 +1,7 @@
 package com.wiyuka.acceleratedrecoiling.mixin;
 
 import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
+import com.wiyuka.acceleratedrecoiling.natives.JavaVanillaBackend;
 import com.wiyuka.acceleratedrecoiling.natives.ParallelAABB;
 import com.wiyuka.acceleratedrecoiling.natives.TempID;
 import net.minecraft.server.level.ServerLevel;
@@ -41,6 +42,7 @@ public abstract class ServerLevelMixin {
     private void tick(BooleanSupplier booleanSupplier, CallbackInfo ci) {
 
         TempID.tickStart();
+        if(JavaVanillaBackend.isSelected()) JavaVanillaBackend.tick(this.entityTickList);
 
         List<Entity> livingEntities = new ArrayList<>();
 //        List<Entity> entityList = new ArrayList<>();
@@ -59,6 +61,7 @@ public abstract class ServerLevelMixin {
             ParallelAABB.handleEntityPush(livingEntities, 1.0E-7);
         }
     }
+
 
 //    @Redirect(
 //            method = "tick(Ljava/util/function/BooleanSupplier;)V", // 目标方法
