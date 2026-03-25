@@ -17,13 +17,16 @@ public class NativeInterface {
         FFM,    // 强制尝试 FFM (Java 21+)
         JNI,    // 强制尝试 JNI
         JAVA_SIMD,
-        JAVA    // 强制使用 Java
+        JAVA,    // 强制使用 Java
+        JAVA_VANILLA
     }
 
     private static INativeBackend backend;
     private static boolean isInitialized = false;
 
     public static void initialize() {
+
+//        initialize(BackendType.JAVA_VANILLA);
         try {
             if (AVX2.hasAVX2()) initialize(BackendType.AUTO);
             else {
@@ -66,6 +69,10 @@ public class NativeInterface {
             instance = tryLoadJavaSIMD();
             if (instance != null) return instance;
             AcceleratedRecoiling.LOGGER.warn("Preferred Java SIMD backend failed. Falling back to AUTO...");
+        } else if (preferredType == BackendType.JAVA_VANILLA) {
+            instance = tryLoadJavaVanilla();
+            if (instance != null) return instance;
+            AcceleratedRecoiling.LOGGER.warn("Preferred Java Vanilla backend failed. Falling back to AUTO...");
 
         }
         else if (preferredType == BackendType.JAVA) {
@@ -135,6 +142,17 @@ public class NativeInterface {
             return javaInstance;
         } catch (Throwable t) {
             AcceleratedRecoiling.LOGGER.error("Java SIMD backend failed to load. Reason: {}", t.getMessage());
+            return null;
+        }
+    }
+    private static INativeBackend tryLoadJavaVanilla() {
+        try {
+            AcceleratedRecoiling.LOGGER.info("Attempting to load Java Vanilla backend...");
+            INativeBackend javaInstance = new JavaVanillaBackend();
+            javaInstance.initialize();
+            return javaInstance;
+        } catch (Throwable t) {
+            AcceleratedRecoiling.LOGGER.error("Java Vanilla backend failed to load. Reason: {}", t.getMessage());
             return null;
         }
     }
