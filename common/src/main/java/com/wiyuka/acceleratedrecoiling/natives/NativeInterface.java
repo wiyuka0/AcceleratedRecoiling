@@ -2,7 +2,13 @@ package com.wiyuka.acceleratedrecoiling.natives;
 
 import com.wiyuka.acceleratedrecoiling.AcceleratedRecoiling;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Supplier;
+
 public class NativeInterface {
+
     public static boolean isVectorApiAvailable() {
         try {
             Class.forName("jdk.incubator.vector.Vector");
@@ -13,31 +19,58 @@ public class NativeInterface {
     }
 
     public enum BackendType {
-        AUTO,   // 自动选择后端
-        FFM,    // 强制尝试 FFM (Java 21+)
-        JNI,    // 强制尝试 JNI
-        JAVA_SIMD,
-        JAVA,    // 强制使用 Java
-        JAVA_VANILLA
+        FFM("FFM", () -> loadReflectively("com.wiyuka.acceleratedrecoiling.natives.FFMBackend")),
+        JNI("JNI", JNIBackend::new), // 假设 JNI 类兼容所有 JDK
+        JAVA_SIMD("Java SIMD", () -> {
+            if (!isVectorApiAvailable()) throw new UnsupportedOperationException("Vector API not available");
+            return loadReflectively("com.wiyuka.acceleratedrecoiling.natives.JavaSIMDBackend");
+        }),
+        JAVA_VANILLA("Java Vanilla", JavaVanillaBackend::new),
+        JAVA("Pure Java", JavaBackend::new),
+        AUTO("Auto", null);
+
+        private final String displayName;
+        private final Supplier<INativeBackend> loader;
+
+        BackendType(String displayName, Supplier<INativeBackend> loader) {
+            this.displayName = displayName;
+            this.loader = loader;
+        }
+
+        public String getDisplayName() { return displayName; }
+
+        public INativeBackend tryLoad() {
+            if (this == AUTO) return null;
+            try {
+                AcceleratedRecoiling.LOGGER.info("Attempting to load {} backend...", this.displayName);
+                INativeBackend instance = loader.get();
+                instance.initialize();
+                return instance;
+            } catch (Throwable t) {
+                AcceleratedRecoiling.LOGGER.warn("{} backend failed to load. Reason: {}", this.displayName, t.getMessage());
+                return null;
+            }
+        }
     }
 
     private static INativeBackend backend;
     private static boolean isInitialized = false;
 
-    public static void initialize() {
+    private static final List<BackendType> AUTO_FALLBACK_CHAIN = Arrays.asList(
+            BackendType.FFM,
+            BackendType.JNI,
+            BackendType.JAVA_SIMD,
+            BackendType.JAVA
+    );
 
-//        initialize(BackendType.JAVA_VANILLA);
-        try {
-            if (AVX2.hasAVX2()) initialize(BackendType.AUTO);
-            else {
-                if(isVectorApiAvailable()) initialize(BackendType.JAVA_SIMD);
-                else initialize(BackendType.JAVA);
-            }
-        } catch (Throwable e) {
+    public static void initialize() {
+        if (AVX2.hasAVX2()) {
+            initialize(BackendType.AUTO);
+        } else if (isVectorApiAvailable()) {
+            initialize(BackendType.JAVA_SIMD);
+        } else {
             initialize(BackendType.JAVA);
         }
-
-//        initialize(BackendType.JAVA_SIMD);
     }
 
     public static void initialize(BackendType preferredType) {
@@ -48,7 +81,7 @@ public class NativeInterface {
         backend = getBackend(preferredType);
 
         if (backend != null) {
-            AcceleratedRecoiling.LOGGER.info("Successfully selected and initialized backend: " + backend.getName());
+            AcceleratedRecoiling.LOGGER.info("Successfully selected and initialized backend: {}", backend.getName());
             isInitialized = true;
         } else {
             throw new IllegalStateException("Failed to initialize ANY backend!");
@@ -57,103 +90,34 @@ public class NativeInterface {
 
     private static INativeBackend getBackend(BackendType preferredType) {
         INativeBackend instance = null;
-        if (preferredType == BackendType.FFM) {
-            instance = tryLoadFFM();
-            if (instance != null) return instance;
-            AcceleratedRecoiling.LOGGER.warn("Preferred FFM backend failed. Falling back to AUTO...");
-        } else if (preferredType == BackendType.JNI) {
-            instance = tryLoadJNI();
-            if (instance != null) return instance;
-            AcceleratedRecoiling.LOGGER.warn("Preferred JNI backend failed. Falling back to AUTO...");
-        } else if (preferredType == BackendType.JAVA_SIMD) {
-            instance = tryLoadJavaSIMD();
-            if (instance != null) return instance;
-            AcceleratedRecoiling.LOGGER.warn("Preferred Java SIMD backend failed. Falling back to AUTO...");
-        } else if (preferredType == BackendType.JAVA_VANILLA) {
-            instance = tryLoadJavaVanilla();
-            if (instance != null) return instance;
-            AcceleratedRecoiling.LOGGER.warn("Preferred Java Vanilla backend failed. Falling back to AUTO...");
 
-        }
-        else if (preferredType == BackendType.JAVA) {
-            return tryLoadJava();
+        if (preferredType != BackendType.AUTO) {
+            instance = preferredType.tryLoad();
+            if (instance != null) return instance;
+
+            AcceleratedRecoiling.LOGGER.warn("Preferred {} backend failed. Falling back to AUTO chain...", preferredType.getDisplayName());
         }
 
-        int javaVersion = Runtime.version().feature();
-        AcceleratedRecoiling.LOGGER.info("Detected Java Version: {}", javaVersion);
+        AcceleratedRecoiling.LOGGER.info("Detected Java Version: {}", Runtime.version().feature());
 
-        // 尝试 FFM
-        if (javaVersion >= 21) {
-            instance = tryLoadFFM();
+        for (BackendType type : AUTO_FALLBACK_CHAIN) {
+            if (type == preferredType) continue;
+
+            if (type == BackendType.FFM && Runtime.version().feature() < 21) continue;
+
+            instance = type.tryLoad();
             if (instance != null) return instance;
         }
 
-        // 尝试 JNI
-        instance = tryLoadJNI();
-        if (instance != null) return instance;
-
-        // 最终回退到纯 Java
-        AcceleratedRecoiling.LOGGER.info("Falling back to Pure Java backend...");
-        return tryLoadJava();
+        return null;
     }
 
-    private static INativeBackend tryLoadFFM() {
+    private static INativeBackend loadReflectively(String className) {
         try {
-            AcceleratedRecoiling.LOGGER.info("Attempting to load FFM backend...");
-            Class<?> ffmClass = Class.forName("com.wiyuka.acceleratedrecoiling.natives.FFMBackend");
-            INativeBackend ffmInstance = (INativeBackend) ffmClass.getDeclaredConstructor().newInstance();
-            ffmInstance.initialize();
-            return ffmInstance;
-        } catch (Throwable t) {
-            AcceleratedRecoiling.LOGGER.warn("FFM backend failed to load. Reason: {}", t.getMessage());
-            return null;
-        }
-    }
-
-    private static INativeBackend tryLoadJNI() {
-        try {
-            AcceleratedRecoiling.LOGGER.info("Attempting to load JNI backend...");
-            INativeBackend jniInstance = new JNIBackend();
-            jniInstance.initialize();
-            return jniInstance;
-        } catch (Throwable t) {
-            AcceleratedRecoiling.LOGGER.warn("JNI backend failed to load. Reason: {}", t.getMessage());
-            return null;
-        }
-    }
-
-    private static INativeBackend tryLoadJava() {
-        try {
-            AcceleratedRecoiling.LOGGER.info("Attempting to load Java backend...");
-            INativeBackend javaInstance = new JavaBackend();
-            javaInstance.initialize();
-            return javaInstance;
-        } catch (Throwable t) {
-            AcceleratedRecoiling.LOGGER.error("Java backend failed to load. Reason: {}", t.getMessage());
-            return null;
-        }
-    }
-
-    private static INativeBackend tryLoadJavaSIMD() {
-        try {
-            AcceleratedRecoiling.LOGGER.info("Attempting to load Java SIMD backend...");
-            INativeBackend javaInstance = new JavaSIMDBackend();
-            javaInstance.initialize();
-            return javaInstance;
-        } catch (Throwable t) {
-            AcceleratedRecoiling.LOGGER.error("Java SIMD backend failed to load. Reason: {}", t.getMessage());
-            return null;
-        }
-    }
-    private static INativeBackend tryLoadJavaVanilla() {
-        try {
-            AcceleratedRecoiling.LOGGER.info("Attempting to load Java Vanilla backend...");
-            INativeBackend javaInstance = new JavaVanillaBackend();
-            javaInstance.initialize();
-            return javaInstance;
-        } catch (Throwable t) {
-            AcceleratedRecoiling.LOGGER.error("Java Vanilla backend failed to load. Reason: {}", t.getMessage());
-            return null;
+            Class<?> clazz = Class.forName(className);
+            return (INativeBackend) clazz.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException("Reflection load failed for " + className, e);
         }
     }
 
