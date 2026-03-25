@@ -3,24 +3,41 @@ package com.wiyuka.acceleratedrecoiling.natives;
 import com.wiyuka.acceleratedrecoiling.AcceleratedRecoiling;
 
 public class NativeInterface {
+    public static boolean isVectorApiAvailable() {
+        try {
+            Class.forName("jdk.incubator.vector.Vector");
+            return true;
+        } catch (Throwable e) {
+            return false;
+        }
+    }
 
     public enum BackendType {
         AUTO,   // 自动选择后端
         FFM,    // 强制尝试 FFM (Java 21+)
         JNI,    // 强制尝试 JNI
-        JAVA    // 强制使用 Java
+        JAVA_SIMD,
+        JAVA,    // 强制使用 Java
+        JAVA_VANILLA
     }
 
     private static INativeBackend backend;
     private static boolean isInitialized = false;
 
     public static void initialize() {
+
+//        initialize(BackendType.JAVA_VANILLA);
         try {
             if (AVX2.hasAVX2()) initialize(BackendType.AUTO);
-            else                initialize(BackendType.JAVA);
+            else {
+                if(isVectorApiAvailable()) initialize(BackendType.JAVA_SIMD);
+                else initialize(BackendType.JAVA);
+            }
         } catch (Throwable e) {
-                                initialize(BackendType.JAVA);
+            initialize(BackendType.JAVA);
         }
+
+//        initialize(BackendType.JAVA_SIMD);
     }
 
     public static void initialize(BackendType preferredType) {
@@ -34,7 +51,7 @@ public class NativeInterface {
             AcceleratedRecoiling.LOGGER.info("Successfully selected and initialized backend: " + backend.getName());
             isInitialized = true;
         } else {
-            throw new IllegalStateException("CRITICAL: Failed to initialize ANY backend!");
+            throw new IllegalStateException("Failed to initialize ANY backend!");
         }
     }
 
@@ -48,7 +65,17 @@ public class NativeInterface {
             instance = tryLoadJNI();
             if (instance != null) return instance;
             AcceleratedRecoiling.LOGGER.warn("Preferred JNI backend failed. Falling back to AUTO...");
-        } else if (preferredType == BackendType.JAVA) {
+        } else if (preferredType == BackendType.JAVA_SIMD) {
+            instance = tryLoadJavaSIMD();
+            if (instance != null) return instance;
+            AcceleratedRecoiling.LOGGER.warn("Preferred Java SIMD backend failed. Falling back to AUTO...");
+        } else if (preferredType == BackendType.JAVA_VANILLA) {
+            instance = tryLoadJavaVanilla();
+            if (instance != null) return instance;
+            AcceleratedRecoiling.LOGGER.warn("Preferred Java Vanilla backend failed. Falling back to AUTO...");
+
+        }
+        else if (preferredType == BackendType.JAVA) {
             return tryLoadJava();
         }
 
@@ -102,7 +129,30 @@ public class NativeInterface {
             javaInstance.initialize();
             return javaInstance;
         } catch (Throwable t) {
-            AcceleratedRecoiling.LOGGER.error("CRITICAL: Java backend failed to load!", t);
+            AcceleratedRecoiling.LOGGER.error("Java backend failed to load. Reason: {}", t.getMessage());
+            return null;
+        }
+    }
+
+    private static INativeBackend tryLoadJavaSIMD() {
+        try {
+            AcceleratedRecoiling.LOGGER.info("Attempting to load Java SIMD backend...");
+            INativeBackend javaInstance = new JavaSIMDBackend();
+            javaInstance.initialize();
+            return javaInstance;
+        } catch (Throwable t) {
+            AcceleratedRecoiling.LOGGER.error("Java SIMD backend failed to load. Reason: {}", t.getMessage());
+            return null;
+        }
+    }
+    private static INativeBackend tryLoadJavaVanilla() {
+        try {
+            AcceleratedRecoiling.LOGGER.info("Attempting to load Java Vanilla backend...");
+            INativeBackend javaInstance = new JavaVanillaBackend();
+            javaInstance.initialize();
+            return javaInstance;
+        } catch (Throwable t) {
+            AcceleratedRecoiling.LOGGER.error("Java Vanilla backend failed to load. Reason: {}", t.getMessage());
             return null;
         }
     }
