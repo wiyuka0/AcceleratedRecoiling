@@ -7,6 +7,7 @@ import com.wiyuka.acceleratedrecoiling.api.ICustomData;
 import com.wiyuka.acceleratedrecoiling.api.ICustomData;
 import com.wiyuka.acceleratedrecoiling.config.FoldConfig;
 import com.wiyuka.acceleratedrecoiling.natives.CollisionMapData;
+import com.wiyuka.acceleratedrecoiling.natives.JavaVanillaBackend;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -32,7 +33,7 @@ public class LivingEntityMixin {
 //        LivingEntity self = (LivingEntity)(Object)this;
 //        if(self.level().isClientSide) return;
 //
-////        ci.cancel();
+    ////        ci.cancel();
 //        if((FoldConfig.fold) && self.getType() != EntityType.PLAYER) {
 //            ci.cancel();
 //        }
@@ -60,6 +61,8 @@ public class LivingEntityMixin {
     private List<Entity> replace(Level instance, Entity entity, AABB aabb, Predicate<? super Entity> predicate, Operation<List<Entity>> original) {
         if (!FoldConfig.enableEntityCollision || entity instanceof Player || entity.level().isClientSide())
             return original.call(instance, entity, aabb, predicate);
+        if(JavaVanillaBackend.isSelected()) return JavaVanillaBackend.getPushableEntities(entity,  boundingBox);
+
         ICustomData data = (ICustomData) entity;
         if (data.getDensity() < FoldConfig.densityThreshold) return original.call(instance, entity, aabb, predicate);
 
