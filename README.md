@@ -2,7 +2,7 @@
 
 加速碰撞是一个专注于优化服务端实体碰撞逻辑的模组。它利用 FFM (Foreign Function & Memory) API/JNI 接管实体 AABB 碰撞检测，将高密集计算压力转移至 C++ 原生库，从而显著提升服务器性能。
 
-**本模组目前为实验性质，实体挤压表现与原版不完全一致。请务必在做好存档备份的前提下谨慎使用。**
+**本模组目前为实验性质，实体挤压表现与原版不完全一致。请务必在做好存档备份的前提下谨慎使用。如果在意原版特性还原程度，请切换至Java Vanilla后端**
 
 官方交流群：1023713677
 
@@ -23,7 +23,7 @@
 | **Java SIMD** | 使用加速碰撞的 Java VectorAPI 算法 | 无特殊硬件限制<br>*(注：MacOS 系统将被 fallback 到此)* | 高 | 可用 |
 | **Java** | 使用加速碰撞的 Java 原生算法 | 无 | 良好 | 可用 |
 | **GPU** | 使用 GPU 算法加速碰撞 | 需图形硬件支持 | 最高 | *Work In Progress* |
-| **Java Vanilla** | 在原版的实体遍历下直接修改实体碰撞筛选逻辑（原版特性还原程度最高） | 无 | 偏差 | feature/java-vanilla分支可用 |
+| **Java Vanilla** | 在原版的实体遍历下直接修改实体碰撞筛选逻辑（原版特性还原程度最高） | 无 | 偏差 | 可用 |
 | **Vanilla** | 原版的碰撞逻辑 | 无 | 最差 | - |
 ## 环境要求与前置
 
@@ -49,6 +49,7 @@
 }
 ```
 *注：若开启后性能不升反降，请尝试调低 `densityThreshold`。*
+*如果CPU占用过高，请调低maxThreads*
 
 ## 常见问题 (Q&A)
 
@@ -139,3 +140,4 @@ gradlew build
 *   **[fireboy637](https://github.com/fireboy637)**: Architectury API 移植方案的核心代码。
 *   **[hydropuse](https://github.com/hydropuse)**: JDK 22 兼容方案的核心代码。
 *   **[wellcoming](https://github.com/wellcoming)**: Docker Ubuntu镜像解决方案。
+*   **[grayawa](https://github.com/grayawa)**: Linux 上的构建问题修复
