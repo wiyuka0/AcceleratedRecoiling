@@ -27,6 +27,7 @@ public class NativeInterface {
         }),
         JAVA_VANILLA("Java Vanilla", JavaVanillaBackend::new),
         JAVA("Pure Java", JavaBackend::new),
+        GPU("GPU", GPUBackend::new),
         AUTO("Auto", null);
 
         private final String displayName;
@@ -57,6 +58,7 @@ public class NativeInterface {
     private static boolean isInitialized = false;
 
     private static final List<BackendType> AUTO_FALLBACK_CHAIN = Arrays.asList(
+            BackendType.GPU,
             BackendType.FFM,
             BackendType.JNI,
             BackendType.JAVA_SIMD,

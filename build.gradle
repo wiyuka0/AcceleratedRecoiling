@@ -148,7 +148,7 @@ tasks.register("compileNativeLibLinux", Exec) {
     doFirst {
         File bDir = new File(getWorkingDir(), "build")
         if (!bDir.exists()) bDir.mkdirs()
-        if (isGitHubActions && isLinux) {
+        if (isLinux) {
             def javaHome = System.getenv("JAVA_HOME")
             commandLine 'bash', '-c', """g++ -std=c++20 -O3 -ffast-math -DAR_ENABLE_JNI -I"${javaHome}/include" -I"${javaHome}/include/linux" -mavx2 -fopenmp -shared -fPIC acceleratedRecoilingLib.cpp -o build/libacceleratedRecoilingLib.so"""
         } else {
@@ -314,6 +314,11 @@ dependencies {
         jarJar.ranged(it, "[0.5.0,)")
     }
 
+    implementation "org.jocl:jocl:${joclVersion}"
+    additionalRuntimeClasspath "org.jocl:jocl:${joclVersion}"
+
+//    jarJar 'org.jocl:jocl:2.0.5'
+    jarJar(group: 'org.jocl', name: 'jocl', version: "[${joclVersion},)")
 
     // Specify the version of Minecraft to use.
     // Any artifact can be supplied so long as it has a "userdev" classifier artifact and is a compatible patcher artifact.
