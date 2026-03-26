@@ -52,7 +52,7 @@ repositories {
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
-
+    def joclVersion = "2.0.5"
     mappings loom.layered() {
         officialMojangMappings()
         parchment("org.parchmentmc.data:parchment-${parchment_minecraft_version}:${parchment_mappings_version}@zip")
@@ -61,11 +61,11 @@ dependencies {
     // 引入 Fabric 加载器
     modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
 
-    implementation "org.jocl:jocl:${joclVersion}"
-    additionalRuntimeClasspath "org.jocl:jocl:${joclVersion}"
+//    implementation "org.jocl:jocl:${joclVersion}"
+//    additionalRuntimeClasspath "org.jocl:jocl:${joclVersion}"
 
 //    jarJar 'org.jocl:jocl:2.0.5'
-    jarJar(group: 'org.jocl', name: 'jocl', version: "[${joclVersion},)")
+//    jarJar(group: 'org.jocl', name: 'jocl', version: "[${joclVersion},)")
 
 }
 

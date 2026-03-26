@@ -50,6 +50,7 @@ dependencies {
         officialMojangMappings()
         parchment("org.parchmentmc.data:parchment-${rootProject.parchment_minecraft_version}:${rootProject.parchment_mappings_version}@zip")
     }
+    // TODO 处理JOCL的打包问题。
 
     neoForge "net.neoforged:neoforge:$rootProject.neoforge_version"
 
@@ -58,6 +59,12 @@ dependencies {
 
     common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
     shadowBundle project(path: ':common', configuration: 'transformProductionNeoForge')
+    def joclVersion = "2.0.5"
+    implementation "org.jocl:jocl:${joclVersion}"
+//    additionalRuntimeClasspath "org.jocl:jocl:${joclVersion}"
+
+//    jarJar 'org.jocl:jocl:2.0.5'
+//    jarJar(group: 'org.jocl', name: 'jocl', version: "[${joclVersion},)")
 }
 
 loom {
