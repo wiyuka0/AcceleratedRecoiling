@@ -189,15 +189,15 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
-        data {
-            clientData()
-
-            // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
-            // gameDirectory = project.file('run-data')
-
-            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-        }
+//        data {
+////            clientData()
+//
+//            // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
+//            // gameDirectory = project.file('run-data')
+//
+//            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
+//            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+//        }
 
         // applies to all the run configs above
         configureEach {
@@ -235,7 +235,14 @@ tasks.named('createMinecraftArtifacts') {
 }
 
 dependencies {
+    def joclVersion = "2.0.5"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation "org.jocl:jocl:${joclVersion}"
+    additionalRuntimeClasspath "org.jocl:jocl:${joclVersion}"
+
+//    jarJar 'org.jocl:jocl:2.0.5'
+    jarJar(group: 'org.jocl', name: 'jocl', version: "[${joclVersion},)")
+
     // Example mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
