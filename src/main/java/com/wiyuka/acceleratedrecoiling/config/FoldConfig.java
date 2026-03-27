@@ -19,7 +19,7 @@ public class FoldConfig {
     public static int gridSize = 1;
     public static int densityWindow = 4;
     public static int densityThreshold = 16;
-    public static int maxThreads = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
+    public static int maxThreads = 1;
     private static final File CONFIG_FILE = new File("acceleratedRecoiling.json");
 
     public static void loadConfig() {
