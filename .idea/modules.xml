@@ -8,17 +8,25 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/fabric/AcceleratedRecoiling.fabric.test.iml" filepath="$PROJECT_DIR$/.idea/modules/fabric/AcceleratedRecoiling.fabric.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling.main~1.iml" filepath="$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling.main~1.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling.main~2.iml" filepath="$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling.main~2.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling.main~3.iml" filepath="$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling.main~3.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/neoforge/AcceleratedRecoiling.neoforge.main.iml" filepath="$PROJECT_DIR$/.idea/modules/neoforge/AcceleratedRecoiling.neoforge.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/neoforge/AcceleratedRecoiling.neoforge.test.iml" filepath="$PROJECT_DIR$/.idea/modules/neoforge/AcceleratedRecoiling.neoforge.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling.test~1.iml" filepath="$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling.test~1.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling_main.iml" filepath="$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling_main.iml" group="AcceleratedRecoiling" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling_test.iml" filepath="$PROJECT_DIR$/.idea/modules/AcceleratedRecoiling_test.iml" group="AcceleratedRecoiling" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/FoldMC.AcceleratedRecoiling.main.iml" filepath="$PROJECT_DIR$/.idea/modules/FoldMC.AcceleratedRecoiling.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/FoldMC.AcceleratedRecoiling.test.iml" filepath="$PROJECT_DIR$/.idea/modules/FoldMC.AcceleratedRecoiling.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/acceleratedrecoiling.AcceleratedRecoiling.main.iml" filepath="$PROJECT_DIR$/.idea/modules/acceleratedrecoiling.AcceleratedRecoiling.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/acceleratedrecoiling.AcceleratedRecoiling.test.iml" filepath="$PROJECT_DIR$/.idea/modules/acceleratedrecoiling.AcceleratedRecoiling.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/com.wiyuka.AcceleratedRecoiling.main.iml" filepath="$PROJECT_DIR$/.idea/modules/com.wiyuka.AcceleratedRecoiling.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/com.wiyuka.AcceleratedRecoiling.test.iml" filepath="$PROJECT_DIR$/.idea/modules/com.wiyuka.AcceleratedRecoiling.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/com.wiyuka.FoldMC.main.iml" filepath="$PROJECT_DIR$/.idea/modules/com.wiyuka.FoldMC.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/common_main.iml" filepath="$PROJECT_DIR$/.idea/modules/common/common_main.iml" group="AcceleratedRecoiling/common" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/common_test.iml" filepath="$PROJECT_DIR$/.idea/modules/common/common_test.iml" group="AcceleratedRecoiling/common" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/fabric/fabric_main.iml" filepath="$PROJECT_DIR$/.idea/modules/fabric/fabric_main.iml" group="AcceleratedRecoiling/fabric" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/fabric/fabric_test.iml" filepath="$PROJECT_DIR$/.idea/modules/fabric/fabric_test.iml" group="AcceleratedRecoiling/fabric" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/neoforge/neoforge_main.iml" filepath="$PROJECT_DIR$/.idea/modules/neoforge/neoforge_main.iml" group="AcceleratedRecoiling/neoforge" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/neoforge/neoforge_test.iml" filepath="$PROJECT_DIR$/.idea/modules/neoforge/neoforge_test.iml" group="AcceleratedRecoiling/neoforge" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/papermc.FoldMC.AcceleratedRecoiling.main.iml" filepath="$PROJECT_DIR$/.idea/modules/papermc.FoldMC.AcceleratedRecoiling.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/papermc.FoldMC.AcceleratedRecoiling.test.iml" filepath="$PROJECT_DIR$/.idea/modules/papermc.FoldMC.AcceleratedRecoiling.test.iml" />
     </modules>
   </component>
 </project>
