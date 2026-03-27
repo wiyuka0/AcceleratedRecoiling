@@ -314,6 +314,8 @@ dependencies {
         jarJar.ranged(it, "[0.5.0,)")
     }
 
+    def joclVersion = "2.0.6"
+
     implementation "org.jocl:jocl:${joclVersion}"
     additionalRuntimeClasspath "org.jocl:jocl:${joclVersion}"
 
