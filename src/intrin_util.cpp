@@ -31,13 +31,13 @@ SimdType getSimdType() noexcept {
         get_cpuid(7, 0, info);
         auto AVX2 = (info[1] & (1 << 5)) != 0;
         auto AVX512F = (info[1] & (1 << 16)) != 0;
+        auto AVX512DQ = (info[1] & (1 << 17)) != 0;
         auto AVX512BW = (info[1] & (1 << 30)) != 0;
         auto AVX512VL = (info[1] & (1 << 31)) != 0;
 
-        // if (AVX512F && AVX512BW && AVX512VL) {
-        //     supported = SimdType::AVX512;
-        // } else
-        if (AVX2 && FMA3) {
+        if (AVX512F && AVX512DQ && AVX512BW && AVX512VL) {
+            supported = SimdType::AVX512;
+        } else if (AVX2 && FMA3) {
             supported = SimdType::AVX2;
         } else {
             supported = SimdType::SSE41;

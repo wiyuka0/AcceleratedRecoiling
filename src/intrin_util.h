@@ -6,7 +6,7 @@
 #include <immintrin.h>
 
 #define AR_PAUSE _mm_pause()
-#define AR_TARGET_AVX512 __attribute__((target("avx512f,avx512vl,avx512bw")))
+#define AR_TARGET_AVX512 __attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 #define AR_TARGET_AVX2 __attribute__((target("avx2,fma")))
 
 #elif defined(AR_AARCH64)
@@ -24,7 +24,7 @@ enum class SimdType : uint16_t {
 #ifdef AR_X64
     SSE41,
     AVX2,
-    // AVX512,
+    AVX512,
 #elif defined(AR_AARCH64)
     NEON,
     // SVE128,

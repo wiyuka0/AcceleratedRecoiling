@@ -86,7 +86,6 @@ struct EntityData : NonCopyable
 };
 
 static std::vector<int> lastFrameIDs;
-static const CompressTable compressLUT;
 
 static void ensureLastFrameSize(int n) {
     if (lastFrameIDs.size() < n){
@@ -110,12 +109,12 @@ void destroyCtx(void* context_ptr) {
 
 #ifdef AR_X64
 
-// #define AR_SIMD_TYPE AVX512
-// #define AR_SIMD_TARGET AR_TARGET_AVX512
-// #include "entity_data_push_avx512.inc"
-// #include "entity_data_push.inc"
-// #undef AR_SIMD_TARGET
-// #undef AR_SIMD_TYPE
+#define AR_SIMD_TYPE AVX512
+#define AR_SIMD_TARGET AR_TARGET_AVX512
+#include "entity_data_push_avx512.inc"
+#include "entity_data_push.inc"
+#undef AR_SIMD_TARGET
+#undef AR_SIMD_TYPE
 
 #define AR_SIMD_TYPE AVX2
 #define AR_SIMD_TARGET AR_TARGET_AVX2

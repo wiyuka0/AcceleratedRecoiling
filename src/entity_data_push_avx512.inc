@@ -26,13 +26,13 @@ static int push_compute(SimdTag<SimdType::AR_SIMD_TYPE>, size_t batchBegin, size
         int maxZA = pMaxZ[i];
         int minXA = pMinX[i];
 
-        __m256i vMaxXA = _mm256_set1_epi32(maxXA);
-        __m256i vMinYA = _mm256_set1_epi32(minYA);
-        __m256i vMaxYA = _mm256_set1_epi32(maxYA);
-        __m256i vMinZA = _mm256_set1_epi32(minZA);
-        __m256i vMaxZA = _mm256_set1_epi32(maxZA);
+        __m512i vMaxXA = _mm512_set1_epi32(maxXA);
+        __m512i vMinYA = _mm512_set1_epi32(minYA);
+        __m512i vMaxYA = _mm512_set1_epi32(maxYA);
+        __m512i vMinZA = _mm512_set1_epi32(minZA);
+        __m512i vMaxZA = _mm512_set1_epi32(maxZA);
 
-        __m256i vMinXA = _mm256_set1_epi32(minXA);
+        __m512i vMinXA = _mm512_set1_epi32(minXA);
         int writeOffset = i * K;
         int currentCollisions = 0;
 
@@ -43,7 +43,7 @@ static int push_compute(SimdTag<SimdType::AR_SIMD_TYPE>, size_t batchBegin, size
         {
             int j = start;
 
-            int alignedStart = (j + 7) & ~7;
+            int alignedStart = (j + 15) & ~15;
             int scalarEnd = std::min(alignedStart, end);
             for (; j < scalarEnd; ++j)
             {
@@ -60,46 +60,41 @@ static int push_compute(SimdTag<SimdType::AR_SIMD_TYPE>, size_t batchBegin, size
                 }
             }
 
-            const __m256i allOnes = _mm256_set1_epi32(-1);
+            const __mmask16 allOnes = 0xFFFFu;
 
-            for (; j < end - 7; j += 8)
+            for (; j < end - 15; j += 16)
             {
-                __m256i vMinXB = _mm256_load_si256((const __m256i*)&pMinX[j]);
-                __m256i vIsAllGreater = _mm256_cmpgt_epi32(vMinXB, vMaxXA);
-                if (_mm256_movemask_ps(_mm256_castsi256_ps(vIsAllGreater)) == 0xFF) return;
+                __m512i vMinXB = _mm512_load_si512(&pMinX[j]);
+                auto vIsAllGreater = _mm512_cmp_epi32_mask(vMinXB, vMaxXA, _MM_CMPINT_GT);
+                if (vIsAllGreater == 0xFFFFu) return;
 
-                __m256i vMaxXB = _mm256_load_si256((const __m256i*)&pMaxX[j]);
-                __m256i maskX = _mm256_and_si256(_mm256_xor_si256(vIsAllGreater, allOnes), _mm256_cmpgt_epi32(vMaxXB, vMinXA));
-                if (_mm256_testz_si256(maskX, maskX)) continue;
+                __m512i vMaxXB = _mm512_load_si512(&pMaxX[j]);
+                auto maskX = _kand_mask16(_kxor_mask16(vIsAllGreater, allOnes), _mm512_cmp_epi32_mask(vMaxXB, vMinXA, _MM_CMPINT_GT));
+                if (_ktestz_mask16_u8(maskX, maskX)) continue;
 
-                __m256i vMinYB = _mm256_load_si256((const __m256i*)&pMinY[j]);
-                __m256i vMaxYB = _mm256_load_si256((const __m256i*)&pMaxY[j]);
-                __m256i maskY = _mm256_and_si256(_mm256_cmpgt_epi32(vMaxYA, vMinYB), _mm256_cmpgt_epi32(vMaxYB, vMinYA));
-                __m256i maskXY = _mm256_and_si256(maskX, maskY);
-                if (_mm256_testz_si256(maskXY, maskXY)) continue;
+                __m512i vMinYB = _mm512_load_si512(&pMinY[j]);
+                __m512i vMaxYB = _mm512_load_si512(&pMaxY[j]);
+                auto maskY = _kand_mask16(_mm512_cmp_epi32_mask(vMaxYA, vMinYB, _MM_CMPINT_GT), _mm512_cmp_epi32_mask(vMaxYB, vMinYA, _MM_CMPINT_GT));
+                auto maskXY = _kand_mask16(maskX, maskY);
+                if (_ktestz_mask16_u8(maskXY, maskXY)) continue;
 
-                __m256i vMinZB = _mm256_load_si256((const __m256i*)&pMinZ[j]);
-                __m256i vMaxZB = _mm256_load_si256((const __m256i*)&pMaxZ[j]);
-                __m256i maskZ = _mm256_and_si256(_mm256_cmpgt_epi32(vMaxZA, vMinZB), _mm256_cmpgt_epi32(vMaxZB, vMinZA));
-                __m256i maskXYZ = _mm256_and_si256(maskXY, maskZ);
-                if (_mm256_testz_si256(maskXYZ, maskXYZ)) continue;
+                __m512i vMinZB = _mm512_load_si512(&pMinZ[j]);
+                __m512i vMaxZB = _mm512_load_si512(&pMaxZ[j]);
+                auto maskZ = _kand_mask16(_mm512_cmp_epi32_mask(vMaxZA, vMinZB, _MM_CMPINT_GT), _mm512_cmp_epi32_mask(vMaxZB, vMinZA, _MM_CMPINT_GT));
+                auto maskXYZ = _kand_mask16(maskXY, maskZ);
+                if (_ktestz_mask16_u8(maskXYZ, maskXYZ)) continue;
 
-                int laneMask = _mm256_movemask_ps(_mm256_castsi256_ps(maskXYZ));
-                if (laneMask != 0)
+                int cnt = __builtin_popcount(maskXYZ);
+                const auto& bits = CompressTable<512>::instance.table[maskXYZ];
+                int take = std::min(cnt, K - currentCollisions);
+                for (int t = 0; t < take; ++t)
                 {
-                    auto mask8 = static_cast<uint8_t>(laneMask);
-                    int cnt = __builtin_popcount((unsigned int)mask8);
-                    const auto& bits = CompressTable<256>::instance.table[mask8];
-                    int take = std::min(cnt, K - currentCollisions);
-                    for (int t = 0; t < take; ++t)
-                    {
-                        int k = bits[t];
-                        outA[currentCollisions] = idA;
-                        outB[currentCollisions] = pIDs[j + k];
-                        currentCollisions++;
-                    }
-                    if (currentCollisions >= K) return;
+                    int k = bits[t];
+                    outA[currentCollisions] = idA;
+                    outB[currentCollisions] = pIDs[j + k];
+                    currentCollisions++;
                 }
+                if (currentCollisions >= K) return;
             }
 
             for (; j < end; ++j)

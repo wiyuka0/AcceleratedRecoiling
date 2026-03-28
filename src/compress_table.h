@@ -2,21 +2,27 @@
 
 #include <array>
 
+template <size_t VEC_BITS>
 struct CompressTable {
-    alignas(64) std::array<std::array<int, 8>, 256> table;
+    constexpr static size_t INT_NUM = VEC_BITS / 32;
+    constexpr static size_t MASK_MAX = static_cast<size_t>(1) << INT_NUM;
+
+    alignas(64) std::array<std::array<int, INT_NUM>, MASK_MAX> table;
 
     CompressTable() {
-        for (int i = 0; i < 256; ++i) {
-            int count = 0;
-            for (int bit = 0; bit < 8; ++bit) {
+        for (size_t i = 0; i < MASK_MAX; ++i) {
+            size_t count = 0;
+            for (int bit = 0; bit < INT_NUM; ++bit) {
                 if ((i >> bit) & 1) {
                     table[i][count++] = bit;
                 }
             }
 
-            for (; count < 8; ++count) {
+            for (; count < INT_NUM; ++count) {
                 table[i][count] = 0;
             }
         }
     }
+
+    static inline CompressTable instance;
 };
