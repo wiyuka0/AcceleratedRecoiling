@@ -1,0 +1,11 @@
+{
+    global:
+        createCfg;
+        updateCfg;
+        destroyCfg;
+        createCtx;
+        destroyCtx;
+        push;
+        Java_*;
+    local: *;
+};
