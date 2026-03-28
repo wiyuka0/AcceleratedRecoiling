@@ -1,0 +1,5 @@
+/cmake-build-*
+/out
+.idea
+*.exe
+test
