@@ -65,6 +65,10 @@ dependencies {
 
 //    jarJar 'org.jocl:jocl:2.0.5'
 //    jarJar(group: 'org.jocl', name: 'jocl', version: "[${joclVersion},)")
+//    include "org.jocl:jocl:${joclVersion}"
+//    jarJar(group: 'org.jocl', name: 'jocl', version: '[2.0.5,)')
+//    jarJar "org.jocl:jocl:2.0.5"
+    shadowBundle "org.jocl:jocl:${joclVersion}"
 }
 
 loom {

@@ -66,6 +66,7 @@ dependencies {
 
 //    jarJar 'org.jocl:jocl:2.0.5'
 //    jarJar(group: 'org.jocl', name: 'jocl', version: "[${joclVersion},)")
+//    include "org.jocl:jocl:${joclVersion}"
 
 }
 

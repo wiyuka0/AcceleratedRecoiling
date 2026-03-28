@@ -47,7 +47,8 @@ dependencies {
     def joclVersion = "2.0.5"
     implementation "org.jocl:jocl:${joclVersion}"
 //    additionalRuntimeClasspath "org.jocl:jocl:${joclVersion}"
-
+//    include "org.jocl:jocl:${joclVersion}"
+    shadowBundle "org.jocl:jocl:${joclVersion}"
 //    jarJar 'org.jocl:jocl:2.0.5'
 //    jarJar(group: 'org.jocl', name: 'jocl', version: "[${joclVersion},)")
 }
