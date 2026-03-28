@@ -12,6 +12,7 @@ add_compile_definitions(AR_${AR_SYSTEM} AR_${AR_ARCH})
 
 if (AR_ENABLE_JNI)
     include_directories("${PROJECT_SOURCE_DIR}/third_party/jni")
+    add_compile_definitions(AR_ENABLE_JNI)
 endif()
 
 if(AR_WINDOWS)
