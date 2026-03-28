@@ -316,11 +316,14 @@ dependencies {
 
     def joclVersion = "2.0.6"
 
-    implementation "org.jocl:jocl:${joclVersion}"
-    additionalRuntimeClasspath "org.jocl:jocl:${joclVersion}"
+    implementation(jarJar("org.jocl:jocl:${joclVersion}")) {
+        jarJar.ranged(it, "[${joclVersion},)")
+    }
 
+//    implementation "org.jocl:jocl:${joclVersion}"
+//    additionalRuntimeClasspath "org.jocl:jocl:${joclVersion}"
 //    jarJar 'org.jocl:jocl:2.0.5'
-    jarJar(group: 'org.jocl', name: 'jocl', version: "[${joclVersion},)")
+//    jarJar(group: 'org.jocl', name: 'jocl', version: "[${joclVersion},)")
 
     // Specify the version of Minecraft to use.
     // Any artifact can be supplied so long as it has a "userdev" classifier artifact and is a compatible patcher artifact.
@@ -345,6 +348,7 @@ dependencies {
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
+//    shadowBundle "org.jocl:jocl:2.0.5"
 
 }
 
