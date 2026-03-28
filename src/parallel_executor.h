@@ -56,17 +56,17 @@ public:
         // 派发任务
         Task task{
             [](auto idx, auto workers, auto ctx) { invoke(*static_cast<decltype(&taskFunc)>(ctx), idx, workers); },
-            &task,
-            ++taskSeq
+            &taskFunc
         };
         currentTask = &task;
-        runningWorkers.fetch_add(threadCount, std::memory_order_release);  // sfence: 保护 currentTask 写入
+        runningWorkers.fetch_add(threadCount, std::memory_order_relaxed);
+        taskSeq.fetch_add(1, std::memory_order_release);              // sfence: 保护 currentTask 和 runningWorkers 的写入
 
         // 当前线程作为 worker#0
         invoke(taskFunc, 0, threadCount);
 
         // 等待其他 worker
-        while (runningWorkers.load(std::memory_order_acquire) > 1)
+        while (runningWorkers.load(std::memory_order_acquire) != 1)
         {
             AR_PAUSE;
         }
@@ -171,16 +171,20 @@ private:
         uint64_t localSeq = 0;
         while (workersAvailable)
         {
-            auto task = currentTask;
-            if (task && task->id > localSeq) [[likely]] {
-                localSeq = task->id;
-                task->func(idx, workers, task->ctx);
+            // sfence: 保护 currentTask 读取
+            if (auto id = taskSeq.load(std::memory_order_acquire); id > localSeq) [[likely]]
+            {
+                localSeq = id;
+                if (auto task = currentTask; task) [[likely]]
+                {
+                    task->func(idx, workers, task->ctx);
+                }
                 runningWorkers.fetch_sub(1, std::memory_order_release);
             }
             else
             {
                 AR_PAUSE;
-                // lfence: 保护下一轮 workersAvailable 和 currentTask 的读取
+                // lfence: 保护下一轮 workersAvailable 的读取
                 activeScope.wait(false, std::memory_order_acquire);
             }
         }
@@ -189,15 +193,14 @@ private:
     struct Task {
         void(*func)(size_t, size_t, const void*);
         const void* ctx;
-        uint64_t id;
     };
 
     std::vector<std::thread> threads;
     bool workersAvailable = false;
     std::atomic_bool activeScope = false;
 
-    uint64_t taskSeq = 0;
-    Task* currentTask = nullptr;
+    std::atomic_uint64_t taskSeq = 0;
+    Task* currentTask;
 
-    alignas(64) std::atomic_size_t runningWorkers = 0;
+    alignas(64) std::atomic_int32_t runningWorkers = 0;
 };
