@@ -92,65 +92,97 @@ group = mod_group_id
 repositories {
     mavenLocal()
     mavenCentral()
+
+    ivy {
+        name = "GitHub Toolchain Release"
+        url = "https://github.com/wiyuka0/AcceleratedRecoiling/releases/download"
+        patternLayout {
+            artifact "[revision]/[artifact].[ext]"
+        }
+        metadataSources { artifact() }
+    }
 }
 
-def isGitHubActions = System.getenv("GITHUB_ACTIONS") == "true"
+configurations {
+    cppToolchain
+}
+
+dependencies {
+    cppToolchain "com.wiyuka.env:AcceleratedRecoiling-third-party:toolchain_20260328_0@zip"
+//    cppToolchain "com.wiyuka.env:AcceleratedRecoiling-third-party.zip:toolchain_20260328_0"
+//    cppToolchain "com.wiyuka.env:toolchain_20260328_0:AcceleratedRecoiling-third-party.zip"
+}
+def zipUrl = "https://github.com/wiyuka0/AcceleratedRecoiling/releases/download/toolchain_20260328_0/AcceleratedRecoiling-third-party.zip"
+def toolchainZipFile = file("${layout.buildDirectory.get().asFile}/tmp/AcceleratedRecoiling-third-party.zip")
+
+def cppProjectDir = file("./AcceleratedRecoiling-third-party")
 def isWindows = System.getProperty("os.name").toLowerCase().contains("windows")
-def isLinux = System.getProperty("os.name").toLowerCase().contains("linux")
+def registerNativeTask = { String taskName, String buildBatName, String description ->
+    return tasks.register(taskName, Exec) {
+        group = "build native"
 
-tasks.register("compileNativeLib", Exec) {
-    group = "build"
-    onlyIf { isWindows }
+        dependsOn "extractToolchain"
 
-    def cppSource = layout.projectDirectory.file("acceleratedRecoilingLib.cpp")
-    def dllOutput = layout.projectDirectory.file("build/acceleratedRecoilingLib.dll")
-    inputs.file(cppSource)
-    outputs.file(dllOutput)
-    workingDir = layout.projectDirectory.asFile
-    doFirst {
-        File bDir = new File(getWorkingDir(), "build")
-        if (!bDir.exists()) bDir.mkdirs()
-        if (isGitHubActions) {
-            def javaHome = System.getenv("JAVA_HOME")
-            commandLine 'cmd', '/c', """cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /MD /Zi /W3 acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /OPT:REF /OPT:ICF"""
-        } else {
-            def vcvarsScript = "I:\\vs\\VC\\Auxiliary\\Build\\vcvars64.bat"
-            commandLine 'cmd', '/c', """call "${vcvarsScript}" && cl.exe /std:c++latest /O2 /fp:fast /arch:AVX2 /openmp /LD /MD /Zi /W3 acceleratedRecoilingLib.cpp /Fe"build\\acceleratedRecoilingLib.dll" /Fd"build\\acceleratedRecoilingLib.pdb" /link /OPT:REF /OPT:ICF"""
+        onlyIf { isWindows }
+        workingDir = cppProjectDir
+        def envScript = file("${cppProjectDir}/env/add_env.bat").absolutePath
+        def buildScript = file("${cppProjectDir}/build/${buildBatName}").absolutePath
+
+        commandLine 'cmd', '/c', "call \"${envScript}\" && call \"${buildScript}\""
+
+        doFirst {
+            println "> 开始编译 ${description} (${buildBatName})"
         }
-        println "正在编译 acceleratedRecoilingLib.dll ..."
     }
 }
-// 2. 编译 Linux 的 .so
-tasks.register("compileNativeLibLinux", Exec) {
-    group = "build"
-    onlyIf { isWindows || isLinux }
-    def cppSource = layout.projectDirectory.file("acceleratedRecoilingLib.cpp")
-    def soOutput = layout.projectDirectory.file("build/libacceleratedRecoilingLib.so")
-    inputs.file(cppSource)
-    outputs.file(soOutput)
-    workingDir = layout.projectDirectory.asFile
-    doFirst {
-        File bDir = new File(getWorkingDir(), "build")
-        if (!bDir.exists()) bDir.mkdirs()
-        if (isLinux) {
-            def javaHome = System.getenv("JAVA_HOME")
-            commandLine 'bash', '-c', """g++ -std=c++20 -O3 -ffast-math -mavx2 -fopenmp -shared -fPIC acceleratedRecoilingLib.cpp -o build/libacceleratedRecoilingLib.so"""
-        } else {
-            commandLine 'wsl', 'bash', '-c', """g++ -std=c++20 -O3 -ffast-math -mavx2 -fopenmp -shared -fPIC acceleratedRecoilingLib.cpp -o build/libacceleratedRecoilingLib.so"""
-        }
-        println "正在编译 libacceleratedRecoilingLib.so ..."
+
+tasks.register("extractToolchain", Copy) {
+    group = "build native"
+    dependsOn configurations.cppToolchain
+    onlyIf {
+        !new File(cppProjectDir, "env/add_env.bat").exists()
+    }
+
+    from({ zipTree(configurations.cppToolchain.singleFile) })
+
+    into cppProjectDir
+    doLast {
+        println "> 解压完成"
     }
 }
-tasks.named('processResources', ProcessResources) {
-    dependsOn 'compileNativeLib'
-    dependsOn 'compileNativeLibLinux'
-    from(layout.projectDirectory.file("build/acceleratedRecoilingLib.dll")) {
+def compileWin = registerNativeTask("compileNativeWin", "win-x64.bat", "Windows 动态库")
+def compileLinux = registerNativeTask("compileNativeLinux", "linux-x64.bat", "Linux 动态库")
+def compileMac = registerNativeTask("compileNativeMac", "macos-x64.bat", "macOS 动态库")
+
+//tasks.named('processResources', ProcessResources) {
+//    dependsOn compileWin, compileLinux, compileMac
+//    from({ file("${cppProjectDir}/out/win-x64/acceleratedRecoilingLib.dll") }) {
+//        into ""
+//    }
+//    from({ file("${cppProjectDir}/out/linux-x64/libacceleratedRecoilingLib.so") }) {
+//        into ""
+//    }
+//    from({ file("${cppProjectDir}/out/macos-x64/libacceleratedRecoilingLib.dylib") }) {
+//        into ""
+//    }
+//}
+
+jar {
+    dependsOn 'compileNativeWin', 'compileNativeLinux', 'compileNativeMac'
+    from("${cppProjectDir}/out/win-x64/") {
+        include "*.dll"
         into ""
     }
-    from(layout.projectDirectory.file("build/libacceleratedRecoilingLib.so")) {
+    from("${cppProjectDir}/out/linux-x64/") {
+        include "*.so"
+        into ""
+    }
+    from("${cppProjectDir}/out/macos-x64/") {
+        include "*.dylib"
         into ""
     }
 }
+
 base {
     archivesName = mod_id
 }
