@@ -3,11 +3,9 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        // 引入 ASM 依赖，用于处理字节码
         classpath 'org.ow2.asm:asm:9.6'
     }
 }
-
 
 plugins {
     id 'java-library'
@@ -16,6 +14,7 @@ plugins {
     id 'net.neoforged.moddev' version '2.0.115'
     id 'org.jetbrains.kotlin.jvm'
 }
+
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs.add('--enable-preview')
     options.compilerArgs += "--add-modules"
@@ -26,14 +25,12 @@ import org.objectweb.asm.*
 import java.util.jar.*
 
 jar.doLast {
-    // 获取生成的 jar 文件路径
     File jarFile = archiveFile.get().asFile
     println "正在移除预览版标记: ${jarFile.name}..."
 
     // 创建一个临时文件
     File tempFile = new File(jarFile.parent, jarFile.name + ".temp")
 
-    // 这里的逻辑就是把你 Main.java 里的代码翻译成了 Groovy
     try (JarFile jar = new JarFile(jarFile);
          JarOutputStream jos = new JarOutputStream(new FileOutputStream(tempFile))) {
 
@@ -48,21 +45,13 @@ jar.doLast {
                 continue
             }
 
-            // ASM 读取和修改
             ClassReader cr = new ClassReader(is)
             ClassWriter cw = new ClassWriter(0)
 
-            // 自定义 Visitor
             ClassVisitor cv = new ClassVisitor(Opcodes.ASM9, cw) {
                 @Override
                 void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-                    // 关键修复：移除版本号中的预览标记 (0xFFFF0000)
                     int newVersion = version & ~Opcodes.V_PREVIEW
-                    // 关键修复：移除 Access Flag 中的预览标记 (虽然 Version 才是导致报错的主因)
-                    // 0x10000 在某些版本指 ACC_RECORD，但也可能指预览。
-                    // 这里只修改 version 即可解决 UnsupportedClassVersionError，
-                    // 但为了和你之前的逻辑一致，如果不影响 Record 功能，可以不改 Access。
-                    // 这里我们只改 Version，这是最稳妥的。
                     super.visit(newVersion, access, name, signature, superName, interfaces)
                 }
             }
@@ -75,7 +64,6 @@ jar.doLast {
         }
     }
 
-    // 3. 用修复后的文件覆盖原文件
     if (jarFile.delete()) {
         if (!tempFile.renameTo(jarFile)) {
             throw new RuntimeException("无法重命名临时文件！")
@@ -92,105 +80,8 @@ group = mod_group_id
 repositories {
     mavenLocal()
     mavenCentral()
-
-    ivy {
-        name = "GitHub Toolchain Release"
-        url = "https://github.com/wiyuka0/AcceleratedRecoiling/releases/download"
-        patternLayout {
-            artifact "[revision]/[artifact].[ext]"
-        }
-        metadataSources { artifact() }
-    }
 }
 
-configurations {
-    cppToolchain
-}
-
-dependencies {
-    cppToolchain "com.wiyuka.env:AcceleratedRecoiling-third-party:toolchain_20260328_0@zip"
-//    cppToolchain "com.wiyuka.env:AcceleratedRecoiling-third-party.zip:toolchain_20260328_0"
-//    cppToolchain "com.wiyuka.env:toolchain_20260328_0:AcceleratedRecoiling-third-party.zip"
-}
-def zipUrl = "https://github.com/wiyuka0/AcceleratedRecoiling/releases/download/toolchain_20260328_0/AcceleratedRecoiling-third-party.zip"
-def toolchainZipFile = file("${layout.buildDirectory.get().asFile}/tmp/AcceleratedRecoiling-third-party.zip")
-
-def cppProjectDir = file("./AcceleratedRecoiling-third-party")
-def isWindows = System.getProperty("os.name").toLowerCase().contains("windows")
-def registerNativeTask = { String taskName, String buildBatName, String description ->
-    return tasks.register(taskName, Exec) {
-        group = "build native"
-
-        dependsOn "extractToolchain"
-
-        onlyIf { isWindows }
-        workingDir = cppProjectDir
-        def envScript = file("${cppProjectDir}/env/add_env.bat").absolutePath
-        def buildScript = file("${cppProjectDir}/build/${buildBatName}").absolutePath
-
-        commandLine 'cmd', '/c', "call \"${envScript}\" && call \"${buildScript}\""
-
-        doFirst {
-            println "> 开始编译 ${description} (${buildBatName})"
-        }
-    }
-}
-
-tasks.register("extractToolchain", Copy) {
-    group = "build native"
-    dependsOn configurations.cppToolchain
-    onlyIf {
-        !new File(cppProjectDir, "env/add_env.bat").exists()
-    }
-
-    from({ zipTree(configurations.cppToolchain.singleFile) })
-
-    into cppProjectDir
-    doLast {
-        println "> 解压完成"
-    }
-}
-def compileWin = registerNativeTask("compileNativeWin", "win-x64.bat", "Windows 动态库")
-def compileLinux = registerNativeTask("compileNativeLinux", "linux-x64.bat", "Linux 动态库")
-def compileMac = registerNativeTask("compileNativeMac", "macos-x64.bat", "macOS 动态库")
-
-//tasks.named('processResources', ProcessResources) {
-//    dependsOn compileWin, compileLinux, compileMac
-//    from({ file("${cppProjectDir}/out/win-x64/acceleratedRecoilingLib.dll") }) {
-//        into ""
-//    }
-//    from({ file("${cppProjectDir}/out/linux-x64/libacceleratedRecoilingLib.so") }) {
-//        into ""
-//    }
-//    from({ file("${cppProjectDir}/out/macos-x64/libacceleratedRecoilingLib.dylib") }) {
-//        into ""
-//    }
-//}
-
-jar {
-    dependsOn 'compileNativeWin', 'compileNativeLinux', 'compileNativeMac'
-
-    // Windows x64
-    from("${cppProjectDir}/out/win-x64/") {
-        include "*.dll"
-        into "natives/windows-x64"
-    }
-    // Linux x64
-    from("${cppProjectDir}/out/linux-x64/") {
-        include "*.so"
-        into "natives/linux-x64"
-    }
-    // MacOS x64 (Intel)
-    from("${cppProjectDir}/out/macos-x64/") {
-        include "*.dylib"
-        into "natives/macos-x64"
-    }
-    // MacOS ARM64 (Apple Silicon M1/M2/M3) - 如果你的 cppProjectDir 输出了这个架构
-    from("${cppProjectDir}/out/macos-arm64/") {
-        include "*.dylib"
-        into "natives/macos-arm64"
-    }
-}
 base {
     archivesName = mod_id
 }
@@ -198,7 +89,6 @@ base {
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 neoForge {
-    // Specify the version of NeoForge to use.
     version = project.neo_version
 
     parchment {
@@ -209,68 +99,37 @@ neoForge {
     runs {
         client {
             client()
-            // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             jvmArgument("--enable-preview")
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
         server {
             server()
-
             programArgument '--nogui'
             jvmArgument("--enable-preview")
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
-        // This run config launches GameTestServer and runs all registered gametests, then exits.
-        // By default, the server will crash when no gametests are provided.
-        // The gametest system is also enabled by default for other run configs under the /test command.
         gameTestServer {
             type = "gameTestServer"
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
-//        data {
-////            clientData()
-//
-//            // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
-//            // gameDirectory = project.file('run-data')
-//
-//            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
-//            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-//        }
-
-        // applies to all the run configs above
         configureEach {
-            // Recommended logging data for a userdev environment
-            // The markers can be added/remove as needed separated by commas.
-            // "SCAN": For mods scan.
-            // "REGISTRIES": For firing of registry events.
-            // "REGISTRYDUMP": For getting the contents of all registries.
             systemProperty 'forge.logging.markers', 'REGISTRIES'
-
-            // Recommended logging level for the console
-            // You can set various levels here.
-            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
             logLevel = org.slf4j.event.Level.DEBUG
         }
     }
 
     mods {
-        // define mod <-> source bindings
-        // these are used to tell the game which sources are for which mod
-        // mostly optional in a single mod project
-        // but multi mod projects should define one per mod
         "${mod_id}" {
             sourceSet(sourceSets.main)
         }
     }
 }
 
-// Include resources generated by data generators.
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
-// 在 build.gradle 文件中找到或添加以下代码块
 tasks.named('createMinecraftArtifacts') {
     dependsOn 'generateModMetadata'
 }
@@ -280,34 +139,9 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation "org.jocl:jocl:${joclVersion}"
     additionalRuntimeClasspath "org.jocl:jocl:${joclVersion}"
-
-//    jarJar 'org.jocl:jocl:2.0.5'
     jarJar(group: 'org.jocl', name: 'jocl', version: "[${joclVersion},)")
-
-    // Example mod dependency with JEI
-    // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
-    // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
-    // compileOnly "mezz.jei:jei-${mc_version}-forge-api:${jei_version}"
-    // runtimeOnly "mezz.jei:jei-${mc_version}-forge:${jei_version}"
-
-    // Example mod dependency using a mod jar from ./libs with a flat dir repository
-    // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
-    // The group id is ignored when searching -- in this case, it is "blank"
-    // implementation "blank:coolmod-${mc_version}:${coolmod_version}"
-
-    // Example mod dependency using a file as dependency
-    // implementation files("libs/coolmod-${mc_version}-${coolmod_version}.jar")
-
-    // Example project dependency using a sister or child project:
-    // implementation project(":myproject")
-
-    // For more info:
-    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
-    // http://www.gradle.org/docs/current/userguide/dependency_management.html
 }
 
-// This block of code expands all declared replace properties in the specified resource targets.
-// A missing property will result in an error. Properties are expanded using ${} Groovy notation.
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
     var replaceProperties = [minecraft_version      : minecraft_version,
                              minecraft_version_range: minecraft_version_range,
@@ -326,13 +160,9 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
     into "build/generated/sources/modMetadata"
 }
 
-// Include the output of "generateModMetadata" as an input directory for the build
-// this works with both building through Gradle and the IDE.
 sourceSets.main.resources.srcDir generateModMetadata
-// To avoid having to run "generateModMetadata" manually, make it run on every project reload
 neoForge.ideSyncTask generateModMetadata
 
-// Example configuration to allow publishing using the maven-publish plugin
 publishing {
     publications {
         register('mavenJava', MavenPublication) {
@@ -345,16 +175,19 @@ publishing {
         }
     }
 }
-//        {
-//
-//        }
-// IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.
+
 idea {
     module {
         downloadSources = true
         downloadJavadoc = true
     }
 }
+
 kotlin {
     jvmToolchain(21)
+}
+
+def cppScript = file('cpp-build.gradle')
+if (cppScript.exists()) {
+    apply from: cppScript
 }
