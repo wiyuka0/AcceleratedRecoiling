@@ -1,5 +1,5 @@
 /cmake-build-*
-/out
-.idea
-*.exe
-test
+/out/*
+/.idea
+/.vs
+/CMakeUserPresets.json

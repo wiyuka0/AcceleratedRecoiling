@@ -25,8 +25,12 @@ if(AR_WINDOWS)
         include_directories("${PROJECT_SOURCE_DIR}/third_party/jni/win32")
     endif()
 
+    if (AR_X64)
+        add_compile_options(/clang:-march=x86-64-v2 /clang:-mtune=generic)
+    endif()
+
     add_compile_definitions(UNICODE _UNICODE _SILENCE_CXX20_U8PATH_DEPRECATION_WARNING _CRT_SECURE_NO_WARNINGS WINVER=0x0601 _WIN32_WINNT=0x0601)
-    add_compile_options(/MT$<$<CONFIG:Debug>:d> /clang:-march=x86-64-v2 /clang:-mtune=generic /utf-8 /D_AMD64_ /permissive- /volatile:iso)
+    add_compile_options(/MT$<$<CONFIG:Debug>:d> /utf-8 /D_AMD64_ /permissive- /volatile:iso)
     if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
         add_compile_options(/clang:-O3 /EHsc -flto /Ob2 /Gw /GR- /D_HAS_STATIC_RTTI=0)
         add_link_options(-flto /OPT:REF /OPT:ICF)
@@ -44,7 +48,11 @@ elseif(AR_LINUX)
         include_directories("${PROJECT_SOURCE_DIR}/third_party/jni/linux")
     endif()
 
-    add_compile_options(-m64 -march=x86-64-v2 -mtune=generic -fPIC -pthread -Wno-deprecated-declarations)
+    if (AR_X64)
+        add_compile_options(-m64 -march=x86-64-v2 -mtune=generic)
+    endif()
+
+    add_compile_options(-fPIC -pthread -Wno-deprecated-declarations)
     add_link_options(-static-libstdc++ -static-libgcc -pthread -Wl,--no-rosegment -Wl,--no-undefined)
     if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
         add_compile_options(-O3 -flto -fdata-sections -ffunction-sections -fno-rtti -fno-addrsig -fomit-frame-pointer)
@@ -60,6 +68,10 @@ elseif(AR_ANDROID)
     if (AR_ENABLE_JNI)
         # 由标准 jvm 加载，所以不需要安卓定制的库
         include_directories("${PROJECT_SOURCE_DIR}/third_party/jni/linux")
+    endif()
+
+    if (AR_AARCH64)
+        add_compile_options(-march=armv8-a)
     endif()
 
     add_compile_options(-fPIC -pthread -Wno-deprecated-declarations -fomit-frame-pointer)
@@ -78,6 +90,12 @@ elseif(AR_DARWIN)
 
     if (AR_ENABLE_JNI)
         include_directories("${PROJECT_SOURCE_DIR}/third_party/jni/darwin")
+    endif()
+
+    if (AR_X64)
+        add_compile_options(-m64 -march=x86-64-v2 -mtune=generic)
+    elseif (AR_AARCH64)
+        add_compile_options(-mcpu=apple-m1)
     endif()
 
     add_compile_options(-fPIC -pthread -Wno-deprecated-declarations -fomit-frame-pointer)
