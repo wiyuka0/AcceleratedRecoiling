@@ -169,20 +169,28 @@ def compileMac = registerNativeTask("compileNativeMac", "macos-x64.bat", "macOS 
 
 jar {
     dependsOn 'compileNativeWin', 'compileNativeLinux', 'compileNativeMac'
+
+    // Windows x64
     from("${cppProjectDir}/out/win-x64/") {
         include "*.dll"
-        into ""
+        into "natives/windows-x64"
     }
+    // Linux x64
     from("${cppProjectDir}/out/linux-x64/") {
         include "*.so"
-        into ""
+        into "natives/linux-x64"
     }
+    // MacOS x64 (Intel)
     from("${cppProjectDir}/out/macos-x64/") {
         include "*.dylib"
-        into ""
+        into "natives/macos-x64"
+    }
+    // MacOS ARM64 (Apple Silicon M1/M2/M3) - 如果你的 cppProjectDir 输出了这个架构
+    from("${cppProjectDir}/out/macos-arm64/") {
+        include "*.dylib"
+        into "natives/macos-arm64"
     }
 }
-
 base {
     archivesName = mod_id
 }

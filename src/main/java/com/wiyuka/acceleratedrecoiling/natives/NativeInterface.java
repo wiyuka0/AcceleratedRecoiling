@@ -18,6 +18,31 @@ public class NativeInterface {
         }
     }
 
+    public static String getPlatformNativePath() {
+        String osName = System.getProperty("os.name").toLowerCase();
+        String osArch = System.getProperty("os.arch").toLowerCase();
+        String os;
+        if (osName.contains("win")) {
+            os = "windows";
+        } else if (osName.contains("mac")) {
+            os = "macos";
+        } else if (osName.contains("nix") || osName.contains("nux") || osName.contains("aix")) {
+            os = "linux";
+        } else {
+            throw new UnsupportedOperationException("Unsupported OS: " + osName);
+        }
+        String arch;
+        if (osArch.contains("amd64") || osArch.contains("x86_64")) {
+            arch = "x64";
+        }
+        else if (osArch.contains("aarch64") || osArch.contains("arm64")) {
+            arch = "arm64";
+        } else {
+            throw new UnsupportedOperationException("Unsupported architecture: " + osArch);
+        }
+        return "/natives/" + os + "-" + arch + "/";
+    }
+
     public enum BackendType {
         FFM("FFM", () -> loadReflectively("com.wiyuka.acceleratedrecoiling.natives.FFMBackend")),
         JNI("JNI", JNIBackend::new), // 假设 JNI 类兼容所有 JDK
@@ -66,13 +91,14 @@ public class NativeInterface {
     );
 
     public static void initialize() {
-        if (AVX2.hasAVX2()) {
-            initialize(BackendType.AUTO);
-        } else if (isVectorApiAvailable()) {
-            initialize(BackendType.JAVA_SIMD);
-        } else {
-            initialize(BackendType.JAVA);
-        }
+//        if (AVX2.hasAVX2()) {
+//            initialize(BackendType.AUTO);
+//        } else if (isVectorApiAvailable()) {
+//            initialize(BackendType.JAVA_SIMD);
+//        } else {
+//            initialize(BackendType.JAVA);
+//        }
+        initialize(BackendType.FFM);
     }
 
     public static void initialize(BackendType preferredType) {

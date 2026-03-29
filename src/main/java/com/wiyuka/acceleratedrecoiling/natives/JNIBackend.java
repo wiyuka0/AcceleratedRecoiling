@@ -193,19 +193,21 @@ public class JNIBackend implements INativeBackend {
     public void initialize() {
         Logger logger = AcceleratedRecoiling.LOGGER;
         String dllPath = "";
-        String dllName = "acceleratedRecoilingLib";
+        String dllName = "AcceleratedRecoiling";
         String fullDllName = System.mapLibraryName(dllName);
 
-        try (InputStream dllStream = AcceleratedRecoiling.class.getResourceAsStream("/" + fullDllName)) {
+        String resourcePath = NativeInterface.getPlatformNativePath() + fullDllName;
+
+        try (InputStream dllStream = AcceleratedRecoiling.class.getResourceAsStream(resourcePath)) {
             if (dllStream == null) {
-                throw new FileNotFoundException("Cannot find " + fullDllName + " in resources.");
+                throw new FileNotFoundException("Cannot find " + fullDllName + " in resources at path: " + resourcePath);
             }
             File tempDll = File.createTempFile(UUID.randomUUID() + "_acceleratedRecoiling_", "_" + fullDllName);
             tempDll.deleteOnExit();
             dllPath = tempDll.getAbsolutePath();
             try (OutputStream out = new FileOutputStream(tempDll)) {
                 dllStream.transferTo(out);
-                logger.info("Extracted JNI native library to temp: {}", dllPath);
+                logger.info("Extracted JNI native library from {} to temp: {}", resourcePath, dllPath);
             }
         } catch (IOException e) {
             throw new RuntimeException("JNI library load failed: " + e.getMessage(), e);
@@ -213,7 +215,7 @@ public class JNIBackend implements INativeBackend {
 
         try {
             System.load(dllPath);
-            logger.info("dll: " + dllPath);
+            logger.info("Loaded dll: " + dllPath);
         } catch (UnsatisfiedLinkError e) {
             throw new RuntimeException("Failed to load JNI library", e);
         }
