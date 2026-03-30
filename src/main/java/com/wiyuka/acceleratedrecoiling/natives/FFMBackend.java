@@ -259,32 +259,27 @@ public class FFMBackend implements INativeBackend {
     public void initialize() {
         Logger logger = AcceleratedRecoiling.LOGGER;
         String dllPath = "";
-        String dllName = "acceleratedRecoilingLib";
+        String dllName = "AcceleratedRecoiling";
         String fullDllName = System.mapLibraryName(dllName);
 
-        try (InputStream dllStream = AcceleratedRecoiling.class.getResourceAsStream("/" + fullDllName)) {
+        String resourcePath = NativeInterface.getPlatformNativePath() + fullDllName;
+        try (InputStream dllStream = AcceleratedRecoiling.class.getResourceAsStream(resourcePath)) {
             if (dllStream == null) {
-                throw new FileNotFoundException("Cannot find " + fullDllName + " in resources.");
+                throw new FileNotFoundException("Cannot find " + fullDllName + " in resources at path: " + resourcePath);
             }
-
             File tempDll = File.createTempFile(UUID.randomUUID() + "_acceleratedRecoiling_", "_" + fullDllName);
             tempDll.deleteOnExit();
-
             dllPath = tempDll.getAbsolutePath();
-
             try (OutputStream out = new FileOutputStream(tempDll)) {
                 dllStream.transferTo(out);
-                logger.info("Extracted native library to temp: {}", dllPath);
+                logger.info("Extracted native library from {} to temp: {}", resourcePath, dllPath);
             }
-
         } catch (IOException e) {
             throw new RuntimeException("Native library load failed: " + e.getMessage(), e);
         }
-
         linker = Linker.nativeLinker();
         nativeArena = Arena.global();
         SymbolLookup lib = findFoldLib(nativeArena, dllPath);
-
         pushMethodHandle = linker.downcallHandle(
                 lib.find("push").orElseThrow(() -> new RuntimeException("Cannot find symbol 'push'")),
                 FunctionDescriptor.of(
@@ -298,7 +293,6 @@ public class FFMBackend implements INativeBackend {
                         ADDRESS     // void* configPtr
                 )
         );
-
         createCtxMethodHandle = linker.downcallHandle(
                 lib.find("createCtx").orElseThrow(() -> new RuntimeException("Cannot find symbol 'createCtx'")),
                 FunctionDescriptor.of(ADDRESS)
@@ -307,7 +301,6 @@ public class FFMBackend implements INativeBackend {
                 lib.find("createCfg").orElseThrow(() -> new RuntimeException("Cannot find symbol 'createCfg'")),
                 FunctionDescriptor.of(ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT)
         );
-
         try {
             updateCfgMethodHandle = linker.downcallHandle(
                     lib.find("updateCfg").orElseThrow(),
