@@ -43,3 +43,9 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += "jdk.incubator.vector"
     options.release.set(21)
 }
+
+
+def cppScript = file('cpp-build.gradle')
+if (cppScript.exists()) {
+    apply from: cppScript
+}
