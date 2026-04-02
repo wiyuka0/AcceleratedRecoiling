@@ -6,32 +6,31 @@
 
 官方交流群：1023713677
 
-
 ## 特性介绍
 
 *   **实体碰撞性能提升**：通过将底层的碰撞逻辑交由 C++ 处理，打破 Java 在处理海量实体碰撞时的性能瓶颈。在测试条件下（同一区块数千实体），TPS 提升可达数十倍。
 *   **算法优化**：引入效率更高的碰撞算法，避免了原版 <math>O(N^2)</math> 复杂度的实体遍历，降低 CPU 负担。
 *   **阈值触发**：只有当局部实体密度达到设定阈值时才会使用 C++ 加速算法，保证常规游戏场景下的稳定与原版体验。
-*   **双端原生支持**：内建 Windows (`.dll`) 与 Linux (`.so`) 的动态链接库，面板服、VPS 还是 Docker 容器，都能一键部署。
+*   **多端支持**：同时包含Windows/Linux/MacOS的运行库，未来版本将支持arm64
 *   **动态后端选择机制**: 同时包含多个后端并自动选择当前可以应用且效率最高的后端
 
 
 | 后端 | 实现说明 | 要求 | 性能 (预期) | 状态 |
 | :--- | :--- | :--- | :--- | :--- |
 | **GPU** | 使用 GPU 算法加速碰撞 | 需图形硬件支持 | 最高 | 可用 |
-| **FFM** | 使用 FFM API 与 C++ 层进行通信 | CPU 需支持 **AVX2** 指令集 | 非常高 | 可用 |
-| **JNI** | 使用 JNI 与 C++ 层进行通信 | CPU 需支持 **AVX2** 指令集 | 非常高 | 可用 |
-| **Java SIMD** | 使用加速碰撞的 Java VectorAPI 算法 | 需添加启动参数<br>*(注：MacOS 系统将被 fallback 到此)* | 高 | 可用 |
+| **FFM** | 使用 FFM API 与 C++ 层进行通信 | 需要使用 JDK 21或以上的Java版本启动游戏 | 非常高 | 可用 |
+| **JNI** | 使用 JNI 与 C++ 层进行通信 | 无 | 非常高 | 可用 |
+| **Java SIMD** | 使用加速碰撞的 Java VectorAPI 算法 | 需添加启动参数 | 高 | 可用 |
 | **Java** | 使用加速碰撞的 Java 原生算法 | 无 | 良好 | 可用 |
 | **Java Vanilla** | 在原版的实体遍历下直接修改实体碰撞筛选逻辑（原版特性还原程度最高） | 无 | 偏差 | 可用 |
 | **Vanilla** | 原版的碰撞逻辑 | 无 | 最差 | - |
+
+如果需要手动切换后端，请在游戏启动时添加参数`-Dacceleratedrecoiling.backend=后端名称`
+
 ## 环境要求与前置
 
-*   **Java 17 或以上**：必须使用 Java 17 或 Java 17+ 启动游戏/服务端。
 *   **64位操作系统**：本机库 (`.dll` / `.so`) 仅支持 64 位环境。
-*   **Windows 平台**：需安装 [Microsoft Visual C++ 运行库](https://aka.ms/vs/17/release/vc_redist.x64.exe)（如启动失败请优先安装）。
 *   **Leaves 端**：启动参数中必须包含 `-Dleavesclip.enable.mixin=true`。
-*   **Linux/Docker**: 需确保系统中已安装 `libgomp1` 依赖。
 
 ## 安装与配置
 
@@ -56,24 +55,17 @@
 **Q: 为什么游戏崩溃或无法启动？** <br>
 **A:** 请按以下步骤排查：
 1. 确认已正确安装 Java 17+
-3. 若使用 **Leaves** 服务端，确保启动参数包含 `-Dleavesclip.enable.mixin=true`。
-4. 如果更新过模组，尝试删除根目录或 `.minecraft` 下的 `acceleratedRecoilingLib.dll`与`acceleratedRecoiling.json`，然后重启游戏让其重新生成。
+2. 若使用 **Leaves** 服务端，确保启动参数包含 `-Dleavesclip.enable.mixin=true`。
+3. 如果更新过模组，尝试删除根目录或 `.minecraft` 下的 `acceleratedRecoilingLib.dll`与`acceleratedRecoiling.json`，然后重启游戏让其重新生成。
 
 **Q: 开启后实体挤压表现和原版一样吗？** <br>
 **A:** 不完全一致。本模组目前为实验性质，改变了底层计算逻辑，因此挤压表现会与原版有差异。**请务必在使用前做好存档备份。**
 
 **Q: 会影响生电特性吗？** <br>
-**A:** 目前不清楚，可能会影响与实体挤压有关的红石机器，**请务必在使用前做好存档备份。**
+**A:** 目前没有找到因加速碰撞而失效的红石机器，但推测可能会影响与实体挤压有关的红石机器，**请务必在使用前做好存档备份。**
 
 **Q: 为什么开启模组后，服务器性能反而下降了？** <br>
 **A:** 可能是周围实体密度未达到触发优化的条件，因此同时走了原版和加速碰撞的两条路径。请尝试打开配置文件，适当调低 `densityThreshold` 的数值。或尝试调低`maxThreads`。
-
-**Q: 在 Docker 中运行服务端时，报错提示找不到 `libgomp.so` 怎么办？** <br>
-**A:** Docker 中使用的 Ubuntu 镜像不包含 `libgomp.so`，因此只需在构建镜像的 Dockerfile 中添加以下命令并重新构建镜像即可：
-```dockerfile
-RUN apt-get update && \
-    apt-get install -y libgomp1
-```
 
 **Q: 会不会和某些模组不兼容？** <br>
 **A:** 完全不会，根据我们目前的测试，加速碰撞与 ATM9 整合包完全兼容
@@ -115,13 +107,9 @@ RUN apt-get update && \
 
 **1. 环境准备**
 *   安装 JDK 21。(必须)
-*   安装 Visual Studio 2022，勾选“使用 C++ 的桌面开发”。
-*   在 WSL 中安装编译工具：`sudo apt update && sudo apt install build-essential libgomp1 -y`
+*   克隆本仓库
 
-**2. 修改脚本路径**
-打开 `build.gradle.kts`，找到 `compileNativeLib` 任务，将 `vcvarsScript` 变量的值替换为你本机实际的 `vcvars64.bat` 路径。
-
-**3. 构建**
+**2. 构建**
 在项目根目录运行以下命令：
 ```bash
 gradlew jar
