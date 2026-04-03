@@ -58,7 +58,9 @@ jobs:
           version: ${{ github.ref_name }}
 
           game-versions: 1.21.11
-          loaders: fabric, neoforge
+          loaders: |
+            fabric
+            forge
 
           retry-attempts: 2
 
