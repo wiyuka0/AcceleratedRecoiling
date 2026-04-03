@@ -42,3 +42,23 @@ jobs:
         with:
           files: build/libs/*.jar
           generate_release_notes: true
+
+      - name: 发布到 CurseForge 和 Modrinth
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: kir-antipov/mc-publish@v3.3
+        with:
+
+          files: build/libs/!(*-dev|-sources|-javadoc).jar
+
+          name: ${{ github.ref_name }}
+          version: ${{ github.ref_name }}
+
+          loaders: forge
+          game-versions: 1.20.1, 1.20.4
+
+
+          curseforge-id: ${{ secrets.CF_PROJECT_ID }}
+          curseforge-token: ${{ secrets.CF_TOKEN }}
+
+          modrinth-id: ${{ secrets.MODRINTH_PROJECT_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
