@@ -8,7 +8,10 @@
 
 void radixSort64(std::span<SAPNode> src, SortBuffer& sortBuffer, ParallelExecutor& executor) {
     if (src.size() <= 1) return;
-
+    if (src.size() <= 256) {
+        if (src.size() > 1) std::sort(src.begin(), src.end(), [](auto& a, auto& b){ return a.sortKey < b.sortKey; });
+        return;
+    }
     auto& buffer = sortBuffer.buffer;
     auto& histograms = sortBuffer.histograms;
 
