@@ -1,4 +1,4 @@
-name: Build and Publish
+name: Build and Publish 1.21.1
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build-and-package:
-    name: Build Native Libs & Package Mod
+    name: Bu
     runs-on: windows-latest
 
     steps:
@@ -42,3 +42,21 @@ jobs:
         with:
           files: build/libs/*.jar
           generate_release_notes: true
+
+      - name: Publish to CurseForge & Modrinth
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: kir-antipov/mc-publish@v3.3
+        with:
+          files: build/libs/!(*-dev|-sources|-javadoc).jar
+
+          name: ${{ github.ref_name }}
+          version: ${{ github.ref_name }}
+
+          loaders: neoforge
+
+          game-versions: 1.21.1
+
+          curseforge-id: ${{ secrets.CF_PROJECT_ID }}
+          curseforge-token: ${{ secrets.CF_TOKEN }}
+          modrinth-id: ${{ secrets.MODRINTH_PROJECT_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
