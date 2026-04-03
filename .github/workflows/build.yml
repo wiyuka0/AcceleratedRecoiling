@@ -60,4 +60,4 @@ jobs:
           curseforge-token: ${{ secrets.CF_TOKEN }}
           modrinth-id: ${{ secrets.MODRINTH_PROJECT_ID }}
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-          version-type: beta
+          version-type: release
