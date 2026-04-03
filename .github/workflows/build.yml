@@ -61,7 +61,7 @@ jobs:
 
           game-versions: |
             1.21.8
-
+          version-type: release
           curseforge-id: ${{ secrets.CF_PROJECT_ID }}
           curseforge-token: ${{ secrets.CF_TOKEN }}
           modrinth-id: ${{ secrets.MODRINTH_PROJECT_ID }}
