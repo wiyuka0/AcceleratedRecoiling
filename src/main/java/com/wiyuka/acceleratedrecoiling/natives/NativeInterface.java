@@ -52,7 +52,7 @@ public class NativeInterface {
         }),
         JAVA_VANILLA("Java Vanilla", JavaVanillaBackend::new),
         JAVA("Pure Java", JavaBackend::new),
-        GPU("GPU", GPUBackend::new),
+        GPU("GPU", () -> loadReflectively("com.wiyuka.acceleratedrecoiling.natives.GPUBackend")),
         AUTO("Auto", null);
 
         private final String displayName;
