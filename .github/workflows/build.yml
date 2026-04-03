@@ -55,7 +55,7 @@ jobs:
 
           loaders: forge
           game-versions: 1.20.1
-
+          version-type: release
 
           curseforge-id: ${{ secrets.CF_PROJECT_ID }}
           curseforge-token: ${{ secrets.CF_TOKEN }}
