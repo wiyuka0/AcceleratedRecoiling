@@ -46,26 +46,37 @@ jobs:
             neoforge/build/libs/*-neoforge.jar
           generate_release_notes: true
 
-      - name: Publish to CurseForge & Modrinth
+      - name: Publish Fabric to CF & Modrinth
         if: startsWith(github.ref, 'refs/tags/v')
         uses: kir-antipov/mc-publish@v3.3
         with:
-          files: |
-            fabric/build/libs/*-fabric.jar
-            neoforge/build/libs/*-neoforge.jar
-
+          files: fabric/build/libs/!(*-dev|-sources|-javadoc).jar
           name: ${{ github.ref_name }}
           version: ${{ github.ref_name }}
-
-          game-versions: 1.21.11
           loaders: |
             fabric
-            neoforge
-
-          retry-attempts: 2
-
+          game-versions: |
+            1.21.11
           curseforge-id: ${{ secrets.CF_PROJECT_ID }}
           curseforge-token: ${{ secrets.CF_TOKEN }}
-
           modrinth-id: ${{ secrets.MODRINTH_PROJECT_ID }}
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          version-type: release
+
+
+      - name: Publish NeoForge to CF & Modrinth
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: kir-antipov/mc-publish@v3.3
+        with:
+          files: neoforge/build/libs/!(*-dev|-sources|-javadoc).jar
+          name: ${{ github.ref_name }}
+          version: ${{ github.ref_name }}
+          loaders: |
+            neoforge
+          game-versions: |
+            1.21.11
+          curseforge-id: ${{ secrets.CF_PROJECT_ID }}
+          curseforge-token: ${{ secrets.CF_TOKEN }}
+          modrinth-id: ${{ secrets.MODRINTH_PROJECT_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          version-type: release
