@@ -11,7 +11,6 @@ permissions:
 jobs:
   build-and-package:
     name: Build Native Libs & Package Mod
-    # 必须在 Windows 上运行，因为 Gradle 脚本依赖 cmd、.bat 并且写了 onlyIf { isWindows }
     runs-on: windows-latest
     steps:
       - name: Checkout repository
@@ -23,12 +22,9 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      # 使用官方 Gradle Action，自动处理环境和依赖缓存
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      # 这一条命令会触发你的整个构建链：
-      # 下载解压工具链 -> 跑 win/linux/mac 的 bat 脚本 -> 编译 Java -> 移除预览版 ASM -> 生成最终 Jars
       - name: Build project
         run: .\gradlew.bat build --stacktrace
 
@@ -49,3 +45,25 @@ jobs:
             fabric/build/libs/*-fabric.jar
             neoforge/build/libs/*-neoforge.jar
           generate_release_notes: true
+
+      - name: Publish to CurseForge & Modrinth
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: kir-antipov/mc-publish@v3.3
+        with:
+          files: |
+            fabric/build/libs/*-fabric.jar
+            neoforge/build/libs/*-neoforge.jar
+
+          name: ${{ github.ref_name }}
+          version: ${{ github.ref_name }}
+
+          game-versions: 1.21.11
+          loaders: fabric, neoforge
+
+          retry-attempts: 2
+
+          curseforge-id: ${{ secrets.CF_PROJECT_ID }}
+          curseforge-token: ${{ secrets.CF_TOKEN }}
+
+          modrinth-id: ${{ secrets.MODRINTH_PROJECT_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
