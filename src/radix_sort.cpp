@@ -3,6 +3,7 @@
 #include <barrier>
 #include <cstring>
 #include <array>
+#include <algorithm>
 
 #include "parallel_executor.h"
 
