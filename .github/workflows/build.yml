@@ -60,7 +60,7 @@ jobs:
           game-versions: 1.21.11
           loaders: |
             fabric
-            forge
+            neoforge
 
           retry-attempts: 2
 
