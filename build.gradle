@@ -94,7 +94,7 @@ sourceSets.main.resources.srcDirs += 'src/generated/resources'
 
 jar.doLast {
     File jarFile = archiveFile.get().asFile
-    println "正在移除预览版标记: ${jarFile.name}..."
+    println "正在修改字节码版本为 Java 17 并移除预览版标记: ${jarFile.name}..."
 
     File tempFile = new File(jarFile.parent, jarFile.name + ".temp")
 
@@ -118,7 +118,7 @@ jar.doLast {
             ClassVisitor cv = new ClassVisitor(Opcodes.ASM9, cw) {
                 @Override
                 void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-                    int newVersion = version & ~Opcodes.V_PREVIEW
+                    int newVersion = Opcodes.V17
                     super.visit(newVersion, access, name, signature, superName, interfaces)
                 }
             }
@@ -135,7 +135,7 @@ jar.doLast {
         if (!tempFile.renameTo(jarFile)) {
             throw new RuntimeException("无法重命名临时文件！")
         }
-        println "预览版标记移除成功！"
+        println "字节码修改成功！"
     } else {
         throw new RuntimeException("无法删除原始 Jar 文件！")
     }

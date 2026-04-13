@@ -1,4 +1,4 @@
-name: Build and Publish 1.21.1
+name: Build and Publish 1.20.1
 
 on:
   push:
@@ -54,7 +54,7 @@ jobs:
 
           loaders: fabric
 
-          game-versions: 1.21.1
+          game-versions: 1.20.1
 
           curseforge-id: ${{ secrets.CF_PROJECT_ID }}
           curseforge-token: ${{ secrets.CF_TOKEN }}
