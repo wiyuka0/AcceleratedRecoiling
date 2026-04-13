@@ -3,6 +3,8 @@ pluginManagement {
         mavenLocal()
         gradlePluginPortal()
         maven { url = 'https://maven.neoforged.net/releases' }
+        maven { url = "https://maven.parchmentmc.org" }
+        maven { url = "https://maven.fabricmc.net/" }
     }
     plugins {
         id 'org.jetbrains.kotlin.jvm' version '2.0.21'

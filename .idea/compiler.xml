@@ -8,12 +8,12 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="AcceleratedRecoiling" options="--enable-preview --add-modules jdk.incubator.vector" />
-      <module name="AcceleratedRecoiling.main" options="--enable-preview --add-modules jdk.incubator.vector" />
+      <module name="AcceleratedRecoiling" options="--enable-preview --add-modules jdk.incubator.vector -AoutRefMapFile=T:\acceleratedrecoiling\AcceleratedRecoiling\build\classes\java\main\acceleratedrecoiling-refmap.json -AdefaultObfuscationEnv=named:intermediary -Aquiet=true -AoutMapFileNamedIntermediary=T:\acceleratedrecoiling\AcceleratedRecoiling\build\loom-cache\mixin-map-loom.mappings.1_21_1.layered+hash.718967116-v2.main.tiny -AinMapFileNamedIntermediary=E:\gra\caches\fabric-loom\1.21.1\loom.mappings.1_21_1.layered+hash.718967116-v2\mappings.tiny" />
+      <module name="AcceleratedRecoiling.main" options="--enable-preview --add-modules jdk.incubator.vector -AoutRefMapFile=T:\acceleratedrecoiling\AcceleratedRecoiling\build\classes\java\main\acceleratedrecoiling-refmap.json -AdefaultObfuscationEnv=named:intermediary -Aquiet=true -AoutMapFileNamedIntermediary=T:\acceleratedrecoiling\AcceleratedRecoiling\build\loom-cache\mixin-map-loom.mappings.1_21_1.layered+hash.718967116-v2.main.tiny -AinMapFileNamedIntermediary=E:\gra\caches\fabric-loom\1.21.1\loom.mappings.1_21_1.layered+hash.718967116-v2\mappings.tiny" />
       <module name="AcceleratedRecoiling.main~1" options="--enable-preview" />
       <module name="AcceleratedRecoiling.main~2" options="--enable-preview --add-modules jdk.incubator.vector" />
       <module name="AcceleratedRecoiling.main~3" options="--enable-preview --add-modules jdk.incubator.vector" />
-      <module name="AcceleratedRecoiling.test" options="--enable-preview --add-modules jdk.incubator.vector" />
+      <module name="AcceleratedRecoiling.test" options="--enable-preview --add-modules jdk.incubator.vector -AoutRefMapFile=T:\acceleratedrecoiling\AcceleratedRecoiling\build\classes\java\test\test-acceleratedrecoiling-refmap.json -AdefaultObfuscationEnv=named:intermediary -Aquiet=true -AoutMapFileNamedIntermediary=T:\acceleratedrecoiling\AcceleratedRecoiling\build\loom-cache\mixin-map-loom.mappings.1_21_1.layered+hash.718967116-v2.test.tiny -AinMapFileNamedIntermediary=E:\gra\caches\fabric-loom\1.21.1\loom.mappings.1_21_1.layered+hash.718967116-v2\mappings.tiny" />
       <module name="AcceleratedRecoiling.test~2" options="--enable-preview --add-modules jdk.incubator.vector" />
       <module name="acceleratedrecoiling.AcceleratedRecoiling.main" options="--enable-preview" />
       <module name="com.wiyuka.AcceleratedRecoiling.test" options="--enable-preview" />

@@ -1,0 +1,8 @@
+accessWidener v2 named
+
+accessible method net/minecraft/world/entity/monster/warden/Warden doPush (Lnet/minecraft/world/entity/Entity;)V
+accessible method net/minecraft/world/entity/decoration/ArmorStand doPush (Lnet/minecraft/world/entity/Entity;)V
+accessible method net/minecraft/world/entity/ambient/Bat doPush (Lnet/minecraft/world/entity/Entity;)V
+accessible method net/minecraft/world/entity/animal/IronGolem doPush (Lnet/minecraft/world/entity/Entity;)V
+accessible method net/minecraft/world/entity/animal/Parrot doPush (Lnet/minecraft/world/entity/Entity;)V
+accessible method net/minecraft/world/entity/LivingEntity doPush (Lnet/minecraft/world/entity/Entity;)V

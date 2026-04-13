@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${mod_version}",
+  "name": "${mod_name}",
+  "description": "${mod_description}",
+  "authors": [
+    "${mod_authors}"
+  ],
+  "contact": {
+    "homepage": "",
+    "sources": "",
+    "issues": ""
+  },
+  "license": "${mod_license}",
+  "icon": "assets/${mod_id}/icon.png",
+  "environment": "*",
+
+  "entrypoints": {
+    "main": [
+      "com.wiyuka.acceleratedrecoiling.AcceleratedRecoiling"
+    ]
+  },
+
+  "mixins": [
+    "${mod_id}.mixins.json"
+  ],
+
+  "accessWidener": "acceleratedrecoiling.accesswidener",
+
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=21"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}

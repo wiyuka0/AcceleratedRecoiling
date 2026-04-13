@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build-and-package:
-    name: Bu
+    name: Build and Publish
     runs-on: windows-latest
 
     steps:
@@ -52,7 +52,7 @@ jobs:
           name: ${{ github.ref_name }}
           version: ${{ github.ref_name }}
 
-          loaders: neoforge
+          loaders: fabric
 
           game-versions: 1.21.1
 
