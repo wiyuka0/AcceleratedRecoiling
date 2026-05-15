@@ -4,10 +4,11 @@
   "package": "com.wiyuka.acceleratedrecoiling.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "EntityGetterMixin",
     "EntityMixin",
+    "FastTagCheckMixin",
     "LivingEntityMixin",
-    "ServerLevelMixin",
-    "EntityGetterMixin"
+    "ServerLevelMixin"
   ],
   "client": [
   ],
