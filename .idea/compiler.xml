@@ -2,6 +2,15 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel target="21">
+      <module name="acceleratedrecoiling.AcceleratedRecoiling.common.main" target="21" />
+      <module name="acceleratedrecoiling.AcceleratedRecoiling.common.test" target="21" />
+      <module name="acceleratedrecoiling.AcceleratedRecoiling.fabric.main" target="21" />
+      <module name="acceleratedrecoiling.AcceleratedRecoiling.fabric.test" target="21" />
+      <module name="acceleratedrecoiling.AcceleratedRecoiling.neoforge.main" target="21" />
+      <module name="acceleratedrecoiling.AcceleratedRecoiling.neoforge.test" target="21" />
+      <module name="AcceleratedRecoiling.common" target="21" />
+      <module name="AcceleratedRecoiling.fabric" target="21" />
+      <module name="AcceleratedRecoiling.neoforge" target="21" />
       <module name="FoldMC.main~1" target="22" />
     </bytecodeTargetLevel>
   </component>
