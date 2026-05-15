@@ -3,7 +3,6 @@ package com.wiyuka.acceleratedrecoiling.natives;
 import com.sun.management.HotSpotDiagnosticMXBean;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.util.regex.Matcher;
@@ -39,14 +38,10 @@ public class AVX2 {
     private static boolean hasAVX2Java() {
         Process process = null;
         try {
-            String javaHome = System.getProperty("java.home");
-            String javaCmd = javaHome + File.separator + "bin" + File.separator + "java";
-            if (System.getProperty("os.name").toLowerCase().contains("win")) {
-                javaCmd += ".exe";
-            }
-            ProcessBuilder pb = new ProcessBuilder(javaCmd, "-XX:+PrintFlagsFinal", "-version");
-            pb.redirectErrorStream(true);
-            process = pb.start();
+            String javaExe = ProcessHandle.current().info().command()
+                    .orElseThrow(() -> new RuntimeException("Cannot determine JVM executable path"));
+            process = Runtime.getRuntime().exec(
+                    new String[]{javaExe, "-XX:+PrintFlagsFinal", "-version"});
             Pattern pattern = Pattern.compile("UseAVX\\s*(:?=)\\s*(\\d+)");
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line;
